@@ -5,7 +5,6 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel
 import zipfile
 import io
-import json
 
 BASE_DIR = Path(__file__).resolve().parent
 TENANTS_DIR = BASE_DIR / "tenants"
@@ -88,3 +87,9 @@ def get_tenant(tenant_id: str):
 @app.get("/")
 def root():
     return {"message": "OKF MD Master FastAPI Backend is running."}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
