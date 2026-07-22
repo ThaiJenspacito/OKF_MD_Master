@@ -270,6 +270,7 @@ ${status.paused
 }
 <button onclick="fetch('/api/scout/scan',{method:'POST'}).then(r=>r.json()).then(d=>{alert('Scout: '+d.discovered+' Dateien gefunden')})" class="text-xs bg-blue-900/50 text-blue-300 px-3 py-1 rounded border border-blue-800 hover:bg-blue-800/50">🔍 Scout</button>
 <button onclick="fetch('/api/architect/process',{method:'POST'}).then(r=>r.json()).then(d=>{alert('Architect: '+d.processed+' Skills erstellt')})" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800 hover:bg-teal-800/50">🤖 Verarbeiten</button>
+<a href="/api/knowledge" class="text-xs bg-purple-900/50 text-purple-300 px-3 py-1 rounded border border-purple-800 hover:bg-purple-800/50 no-underline">🧠 Knowledge Bundle</a>
 </div>
 </header>
 
@@ -652,6 +653,27 @@ app.get('/api/journal', (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
   const entries = loadJournal();
   res.json(entries.slice(-20));
+});
+
+app.get('/api/knowledge', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const skills = getAllSkills().filter(s => s.dir === 'okf_ready' && s.description);
+  const bundle = skills.map(s => {
+    const raw = fs.readFileSync(path.join(DATA_DIR, s.dir, s.file), 'utf8');
+    return raw;
+  }).join('\n\n---\n\n');
+  res.set('Content-Type', 'text/markdown; charset=utf-8');
+  res.set('Content-Disposition', 'attachment; filename="okf-knowledge-bundle.md"');
+  res.send(`# OKF Knowledge Bundle\n> ${skills.length} Skills · Generiert ${new Date().toLocaleDateString('de-DE')}\n\n---\n\n${bundle}`);
+});
+
+app.get('/api/knowledge/context', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const skills = getAllSkills().filter(s => s.dir === 'okf_ready');
+  const context = skills.map(s =>
+    `## ${s.name}\n**Tags:** ${s.tags.join(', ')}\n**Typ:** ${s.type}\n\n${s.description}\n`
+  ).join('\n');
+  res.json({ ok: true, count: skills.length, context, usage: 'Diesen context-Teil als System-Prompt oder RAG-Kontext verwenden.' });
 });
 
 if (require.main === module) startServer();
