@@ -19,6 +19,7 @@ const architect = require('./core/architect');
 const skillAgent = require('./core/skill-agent');
 const social = require('./core/social');
 const monitor = require('./core/monitor');
+const sync = require('./core/sync');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -281,7 +282,7 @@ function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredProm
 <p class="text-xs text-gray-500">IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</p>
 ${activeSessions.length > 0 ? `<p class="text-xs text-gray-600 mt-1">👤 ${activeSessions.map(s => s.ip + ' (' + s.since + 'min)').join(' · ')}</p>` : ''}
 </div>
-<a href="/social" class="text-xs text-pink-400 hover:text-pink-300 transition mr-3">📱 Social</a><a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
+<a href="/connect" class="text-xs text-green-400 hover:text-green-300 transition mr-3">🌐 Network</a><a href="/social" class="text-xs text-pink-400 hover:text-pink-300 transition mr-3">📱 Social</a><a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
 <script>setTimeout(()=>{if(deferredPrompt)document.getElementById('installBtn').classList.remove('hidden')},2000);</script>
 </div>
 <div class="flex space-x-2 mt-3">
@@ -951,6 +952,95 @@ function copyPost(platform){
 app.get('/api/report', (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
   res.json(monitor.getReport());
+});
+
+app.post('/api/sync', express.json(), async (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const { owner, repo } = req.body;
+  if (!owner || !repo) return res.status(400).json({ error: 'owner und repo erforderlich' });
+  try {
+    const state = await sync.fullSync(owner, repo);
+    res.json({ ok: true, ...state });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/sync/state', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  res.json(sync.getSyncState() || { connected: false });
+});
+
+app.get('/connect', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  const state = sync.getSyncState();
+  const log = sync.getSyncLog().slice(-5).reverse();
+
+  res.send(`<!DOCTYPE html><html lang="de" class="dark"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OKF Network</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+</head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+<header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
+<div>
+<h1 class="text-xl font-bold bg-gradient-to-r from-green-400 to-teal-500 bg-clip-text text-transparent">OKF Network · P2P Sync</h1>
+<p class="text-xs text-gray-500 mt-1">Verteiltes Rechnen über GitHub — Skills teilen & Nodes verbinden</p>
+</div>
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">🔗 GitHub Repo verbinden</h2>
+<p class="text-xs text-gray-600 mb-3">Skills werden automatisch zwischen Nodes synchronisiert.</p>
+<input id="syncOwner" placeholder="Owner (z.B. ThaiJenspacito)" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm mb-2">
+<input id="syncRepo" placeholder="Repo (z.B. OKF_MD_Master)" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm mb-3">
+<button onclick="doSync()" class="text-sm bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-2 rounded-lg hover:from-green-500 hover:to-teal-500 transition">🔄 Sync starten</button>
+<span id="syncStatus" class="text-xs text-gray-500 ml-3"></span>
+</div>
+
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">🌐 Verbundene Nodes</h2>
+<div id="contributors"></div>
+</div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">📊 Sync-Status</h2>
+<div id="syncState"><p class="text-gray-600 text-xs">Keine Verbindung. Repo oben eintragen.</p></div>
+</div>
+
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">📋 Letzte Syncs</h2>
+<div id="syncLog" class="text-xs text-gray-500 space-y-1">
+${log.length === 0 ? '<p>Keine Syncs.</p>' : ''}
+${log.map(l => '<div class=border-b.border-gray-800.py-1><span class=text-gray-600>'+l.at.substring(0,16)+'</span> '+l.action+' <span class=text-teal-400>'+l.changed+'</span> Skills</div>').join('')}
+</div>
+</div>
+</div>
+
+</div>
+<script>
+async function doSync(){
+  const o=document.getElementById('syncOwner').value.trim();
+  const r=document.getElementById('syncRepo').value.trim();
+  if(!o||!r)return;
+  document.getElementById('syncStatus').innerHTML='⏳ Syncing...';
+  try{
+    const res=await fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:o,repo:r})});
+    const d=await res.json();
+    document.getElementById('syncStatus').innerHTML='✅ Pull: '+d.pull.pulled+' ('+d.pull.new+' neu) · Push: '+d.push.pushed+' Skills';
+    showState(d);
+  }catch(e){document.getElementById('syncStatus').innerHTML='❌ '+e.message}
+}
+function showState(d){
+  document.getElementById('syncState').innerHTML='<div class=text-sm><span class=text-teal-300>'+d.repo+'</span><br><span class=text-gray-500>Sync: '+d.lastSync+'</span><br><span class=text-gray-400>Pull: '+d.pull.pulled+' | Push: '+d.push.pushed+'</span><br>'+('⭐ '+d.repoInfo?.stars||'')+' 🍴 '+d.repoInfo?.forks||''+'</div>';
+  if(d.contributors?.length){
+    document.getElementById('contributors').innerHTML=d.contributors.map(c=>'<div class=flex.items-center.space-x-2.py-1><span class=text-teal-300>'+c.login+'</span><span class=text-gray-600>'+c.contributions+' contributions</span></div>').join('')
+  }
+}
+</script></body></html>`);
 });
 
 if (require.main === module) startServer();
