@@ -321,7 +321,7 @@ app.get('/', (req, res) => {
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>OKF MD Master</title>
 <script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0d9488">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -538,9 +538,10 @@ function approvePath(dir){fetch('/api/scan/approve',{method:'POST',headers:{'Con
 function checkHealth(){fetch('/api/health').then(r=>r.json()).then(h=>{document.getElementById('healthDisplay').innerHTML='<p>Scheduler: '+(h.scheduler?'🟢':'🔴')+'</p><p>LLM: '+(h.llm?'🟢':'🔴')+'</p><p>Memory: '+(h.memory?h.memory.used:'?')+'</p><p>Uptime: '+Math.round(h.uptime/60)+'min</p><p class='+(h.allOk?'text-green-400':'text-yellow-400')+'>'+(h.allOk?'✅ Alles OK':'⚠️ Probleme')+'</p>'})}
 function fetchUrl(){const u=document.getElementById('urlInput').value.trim();if(!u)return;document.getElementById('fetchMsg').innerHTML='⏳...';fetch('/api/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})}).then(r=>r.json()).then(d=>{document.getElementById('fetchMsg').innerHTML=d.ok?'✅ '+(d.type||'')+' '+d.filename+' ('+d.size+' Bytes)':'❌ '+d.error})}
 let gauges={};
-function loadReport(){fetch('/api/report').then(r=>r.json()).then(r=>{const m=r.metrics;['cpu','ram','disk'].forEach(k=>{const d=m[k];const color=d.status==='under'?'#10b981':d.status==='ok'?'#06b6d4':d.status==='warn'?'#f59e0b':'#ef4444';const rem=100-d.bar;const id='chart'+k.charAt(0).toUpperCase()+k.slice(1);if(gauges[k]){gauges[k].data.datasets[0].data=[d.bar,rem];gauges[k].data.datasets[0].backgroundColor=[color,'#1f2937'];gauges[k].update()}else{const ctx=document.getElementById(id);if(!ctx)return;gauges[k]=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[d.bar,rem],backgroundColor:[color,'#1f2937'],borderWidth:0,borderRadius:[4,0]}]},options:{cutout:'75%',responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{enabled:false}}}})}document.getElementById(k+'Label').innerHTML='<span class=text-lg.font-bold style=color:'+color+'>'+d.ist+(d.unit||'%')+'</span><br><span class=text-gray-500>SOLL '+d.soll+(d.unit||'%')+' | MAX '+d.max+(d.unit||'%')+'</span>'});document.getElementById('reportSummary').innerHTML='<span class=font-mono>Uptime '+m.uptime.formatted+' · RSS '+m.process.rss+' · '+('disk'===m.disk?'Disk '+m.disk.free+' frei':'')+'</span>'})}
+let chartRetries=0;
+function loadReport(){if(typeof Chart==='undefined'){if(chartRetries++<5)setTimeout(loadReport,500);return}chartRetries=0;fetch('/api/report').then(r=>r.json()).then(r=>{const m=r.metrics;['cpu','ram','disk'].forEach(k=>{const d=m[k];const color=d.status==='under'?'#10b981':d.status==='ok'?'#06b6d4':d.status==='warn'?'#f59e0b':'#ef4444';const rem=100-d.bar;const id='chart'+k.charAt(0).toUpperCase()+k.slice(1);if(gauges[k]){gauges[k].data.datasets[0].data=[d.bar,rem];gauges[k].data.datasets[0].backgroundColor=[color,'#1f2937'];gauges[k].update()}else{const ctx=document.getElementById(id);if(!ctx)return;gauges[k]=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[d.bar,rem],backgroundColor:[color,'#1f2937'],borderWidth:0,borderRadius:[4,0]}]},options:{cutout:'75%',responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{enabled:false}}}})}document.getElementById(k+'Label').innerHTML='<span class=text-lg.font-bold style=color:'+color+'>'+d.ist+(d.unit||'%')+'</span><br><span class=text-gray-500>SOLL '+d.soll+(d.unit||'%')+' | MAX '+d.max+(d.unit||'%')+'</span>'});document.getElementById('reportSummary').innerHTML='<span class=font-mono>Uptime '+m.uptime.formatted+' · RSS '+m.process.rss+' · '+('disk'===m.disk?'Disk '+m.disk.free+' free':'')+'</span>'})}
 checkHealth();
-loadReport();
+setTimeout(loadReport, 500);
 </script></body></html>`);
 });
 
