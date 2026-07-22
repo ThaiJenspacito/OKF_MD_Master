@@ -296,6 +296,17 @@ ${status.paused
 </div>
 </header>
 
+<div class="bg-gradient-to-r from-amber-900/30 via-purple-900/30 to-teal-900/30 border border-amber-800/50 rounded-xl p-4 mb-6">
+<div class="flex items-center justify-between">
+<div>
+<span class="text-amber-400 font-bold text-sm">🚀 WikiLLM</span>
+<span class="text-gray-400 text-xs ml-2">— Das neue schnelle Open-Source Modell für OKF</span>
+<p class="text-gray-500 text-xs mt-1">🔗 <a href="https://wikillm.org" target="_blank" class="text-teal-400 hover:text-teal-300">wikillm.org</a> · Weitere Modelle folgen in Kürze</p>
+</div>
+<span class="text-xs bg-amber-900/50 text-amber-300 px-3 py-1 rounded-full border border-amber-700">NEU</span>
+</div>
+</div>
+
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800 mb-6">
 <div class="flex justify-between items-center mb-4">
 <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">📊 Server-Report · SOLL / IST / MAX</h2>

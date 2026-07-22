@@ -15,7 +15,8 @@ const PLATFORMS = {
   tiktok: { name: 'TikTok', type: 'text', maxChars: 400, tone: 'sehr kurz, catchy, junge Zielgruppe', hashtags: 5 },
   youtube: { name: 'YouTube', type: 'text', maxChars: 5000, tone: 'ausfuehrlich, tutorial-style, SEO-optimiert', hashtags: 8 },
   facebook: { name: 'Facebook', type: 'text', maxChars: 63206, tone: 'community, Mehrwert, Frage ans Publikum', hashtags: 5 },
-  google: { name: 'Google Business', type: 'text', maxChars: 1500, tone: 'professionell, Update-style, Business-freundlich' }
+  google: { name: 'Google Business', type: 'text', maxChars: 1500, tone: 'professionell, Update-style, Business-freundlich' },
+  x: { name: 'X (Twitter)', type: 'text', maxChars: 280, tone: 'kurz, praegnant, punchy, kein Fluff', hashtags: 3 }
 };
 
 function loadSkills() {
