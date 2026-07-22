@@ -19,6 +19,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "glob": "^10.3.10",
+    "google-auth-library": "^10.9.0",
     "gray-matter": "^4.0.3",
     "multer": "^2.2.0",
     "node-telegram-bot-api": "^0.66.0",

@@ -20,6 +20,7 @@ const skillAgent = require('./core/skill-agent');
 const social = require('./core/social');
 const monitor = require('./core/monitor');
 const sync = require('./core/sync');
+const auth = require('./core/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -109,6 +110,12 @@ function isLoggedIn(req) {
   return true;
 }
 
+function getUser(req) {
+  const sid = req.cookies.okf_session;
+  if (!sid || !sessions[sid]) return null;
+  return sessions[sid].user || null;
+}
+
 function agentCard(name, icon, color, status, detail, model) {
   const dot = status ? '🟢' : '🔴';
   return `<div class="bg-gray-700/50 rounded-lg border border-gray-600/50 p-4 flex items-start space-x-3">
@@ -135,7 +142,29 @@ function okfCard(name, description, tags, date) {
 
 app.get('/login', (req, res) => {
   if (isLoggedIn(req)) return res.redirect('/');
-  res.send(`<!DOCTYPE html><html lang="de" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>OKF Login</title><script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script></head><body class="bg-gray-950 min-h-screen flex items-center justify-center"><div class="bg-gray-900 p-8 rounded-2xl border border-gray-800 w-full max-w-sm shadow-2xl"><div class="text-center mb-6"><h1 class="text-2xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF MD Master</h1><p class="text-gray-500 text-sm mt-1">Admin-Login</p></div><form method="POST" action="/login"><input type="password" name="pin" placeholder="PIN" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 text-center text-lg tracking-widest focus:outline-none focus:border-teal-500 mb-4" maxlength="8" autofocus><button class="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-lg transition">Anmelden</button></form></div></body></html>`);
+  const gClientId = auth.GOOGLE_CLIENT_ID || '';
+  const gButton = gClientId ? `
+<div id="g_id_onload" data-client_id="${gClientId}" data-callback="handleGoogleLogin" data-auto_prompt="false"></div>
+<div class="g_id_signin mt-4" data-type="standard" data-size="large" data-theme="filled_black" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>function handleGoogleLogin(r){fetch('/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:r.credential})}).then(x=>x.json()).then(d=>{if(d.ok)location.href='/';else alert(d.error)})}</script>
+<div class="text-center my-3"><span class="text-gray-600 text-xs">oder</span></div>
+` : '';
+
+  res.send(`<!DOCTYPE html><html lang="de" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>OKF Login</title><script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script></head><body class="bg-gray-950 min-h-screen flex items-center justify-center"><div class="bg-gray-900 p-8 rounded-2xl border border-gray-800 w-full max-w-sm shadow-2xl"><div class="text-center mb-6"><h1 class="text-2xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF MD Master</h1><p class="text-gray-500 text-sm mt-1">Admin-Login</p></div>${gButton}<form method="POST" action="/login"><input type="password" name="pin" placeholder="PIN" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 text-center text-lg tracking-widest focus:outline-none focus:border-teal-500 mb-4" maxlength="8" autofocus><button class="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-lg transition">Anmelden</button></form></div></body></html>`);
+});
+
+app.post('/auth/google', express.json(), async (req, res) => {
+  try {
+    const payload = await auth.verifyGoogleToken(req.body.credential);
+    const user = auth.getOrCreateUser(payload.email, payload.name, payload.picture);
+    const sid = crypto.randomBytes(16).toString('hex');
+    sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user };
+    res.cookie('okf_session', sid, { httpOnly: true, maxAge: 8 * 3600000 });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(401).json({ error: e.message });
+  }
 });
 
 app.post('/login', express.urlencoded({ extended: false }), (req, res) => {
@@ -243,6 +272,8 @@ app.get('/', (req, res) => {
   const tokens = architect.getTokenEstimate();
   const journalEntries = loadJournal().slice(-10).reverse();
   const activity = status.activity || {};
+  const user = getUser(req);
+  const userDisplay = user ? `<span class="text-xs text-gray-400">👤 ${user.name || user.email}</span>` : '';
 
   res.send(`<!DOCTYPE html><html lang="de" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -282,7 +313,7 @@ function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredProm
 <p class="text-xs text-gray-500">IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</p>
 ${activeSessions.length > 0 ? `<p class="text-xs text-gray-600 mt-1">👤 ${activeSessions.map(s => s.ip + ' (' + s.since + 'min)').join(' · ')}</p>` : ''}
 </div>
-<a href="/connect" class="text-xs text-green-400 hover:text-green-300 transition mr-3">🌐 Network</a><a href="/social" class="text-xs text-pink-400 hover:text-pink-300 transition mr-3">📱 Social</a><a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
+<a href="/connect" class="text-xs text-green-400 hover:text-green-300 transition mr-3">🌐 Network</a><a href="/social" class="text-xs text-pink-400 hover:text-pink-300 transition mr-3">📱 Social</a><a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button>${userDisplay}<a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition ml-3">Logout</a>
 <script>setTimeout(()=>{if(deferredPrompt)document.getElementById('installBtn').classList.remove('hidden')},2000);</script>
 </div>
 <div class="flex space-x-2 mt-3">
