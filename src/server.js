@@ -158,15 +158,25 @@ function okfCard(name, description, tags, date) {
 app.get('/login', (req, res) => {
   if (isLoggedIn(req)) return res.redirect('/');
   const gClientId = auth.GOOGLE_CLIENT_ID || '';
-  const gButton = gClientId ? `
+  const ghClientId = auth.GH_CLIENT_ID || '';
+
+  const googleBtn = gClientId ? `
 <div id="g_id_onload" data-client_id="${gClientId}" data-callback="handleGoogleLogin" data-auto_prompt="false"></div>
-<div class="g_id_signin mt-4" data-type="standard" data-size="large" data-theme="filled_black" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
+<div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_black" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>function handleGoogleLogin(r){fetch('/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:r.credential})}).then(x=>x.json()).then(d=>{if(d.ok)location.href='/';else alert(d.error)})}</script>
-<div class="text-center my-3"><span class="text-gray-600 text-xs">oder</span></div>
 ` : '';
 
-  res.send(`<!DOCTYPE html><html lang="de" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>OKF Login</title><script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script></head><body class="bg-gray-950 min-h-screen flex items-center justify-center"><div class="bg-gray-900 p-8 rounded-2xl border border-gray-800 w-full max-w-sm shadow-2xl"><div class="text-center mb-6"><h1 class="text-2xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF MD Master</h1><p class="text-gray-500 text-sm mt-1">Admin-Login</p></div>${gButton}<form method="POST" action="/login"><input type="password" name="pin" placeholder="PIN" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 text-center text-lg tracking-widest focus:outline-none focus:border-teal-500 mb-4" maxlength="8" autofocus><button class="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-lg transition">Anmelden</button></form></div></body></html>`);
+  const githubBtn = ghClientId ? `
+<a href="/auth/github" class="flex items-center justify-center space-x-3 w-full bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-lg py-3 transition">
+<svg class="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+<span class="text-white font-semibold text-sm">Continue with GitHub</span>
+</a>
+` : '';
+
+  const separator = (googleBtn || githubBtn) ? '<div class="flex items-center my-4"><div class="flex-1 border-t border-gray-700"></div><span class="px-3 text-xs text-gray-600">or</span><div class="flex-1 border-t border-gray-700"></div></div>' : '';
+
+  res.send(`<!DOCTYPE html><html lang="de" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>OKF Login</title><script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script></head><body class="bg-gray-950 min-h-screen flex items-center justify-center"><div class="bg-gray-900 p-8 rounded-2xl border border-gray-800 w-full max-w-sm shadow-2xl"><div class="text-center mb-6"><h1 class="text-2xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF MD Master</h1><p class="text-gray-500 text-sm mt-1">Sign in</p></div><div class="space-y-3">${googleBtn}${githubBtn}</div>${separator}<form method="POST" action="/login"><input type="password" name="pin" placeholder="PIN" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 text-center text-lg tracking-widest focus:outline-none focus:border-teal-500 mb-4" maxlength="8" autofocus><button class="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-lg transition">Sign in with PIN</button></form><div class="mt-6 pt-4 border-t border-gray-800 text-center"><p class="text-xs bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent font-bold">FREE for the first 100 users</p><p class="text-gray-600 text-xs mt-1">Share your computing power · Earn credits · Unlimited OKF skills</p></div></div></body></html>`);
 });
 
 app.post('/auth/google', express.json(), async (req, res) => {
@@ -177,9 +187,26 @@ app.post('/auth/google', express.json(), async (req, res) => {
     sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user };
     res.cookie('okf_session', sid, { httpOnly: true, maxAge: 8 * 3600000 });
     res.json({ ok: true });
-  } catch (e) {
-    res.status(401).json({ error: e.message });
-  }
+  } catch (e) { res.status(401).json({ error: e.message }); }
+});
+
+app.get('/auth/github', (req, res) => {
+  const ghId = auth.GH_CLIENT_ID;
+  if (!ghId) return res.redirect('/login');
+  const redirect = `http://${req.get('host')}/auth/github/callback`;
+  res.redirect(`https://github.com/login/oauth/authorize?client_id=${ghId}&redirect_uri=${redirect}&scope=user:email`);
+});
+
+app.get('/auth/github/callback', async (req, res) => {
+  try {
+    const token = await auth.getGitHubToken(req.query.code);
+    const ghUser = await auth.getGitHubUser(token);
+    const user = auth.getOrCreateUser(ghUser.email, ghUser.name, ghUser.picture, ghUser.login);
+    const sid = crypto.randomBytes(16).toString('hex');
+    sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user };
+    res.cookie('okf_session', sid, { httpOnly: true, maxAge: 8 * 3600000 });
+    res.redirect('/');
+  } catch (e) { res.redirect('/login?error=' + encodeURIComponent(e.message)); }
 });
 
 app.post('/login', express.urlencoded({ extended: false }), (req, res) => {
@@ -1280,10 +1307,10 @@ app.get('/enterprise', (req, res) => {
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800 mb-6">
 <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Pricing & Plans</h2>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-<div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
-<h3 class="font-bold text-teal-300 mb-2">Free</h3>
-<p class="text-xs text-gray-400">Local processing<br>Up to 50 skills<br>Basic dashboard<br>GitHub sync</p>
-<p class="text-teal-400 font-bold mt-2">Free forever</p>
+<div class="bg-gray-800 rounded-lg p-4 border border-amber-800/50 bg-amber-900/10">
+<h3 class="font-bold text-amber-300 mb-2">Free</h3>
+<p class="text-xs text-gray-400">Up to 100 users<br>Unlimited skills<br>Local processing<br>GitHub sync<br>All features included</p>
+<p class="text-amber-400 font-bold mt-2">Free up to 100 users</p>
 </div>
 <div class="bg-gray-800 rounded-lg p-4 border border-amber-800/50 bg-amber-900/10">
 <h3 class="font-bold text-amber-300 mb-2">Pro</h3>

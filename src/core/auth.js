@@ -1,11 +1,14 @@
 const { OAuth2Client } = require('google-auth-library');
+const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
 const USERS_FILE = path.join(__dirname, '../../data/users.json');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-const client = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+const GH_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
+const GH_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 function loadUsers() {
   if (!fs.existsSync(USERS_FILE)) return {};
@@ -18,9 +21,37 @@ function saveUsers(users) {
 }
 
 async function verifyGoogleToken(idToken) {
-  if (!client) throw new Error('GOOGLE_CLIENT_ID nicht konfiguriert');
-  const ticket = await client.verifyIdToken({ idToken, audience: GOOGLE_CLIENT_ID });
+  if (!googleClient) throw new Error('GOOGLE_CLIENT_ID not configured');
+  const ticket = await googleClient.verifyIdToken({ idToken, audience: GOOGLE_CLIENT_ID });
   return ticket.getPayload();
+}
+
+async function getGitHubToken(code) {
+  if (!GH_CLIENT_ID || !GH_CLIENT_SECRET) throw new Error('GitHub OAuth not configured');
+  const res = await axios.post('https://github.com/login/oauth/access_token',
+    { client_id: GH_CLIENT_ID, client_secret: GH_CLIENT_SECRET, code },
+    { headers: { Accept: 'application/json' } }
+  );
+  if (res.data.error) throw new Error(res.data.error_description || res.data.error);
+  return res.data.access_token;
+}
+
+async function getGitHubUser(token) {
+  const res = await axios.get('https://api.github.com/user', {
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' }
+  });
+
+  const emails = await axios.get('https://api.github.com/user/emails', {
+    headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' }
+  });
+
+  const primaryEmail = (emails.data || []).find(e => e.primary)?.email || res.data.email || res.data.login + '@github';
+  return {
+    email: primaryEmail,
+    name: res.data.name || res.data.login,
+    picture: res.data.avatar_url,
+    login: res.data.login
+  };
 }
 
 function getUserByEmail(email) {
@@ -28,16 +59,15 @@ function getUserByEmail(email) {
   return users[email] || null;
 }
 
-function getOrCreateUser(email, name, picture) {
+function getOrCreateUser(email, name, picture, login) {
   const users = loadUsers();
   if (!users[email]) {
     users[email] = {
-      email,
-      name,
-      picture,
+      email, name, picture, login,
       createdAt: new Date().toISOString(),
       lastLogin: new Date().toISOString(),
-      loginCount: 1
+      loginCount: 1,
+      provider: login ? 'github' : 'google'
     };
   } else {
     users[email].lastLogin = new Date().toISOString();
@@ -53,4 +83,8 @@ function getAllUsers() {
   return loadUsers();
 }
 
-module.exports = { verifyGoogleToken, getOrCreateUser, getUserByEmail, getAllUsers, GOOGLE_CLIENT_ID };
+module.exports = {
+  verifyGoogleToken, getGitHubToken, getGitHubUser,
+  getOrCreateUser, getUserByEmail, getAllUsers,
+  GOOGLE_CLIENT_ID, GH_CLIENT_ID, GH_CLIENT_SECRET
+};
