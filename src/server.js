@@ -23,6 +23,7 @@ const PORT = process.env.PORT || 5000;
 const ADMIN_PIN = process.env.ADMIN_PIN || '180473';
 
 app.use(cookieParser());
+app.use(express.static(path.join(__dirname, '../public')));
 
 const DATA_DIR = path.join(__dirname, '../data');
 const INDEX_FILE = path.join(DATA_DIR, 'index.md');
@@ -243,7 +244,19 @@ app.get('/', (req, res) => {
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>OKF MD Master</title>
 <script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0d9488">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OKF Master">
+<link rel="apple-touch-icon" href="/icon.svg">
 <meta http-equiv="refresh" content="30">
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
+function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{deferredPrompt=null}) } }
+</script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-7xl">
 
@@ -264,7 +277,8 @@ app.get('/', (req, res) => {
 <p class="text-xs text-gray-500">IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</p>
 ${activeSessions.length > 0 ? `<p class="text-xs text-gray-600 mt-1">👤 ${activeSessions.map(s => s.ip + ' (' + s.since + 'min)').join(' · ')}</p>` : ''}
 </div>
-<a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
+<a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
+<script>setTimeout(()=>{if(deferredPrompt)document.getElementById('installBtn').classList.remove('hidden')},2000);</script>
 </div>
 <div class="flex space-x-2 mt-3">
 ${status.paused
