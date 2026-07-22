@@ -4,6 +4,9 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const matter = require('gray-matter');
+const multer = require('multer');
+const os = require('os');
+const dns = require('dns');
 require('dotenv').config();
 
 const tracker = require('./state/tracker');
@@ -22,6 +25,63 @@ const DATA_DIR = path.join(__dirname, '../data');
 const INDEX_FILE = path.join(DATA_DIR, 'index.md');
 const SYSTEM_LOG = path.join(__dirname, '../logs/system.log');
 const OKF_READY_DIR = path.join(DATA_DIR, 'okf_ready');
+
+const JOURNAL_FILE = path.join(DATA_DIR, 'journal.json');
+const UPLOADS_DIR = path.join(__dirname, '../mock_documents');
+
+function loadJournal() {
+  if (!fs.existsSync(JOURNAL_FILE)) return [];
+  try { return JSON.parse(fs.readFileSync(JOURNAL_FILE, 'utf8')); } catch { return []; }
+}
+
+function addJournalEntry(source, filename, action, detail) {
+  const entries = loadJournal();
+  entries.push({
+    at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    source,
+    filename,
+    action,
+    detail
+  });
+  if (entries.length > 200) entries.splice(0, entries.length - 200);
+  fs.writeFileSync(JOURNAL_FILE, JSON.stringify(entries, null, 2));
+}
+
+function checkHealth() {
+  const status = scheduler.getStatus();
+  cfg = config.get();
+  const results = {
+    uptime: process.uptime(),
+    scheduler: status.running && !status.paused,
+    watcher: true,
+    llm: false,
+    disk: null,
+    memory: null
+  };
+  try {
+    const free = fs.statSync(path.join(__dirname, '..')).size;
+    const total = os.totalmem();
+    const rss = process.memoryUsage().rss;
+    results.disk = { ok: true };
+    results.memory = { total: Math.round(total / 1e9) + 'GB', used: Math.round(rss / 1e6) + 'MB', ok: rss < total * 0.8 };
+  } catch {}
+  return new Promise(resolve => {
+    dns.lookup('openrouter.ai', (err) => {
+      results.llm = !err;
+      results.allOk = results.scheduler && results.llm && (!results.memory || results.memory.ok);
+      resolve(results);
+    });
+  });
+}
+
+const upload = multer({
+  dest: UPLOADS_DIR,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.endsWith('.md')) cb(null, true);
+    else cb(new Error('Nur .md-Dateien erlaubt'));
+  }
+});
 
 const sessions = {};
 
@@ -174,6 +234,7 @@ app.get('/', (req, res) => {
 
   const hasTelegram = !!(process.env.TELEGRAM_BOT_TOKEN && !process.env.TELEGRAM_BOT_TOKEN.includes('DEIN_BOT_TOKEN'));
   const tokens = architect.getTokenEstimate();
+  const journalEntries = loadJournal().slice(-10).reverse();
 
   res.send(`<!DOCTYPE html><html lang="de" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -250,6 +311,37 @@ ${agentCard('Tray App', '🖥️', 'gray', true, 'Windows Taskleiste', null)}
 </div>
 </div>
 
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">📥 Upload .md-Datei</h2>
+<form id="uploadForm" class="space-y-2">
+<div id="dropZone" class="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center hover:border-teal-600 transition cursor-pointer"
+  ondragover="this.classList.add('border-teal-500');event.preventDefault()"
+  ondragleave="this.classList.remove('border-teal-500')"
+  ondrop="this.classList.remove('border-teal-500');event.preventDefault();uploadFile(event.dataTransfer.files[0])"
+  onclick="document.getElementById('fileInput').click()">
+<p class="text-gray-500 text-sm">📄 .md-Datei ablegen</p>
+<p class="text-gray-600 text-xs mt-1">oder klicken</p>
+</div>
+<input type="file" id="fileInput" accept=".md" onchange="uploadFile(this.files[0])" class="hidden">
+</form>
+<p id="uploadMsg" class="text-xs mt-2 text-gray-600"></p>
+</div>
+
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">🔍 Laptop durchsuchen</h2>
+<p class="text-xs text-gray-600 mb-3">Findet .md-Dateien in Documents, Desktop, Downloads. Zur Freigabe.</p>
+<button onclick="scanLaptop()" id="scanBtn" class="text-xs bg-indigo-900/50 text-indigo-300 px-3 py-2 rounded border border-indigo-800 hover:bg-indigo-800/50 w-full">💻 Suchen</button>
+<div id="scanResults" class="mt-3 text-xs text-gray-500 max-h-36 overflow-y-auto space-y-1"></div>
+</div>
+
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">💚 System Health</h2>
+<div id="healthDisplay" class="text-xs space-y-1 text-gray-400"><p>Lade...</p></div>
+<button onclick="checkHealth()" class="text-xs text-gray-600 hover:text-teal-400 mt-2">↻ Aktualisieren</button>
+</div>
+</div>
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
 <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">📁 Verzeichnisbaum / data</h2>
@@ -287,15 +379,15 @@ ${cat.count > 5 ? `<p class="text-xs text-gray-600 italic pl-1">+ ${cat.count - 
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 <div class="lg:col-span-1 bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Alle Skills</h2>
-${skills.length === 0 ? '<p class="text-gray-600 italic text-sm">—</p>' : ''}
-<ul class="space-y-1.5">
-${skills.map(s => `<li class="text-sm"><span class="font-medium text-teal-300">${s.name}</span><span class="text-xs text-gray-600 block">${s.date}</span></li>`).join('')}
-</ul>
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">📋 Eingangsjournal</h2>
+${journalEntries.length === 0 ? '<p class="text-gray-600 italic text-xs">Noch keine Eintraege.</p>' : ''}
+<div class="text-xs space-y-1.5 max-h-48 overflow-y-auto">
+${journalEntries.map(e => `<div class="border-b border-gray-800/50 pb-1"><span class="text-gray-500">${(e.at || '').substring(11)}</span> <span class="text-teal-300">${e.filename}</span><br><span class="text-gray-600">${e.source} → ${e.action}</span></div>`).join('')}
+</div>
 </div>
 
 <div class="lg:col-span-2 bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Letzte Aktivitäten</h2>
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Letzte Aktivitaeten</h2>
 <table class="w-full text-xs">
 <thead><tr class="text-gray-500 uppercase border-b border-gray-800"><th class="py-2 px-2 text-left">Datei</th><th class="py-2 px-2 text-left">Status</th><th class="py-2 px-2 text-left">Zuletzt</th></tr></thead>
 <tbody class="divide-y divide-gray-800/50">
@@ -309,7 +401,14 @@ return `<tr class="hover:bg-gray-800/30"><td class="py-2 px-2 font-medium text-g
 </div>
 </div>
 
-</div></body></html>`);
+</div>
+<script>
+function uploadFile(file){if(!file)return;document.getElementById('uploadMsg').innerHTML='⏳...';const fd=new FormData();fd.append('file',file);fetch('/api/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{document.getElementById('uploadMsg').innerHTML=d.ok?'✅ <b>'+d.filename+'</b> ('+d.size+' Bytes)':'❌ '+d.error}).catch(()=>document.getElementById('uploadMsg').innerHTML='❌ Fehler')}
+function scanLaptop(){const btn=document.getElementById('scanBtn');btn.disabled=true;btn.innerHTML='⏳...';fetch('/api/scan/laptop').then(r=>r.json()).then(d=>{btn.disabled=false;btn.innerHTML='💻 Suchen';const div=document.getElementById('scanResults');if(!d.files||!d.files.length){div.innerHTML='<p class=text-gray-600>Keine .md-Dateien gefunden.</p>';return}div.innerHTML=d.files.map(f=>'<div class=flex.justify-between.items-center.py-1.border-b.border-gray-800><span class=truncate.mr-2>'+f.dir+'/'+f.name+'</span><span class=text-gray-600.mr-2>'+(f.size/1024).toFixed(1)+'KB</span><button onclick=approvePath(\''+f.path+'\') class=text-teal-400>+</button></div>').join('')}).catch(()=>{btn.disabled=false;btn.innerHTML='💻 Suchen'})}
+function approvePath(dir){fetch('/api/scan/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:dir})}).then(r=>r.json()).then(d=>{if(d.ok)alert('✅ Pfad hinzugefuegt: '+d.watchDirs.join(', '));else alert('❌ Fehler')})}
+function checkHealth(){fetch('/api/health').then(r=>r.json()).then(h=>{document.getElementById('healthDisplay').innerHTML='<p>Scheduler: '+(h.scheduler?'🟢':'🔴')+'</p><p>LLM: '+(h.llm?'🟢':'🔴')+'</p><p>Memory: '+(h.memory?h.memory.used:'?')+'</p><p>Uptime: '+Math.round(h.uptime/60)+'min</p><p class='+(h.allOk?'text-green-400':'text-yellow-400')+'>'+(h.allOk?'✅ Alles OK':'⚠️ Probleme')+'</p>'})}
+checkHealth();
+</script></body></html>`);
 });
 
 app.get('/api/status', (req, res) => {
@@ -344,12 +443,14 @@ app.post('/api/scout/scan', (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
   const scout = require('./core/scout');
   const results = scout.scanForKnowledge(config.get().watchDirs[0] || path.join(__dirname, '../mock_documents'));
+  results.forEach(r => addJournalEntry('scan', r.filename, 'scouted', r.originalPath));
   res.json({ ok: true, discovered: results.length, files: results.map(r => r.filename) });
 });
 
 app.post('/api/architect/process', (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
   architect.processAll().then(results => {
+    results.forEach(r => addJournalEntry('architect', r.filename, 'okf_created', r.model + ' ' + (r.tokens || '') + ' tokens'));
     res.json({ ok: true, processed: results.length, skills: results.map(r => r.skillName) });
   }).catch(err => {
     res.status(500).json({ error: err.message });
@@ -486,6 +587,71 @@ function filter() {
 render(skills);
 </script>
 </body></html>`);
+});
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (!req.file) return res.status(400).json({ error: 'Keine Datei' });
+  addJournalEntry('upload', req.file.originalname, 'uploaded', req.file.size + ' Bytes');
+  res.json({ ok: true, filename: req.file.originalname, size: req.file.size });
+});
+
+app.get('/api/scan/laptop', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const searchRoots = [
+    os.homedir() + '/Documents', os.homedir() + '/Desktop',
+    os.homedir() + '/Downloads', os.homedir() + '/OneDrive',
+    'C:/Users'
+  ];
+  const found = [];
+  searchRoots.forEach(root => {
+    try {
+      if (!fs.existsSync(root)) return;
+      walk(root, 2);
+    } catch {}
+  });
+  function walk(dir, depth) {
+    if (depth < 0) return;
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      entries.forEach(e => {
+        if (e.isDirectory() && !e.name.startsWith('.') && !e.name.startsWith('node_modules')) walk(path.join(dir, e.name), depth - 1);
+        else if (e.isFile() && e.name.endsWith('.md')) found.push(path.join(dir, e.name));
+      });
+    } catch {}
+  }
+  const results = found.slice(0, 30).map(f => ({
+    path: f,
+    dir: path.dirname(f).split(path.sep).slice(-2).join('/'),
+    name: path.basename(f),
+    size: fs.statSync(f).size
+  }));
+  res.json({ ok: true, found: results.length, files: results });
+});
+
+app.post('/api/scan/approve', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const dirPath = req.body.path;
+  if (!dirPath || !fs.existsSync(dirPath)) return res.status(400).json({ error: 'Pfad existiert nicht' });
+  const cfg = config.get();
+  const dirs = [...(cfg.watchDirs || [])];
+  if (!dirs.includes(dirPath)) {
+    dirs.push(dirPath);
+    config.update({ watchDirs: dirs });
+    addJournalEntry('scan-approve', path.basename(dirPath), 'watch-added', dirPath);
+  }
+  res.json({ ok: true, watchDirs: dirs });
+});
+
+app.get('/api/health', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  checkHealth().then(h => res.json(h));
+});
+
+app.get('/api/journal', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const entries = loadJournal();
+  res.json(entries.slice(-20));
 });
 
 if (require.main === module) startServer();
