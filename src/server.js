@@ -338,35 +338,44 @@ function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredProm
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-7xl">
 
-<header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
-<div>
-<h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF MD Master</h1>
-<p class="text-xs text-gray-500 mt-1">Autonomer Knowledge Architect · Open Knowledge Format</p>
-</div>
+<header class="flex flex-wrap items-center justify-between border-b border-gray-800 pb-4 mb-6 gap-3">
 <div class="flex items-center space-x-4">
-<div class="text-right">
-<div class="flex items-center space-x-2">
-<span class="flex h-2.5 w-2.5 relative">
-<span class="animate-ping absolute inline-flex h-full w-full rounded-full ${!status.paused ? 'bg-green-400' : 'bg-yellow-400'} opacity-75"></span>
-<span class="relative inline-flex rounded-full h-2.5 w-2.5 ${!status.paused ? 'bg-green-500' : 'bg-yellow-500'}"></span>
+<h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF MD Master</h1>
+<span class="hidden sm:inline-flex items-center space-x-1">
+<span class="flex h-2 w-2 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full ${!status.paused ? 'bg-green-400' : 'bg-yellow-400'} opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 ${!status.paused ? 'bg-green-500' : 'bg-yellow-500'}"></span></span>
+<span class="text-xs text-gray-500">${status.paused ? 'Paused' : 'Active'} · IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</span>
 </span>
-<span class="text-xs font-medium text-gray-400">${status.paused ? 'Pausiert' : 'Aktiv'}</span>
 </div>
-<p class="text-xs text-gray-500">IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</p>
-${activeSessions.length > 0 ? `<p class="text-xs text-gray-600 mt-1">👤 ${activeSessions.map(s => s.ip + ' (' + s.since + 'min)').join(' · ')}</p>` : ''}
+
+<nav class="flex items-center space-x-1 text-xs">
+<a href="/" class="text-teal-300 px-2 py-1 rounded hover:bg-gray-800 font-medium">Home</a>
+<a href="/library" class="text-gray-400 hover:text-teal-300 px-2 py-1 rounded hover:bg-gray-800">Library</a>
+<a href="/chat" class="text-gray-400 hover:text-teal-300 px-2 py-1 rounded hover:bg-gray-800">Chat</a>
+<div class="relative inline-block text-left" x-data="{open:false}" id="moreMenu">
+<button onclick="document.getElementById('moreDropdown').classList.toggle('hidden')" class="text-gray-400 hover:text-teal-300 px-2 py-1 rounded hover:bg-gray-800">More ▾</button>
+<div id="moreDropdown" class="hidden absolute right-0 mt-1 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1">
+<a href="/social" class="block px-3 py-1.5 hover:bg-gray-800 text-gray-400 hover:text-pink-300">📱 Social</a>
+<a href="/connect" class="block px-3 py-1.5 hover:bg-gray-800 text-gray-400 hover:text-green-300">🌐 Network</a>
+<a href="/enterprise" class="block px-3 py-1.5 hover:bg-gray-800 text-gray-400 hover:text-amber-300">🏢 Enterprise</a>
+<a href="/settings" class="block px-3 py-1.5 hover:bg-gray-800 text-gray-400 hover:text-blue-300">⚙️ Settings</a>
+<div class="border-t border-gray-800 my-1"></div>
+<a href="/api/knowledge" class="block px-3 py-1.5 hover:bg-gray-800 text-purple-400">🧠 Export Bundle</a>
 </div>
-<a href="/settings" class="text-xs text-blue-400 hover:text-blue-300 transition mr-3">⚙️ Settings</a><a href="/enterprise" class="text-xs text-amber-400 hover:text-amber-300 transition mr-3">🏢 Enterprise</a><a href="/connect" class="text-xs text-green-400 hover:text-green-300 transition mr-3">🌐 Network</a><a href="/social" class="text-xs text-pink-400 hover:text-pink-300 transition mr-3">📱 Social</a><a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button>${userDisplay}<a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition ml-3">Logout</a>
-<script>setTimeout(()=>{if(deferredPrompt)document.getElementById('installBtn').classList.remove('hidden')},2000);</script>
 </div>
-<div class="flex space-x-2 mt-3">
+${user ? `<span class="text-gray-500 text-xs ml-1">· ${user.credits || 0}¢</span>` : ''}
+<a href="/logout" class="text-gray-600 hover:text-red-400 ml-2">Logout</a>
+</nav>
+
+<div class="flex space-x-1 w-full sm:w-auto">
 ${status.paused
-  ? '<button onclick="fetch(\'/api/scheduler/resume\',{method:\'POST\'}).then(()=>location.reload())" class="text-xs bg-green-900/50 text-green-300 px-3 py-1 rounded border border-green-800 hover:bg-green-800/50">▶ Fortsetzen</button>'
-  : '<button onclick="fetch(\'/api/scheduler/pause\',{method:\'POST\'}).then(()=>location.reload())" class="text-xs bg-yellow-900/50 text-yellow-300 px-3 py-1 rounded border border-yellow-800 hover:bg-yellow-800/50">⏸ Pause</button>'
+  ? '<button onclick="fetch(\'/api/scheduler/resume\',{method:\'POST\'}).then(()=>location.reload())" class="text-xs bg-green-900/40 text-green-300 px-2 py-1 rounded border border-green-800/50 hover:bg-green-800/50">▶</button>'
+  : '<button onclick="fetch(\'/api/scheduler/pause\',{method:\'POST\'}).then(()=>location.reload())" class="text-xs bg-yellow-900/40 text-yellow-300 px-2 py-1 rounded border border-yellow-800/50 hover:bg-yellow-800/50">⏸</button>'
 }
-<button onclick="fetch('/api/scout/scan',{method:'POST'}).then(r=>r.json()).then(d=>{alert('Scout: '+d.discovered+' Dateien gefunden')})" class="text-xs bg-blue-900/50 text-blue-300 px-3 py-1 rounded border border-blue-800 hover:bg-blue-800/50">🔍 Scout</button>
-<button onclick="fetch('/api/architect/process',{method:'POST'}).then(r=>r.json()).then(d=>{alert('Architect: '+d.processed+' Skills erstellt')})" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800 hover:bg-teal-800/50">🤖 Verarbeiten</button>
-<a href="/api/knowledge" class="text-xs bg-purple-900/50 text-purple-300 px-3 py-1 rounded border border-purple-800 hover:bg-purple-800/50 no-underline">🧠 Knowledge Bundle</a>
+<button onclick="fetch('/api/scout/scan',{method:'POST'}).then(r=>r.json()).then(d=>{location.reload()})" class="text-xs bg-blue-900/40 text-blue-300 px-2 py-1 rounded border border-blue-800/50 hover:bg-blue-800/50" title="Scout scan">🔍</button>
+<button onclick="fetch('/api/architect/process',{method:'POST'}).then(r=>r.json()).then(d=>{location.reload()})" class="text-xs bg-teal-900/40 text-teal-300 px-2 py-1 rounded border border-teal-800/50 hover:bg-teal-800/50" title="Process">🤖</button>
+<button onclick="installPWA()" id="installBtn" class="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded border border-gray-700 hover:bg-gray-700 hidden" title="Install app">📲</button>
 </div>
+<script>setTimeout(()=>{if(deferredPrompt)document.getElementById('installBtn').classList.remove('hidden')},2000)</script>
 </header>
 
 <div class="bg-gradient-to-r from-amber-900/30 via-purple-900/30 to-teal-900/30 border border-amber-800/50 rounded-xl p-4 mb-6">
