@@ -9,14 +9,14 @@ const OKF_DIR = path.join(DATA_DIR, 'okf_ready');
 const SOCIAL_LOG = path.join(DATA_DIR, 'social-posts.json');
 
 const PLATFORMS = {
-  github: { name: 'GitHub', type: 'markdown', maxChars: 5000, tone: 'technisch, developer-freundlich' },
-  discord: { name: 'Discord', type: 'markdown', maxChars: 2000, tone: 'community, casual, einladend' },
-  instagram: { name: 'Instagram', type: 'text', maxChars: 2200, tone: 'visuell, kurz, mit Emojis und Hashtags', hashtags: 10 },
-  tiktok: { name: 'TikTok', type: 'text', maxChars: 400, tone: 'sehr kurz, catchy, junge Zielgruppe', hashtags: 5 },
-  youtube: { name: 'YouTube', type: 'text', maxChars: 5000, tone: 'ausfuehrlich, tutorial-style, SEO-optimiert', hashtags: 8 },
-  facebook: { name: 'Facebook', type: 'text', maxChars: 63206, tone: 'community, Mehrwert, Frage ans Publikum', hashtags: 5 },
-  google: { name: 'Google Business', type: 'text', maxChars: 1500, tone: 'professionell, Update-style, Business-freundlich' },
-  x: { name: 'X (Twitter)', type: 'text', maxChars: 280, tone: 'kurz, praegnant, punchy, kein Fluff', hashtags: 3 }
+  github: { name: 'GitHub', type: 'markdown', maxChars: 5000, tone: 'technical, developer-friendly' },
+  discord: { name: 'Discord', type: 'markdown', maxChars: 2000, tone: 'community, casual, inviting' },
+  instagram: { name: 'Instagram', type: 'text', maxChars: 2200, tone: 'visual, short, with emojis and hashtags', hashtags: 10 },
+  tiktok: { name: 'TikTok', type: 'text', maxChars: 400, tone: 'very short, catchy, young audience', hashtags: 5 },
+  youtube: { name: 'YouTube', type: 'text', maxChars: 5000, tone: 'detailed, tutorial-style, SEO-optimized', hashtags: 8 },
+  facebook: { name: 'Facebook', type: 'text', maxChars: 63206, tone: 'community, value-add, question to audience', hashtags: 5 },
+  google: { name: 'Google Business', type: 'text', maxChars: 1500, tone: 'professional, update-style, business-friendly' },
+  x: { name: 'X (Twitter)', type: 'text', maxChars: 280, tone: 'short, punchy, no fluff', hashtags: 3 }
 };
 
 function loadSkills() {
@@ -46,18 +46,18 @@ async function generatePost(skill, platform) {
 
   const { client, model } = getClient('cohere/north-mini-code:free');
 
-  const prompt = `Erstelle einen Social-Media-Post fuer ${cfg.name}.
-Plattform: ${cfg.name} (${cfg.type})
-Max Zeichen: ${cfg.maxChars}
-Ton: ${cfg.tone}
-${cfg.hashtags ? 'Fuege ' + cfg.hashtags + ' relevante Hashtags hinzu.' : ''}
+  const prompt = `Create a social media post for ${cfg.name}.
+Platform: ${cfg.name} (${cfg.type})
+Max characters: ${cfg.maxChars}
+Tone: ${cfg.tone}
+${cfg.hashtags ? 'Add ' + cfg.hashtags + ' relevant hashtags.' : ''}
 
-Das OKF-Skill worueber gepostet wird:
+The OKF skill to post about:
 Name: ${skill.name}
-Beschreibung: ${skill.description}
+Description: ${skill.description}
 Tags: ${skill.tags.join(', ')}
 
-Gib NUR den fertigen Post-Text zurueck. Keine Erklaerung.`;
+Return ONLY the finished post text. No explanation.`;
 
   const res = await client.chat.completions.create({
     model,

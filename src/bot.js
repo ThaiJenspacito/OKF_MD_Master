@@ -21,19 +21,19 @@ function initBot() {
   const allowedChatId = parseInt(process.env.ALLOWED_CHAT_ID);
 
   if (!token || !allowedChatId) {
-    console.log('\u26a0\ufe0f Telegram Bot nicht gestartet: Token oder Chat-ID fehlt.');
+    console.log('Telegram Bot: disabled (no token)');
     return;
   }
 
   const bot = new TelegramBot(token, { polling: true });
-  console.log('\ud83e\udd16 Telegram-Bot bereit.');
+  console.log('Telegram Bot: ready');
 
   const mainMenuKeyboard = {
     reply_markup: {
       keyboard: [
-        [{ text: '\ud83d\udcca Dashboard' }, { text: '\ud83d\udcb0 Tokens' }],
-        [{ text: '\u23f8\ufe0f Pausieren' }, { text: '\u25b6\ufe0f Fortsetzen' }],
-        [{ text: '\ud83c\udf10 Scope' }, { text: '\u2699\ufe0f Limit' }]
+        [{ text: '📊 Dashboard' }, { text: '💰 Tokens' }],
+        [{ text: '⏸️ Pause' }, { text: '▶️ Resume' }],
+        [{ text: '🌐 Scope' }, { text: '⚙️ Limit' }]
       ],
       resize_keyboard: true
     }
@@ -48,20 +48,20 @@ function initBot() {
     const totalBytes = scoutedFiles.reduce((sum, e) => sum + (e.stages?.scouted?.sizeBytes || 0), 0);
 
     bot.sendMessage(chatId,
-      `*\ud83d\udcca OKF MD Master Dashboard*\n` +
-      `\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n` +
-      `\ud83d\udfe2 Status: ${s.paused ? '*PAUSIERT*' : s.running ? '*Aktiv*' : 'Gestoppt'}\n` +
-      `\u2705 OKF Skills: *${s.stats.okf_ready}*\n` +
-      `\ud83d\udcdd In Queue: *${s.stats.scouted + s.stats.failed}* (${formatBytes(totalBytes)})\n` +
-      `\ud83d\udcd6 Lessons: *${s.stats.lessons_learned || 0}*\n` +
-      `\u2728 Token (Session): ~*${tokens.toLocaleString()}*\n` +
-      `\ud83e\udd16 Modell: \`${cfg.model}\`\n` +
-      `\ud83c\udf10 Scopes: \`${(cfg.watchDirs || []).map(d => path.basename(d)).join(', ')}\`\n` +
-      `\ud83d\udccf Max-Datei: ${formatBytes(cfg.maxFileSize || 50000)}\n` +
-      `\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n` +
-      `\ud83d\udee0\ufe0f /limit 100 -> Max 100 KB Dateien\n` +
-      `\ud83e\udd16 /model deepseek-chat -> LLM wechseln\n` +
-      `\ud83d\udcc1 /scope add Pfad -> Ordner hinzufuegen`,
+      `*📊 OKF MD Master Dashboard*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `🟢 Status: ${s.paused ? '*PAUSED*' : s.running ? '*Active*' : 'Stopped'}\n` +
+      `✅ OKF Skills: *${s.stats.okf_ready}*\n` +
+      `📝 In Queue: *${s.stats.scouted + s.stats.failed}* (${formatBytes(totalBytes)})\n` +
+      `📖 Lessons: *${s.stats.lessons_learned || 0}*\n` +
+      `✨ Tokens (Session): ~*${tokens.toLocaleString()}*\n` +
+      `🤖 Model: \`${cfg.model}\`\n` +
+      `🌐 Scopes: \`${(cfg.watchDirs || []).map(d => path.basename(d)).join(', ')}\`\n` +
+      `📏 Max File: ${formatBytes(cfg.maxFileSize || 50000)}\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `🛠️ /limit 100 -> Max 100 KB files\n` +
+      `🤖 /model deepseek-chat -> Switch LLM\n` +
+      `📁 /scope add path -> Add directory`,
       { parse_mode: 'Markdown', ...mainMenuKeyboard }
     );
   }
@@ -78,12 +78,12 @@ function initBot() {
 
       switch (cmd) {
         case '/start':
-        case '\ud83d\udcca Dashboard':
+        case '📊 Dashboard':
           sendDashboard(chatId);
           break;
 
         case '/tokens':
-        case '\ud83d\udcb0 Tokens': {
+        case '💰 Tokens': {
           const tokens = architect.getTokenEstimate();
           const all = tracker.getAll();
           const okf = all.filter(e => e.status === 'okf_ready');
@@ -92,70 +92,70 @@ function initBot() {
           const totalCost = okf.reduce((s, e) => s + (e.stages?.architected?.cost || 0), 0);
 
           bot.sendMessage(chatId,
-            `*\ud83d\udcb0 Token-Verbrauch*\n` +
-            `\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n` +
-            `Session gesamt: ~*${tokens.toLocaleString()}* Tokens\n` +
-            `OKF Skills: *${okf.length}* erstellt\n` +
+            `*💰 Token Usage*\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `Session total: ~*${tokens.toLocaleString()}* tokens\n` +
+            `OKF Skills: *${okf.length}* created\n` +
             `Input: ~${(totalIn / 1000).toFixed(1)}K | Output: ~${(totalOut / 1000).toFixed(1)}K\n` +
-            `Kosten (ca.): $${totalCost.toFixed(4)}\n` +
-            `\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n` +
-            `\ud83d\udee0\ufe0f /model deepseek-chat  -> Wechseln`,
+            `Cost (est.): $${totalCost.toFixed(4)}\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `🛠️ /model deepseek-chat -> Switch`,
             { parse_mode: 'Markdown', ...mainMenuKeyboard }
           );
           break;
         }
 
         case '/pause':
-        case '\u23f8\ufe0f Pausieren':
+        case '⏸️ Pause':
           scheduler.pause();
           config.update({ paused: true });
-          bot.sendMessage(chatId, '\u23f8\ufe0f Verarbeitung *pausiert*.', { parse_mode: 'Markdown', ...mainMenuKeyboard });
+          bot.sendMessage(chatId, '⏸️ Processing *paused*.', { parse_mode: 'Markdown', ...mainMenuKeyboard });
           break;
 
         case '/resume':
-        case '\u25b6\ufe0f Fortsetzen':
+        case '▶️ Resume':
           scheduler.resume();
           config.update({ paused: false });
-          bot.sendMessage(chatId, '\u25b6\ufe0f Verarbeitung *fortgesetzt*.', { parse_mode: 'Markdown', ...mainMenuKeyboard });
+          bot.sendMessage(chatId, '▶️ Processing *resumed*.', { parse_mode: 'Markdown', ...mainMenuKeyboard });
           break;
 
         case '/limit':
-        case '\u2699\ufe0f Limit': {
+        case '⚙️ Limit': {
           if (!arg) {
             const cfg = config.get();
-            bot.sendMessage(chatId, `Aktuelles Limit: *${formatBytes(cfg.maxFileSize || 50000)}*\n\ud83d\udee0\ufe0f /limit 100 -> 100 KB`, { parse_mode: 'Markdown', ...mainMenuKeyboard });
+            bot.sendMessage(chatId, `Current limit: *${formatBytes(cfg.maxFileSize || 50000)}*\n🛠️ /limit 100 -> 100 KB`, { parse_mode: 'Markdown', ...mainMenuKeyboard });
             return;
           }
           const kb = parseInt(arg);
           if (isNaN(kb) || kb < 1) {
-            bot.sendMessage(chatId, '\u26a0\ufe0f /limit <KB> z.B. /limit 100', mainMenuKeyboard);
+            bot.sendMessage(chatId, '⚠️ /limit <KB> e.g. /limit 100', mainMenuKeyboard);
             return;
           }
           config.update({ maxFileSize: kb * 1024 });
-          bot.sendMessage(chatId, `\u2705 Max-Dateigroesse: *${kb} KB* (${formatBytes(kb * 1024)})`, { parse_mode: 'Markdown', ...mainMenuKeyboard });
+          bot.sendMessage(chatId, `✅ Max file size: *${kb} KB* (${formatBytes(kb * 1024)})`, { parse_mode: 'Markdown', ...mainMenuKeyboard });
           break;
         }
 
         case '/model': {
           if (!arg) {
             const cfg = config.get();
-            bot.sendMessage(chatId, `Aktuell: \`${cfg.model}\`\nFallback: \`${cfg.fallbackModel}\`\n\ud83d\udee0\ufe0f /model deepseek-chat`, { parse_mode: 'Markdown', ...mainMenuKeyboard });
+            bot.sendMessage(chatId, `Current: \`${cfg.model}\`\nFallback: \`${cfg.fallbackModel}\`\n🛠️ /model deepseek-chat`, { parse_mode: 'Markdown', ...mainMenuKeyboard });
             return;
           }
           config.update({ model: arg.trim() });
-          bot.sendMessage(chatId, `\u2705 Modell: \`${arg.trim()}\``, { parse_mode: 'Markdown', ...mainMenuKeyboard });
+          bot.sendMessage(chatId, `✅ Model: \`${arg.trim()}\``, { parse_mode: 'Markdown', ...mainMenuKeyboard });
           break;
         }
 
         case '/scope':
-        case '\ud83c\udf10 Scope': {
+        case '🌐 Scope': {
           if (!arg) {
             const cfg = config.get();
             const dirs = (cfg.watchDirs || []).map(d => path.basename(d)).join(', ');
             bot.sendMessage(chatId,
-              `*\ud83c\udf10 Watch-Bereiche*\n` +
-              `Aktiv: \`${dirs}\`\n\n` +
-              `/scope add ./neuer_ordner\n` +
+              `*🌐 Watch Scopes*\n` +
+              `Active: \`${dirs}\`\n\n` +
+              `/scope add ./new_folder\n` +
               `/scope del mock_documents`,
               { parse_mode: 'Markdown', ...mainMenuKeyboard }
             );
@@ -169,13 +169,13 @@ function initBot() {
             if (!dirs.includes(newDir)) {
               dirs.push(newDir);
               config.update({ watchDirs: dirs });
-              bot.sendMessage(chatId, `\u2705 Scope hinzugefuegt: \`${newDir}\`\n\ud83d\udd04 Neustart noetig.`, { parse_mode: 'Markdown', ...mainMenuKeyboard });
+              bot.sendMessage(chatId, `✅ Scope added: \`${newDir}\`\n🔄 Restart required.`, { parse_mode: 'Markdown', ...mainMenuKeyboard });
             }
           } else if (parts[0] === 'del' && parts[1]) {
             const cfg = config.get();
             const dirs = (cfg.watchDirs || []).filter(d => !d.includes(parts[1]));
             config.update({ watchDirs: dirs });
-            bot.sendMessage(chatId, `\u2705 Scope entfernt: \`${parts[1]}\``, { parse_mode: 'Markdown', ...mainMenuKeyboard });
+            bot.sendMessage(chatId, `✅ Scope removed: \`${parts[1]}\``, { parse_mode: 'Markdown', ...mainMenuKeyboard });
           }
           break;
         }
@@ -186,19 +186,19 @@ function initBot() {
 
         case '/help':
           bot.sendMessage(chatId,
-            `*\ud83d\udcd6 OKF MD Master Befehle*\n` +
-            `/dashboard - Uebersicht\n` +
-            `/tokens - Token-Verbrauch\n` +
-            `/pause | /resume - Steuerung\n` +
-            `/limit <KB> - Max Dateigroesse\n` +
-            `/model <name> - LLM wechseln\n` +
-            `/scope add|del <Pfad> - Bereiche`,
+            `*📖 OKF MD Master Commands*\n` +
+            `/dashboard - Overview\n` +
+            `/tokens - Token usage\n` +
+            `/pause | /resume - Control\n` +
+            `/limit <KB> - Max file size\n` +
+            `/model <name> - Switch LLM\n` +
+            `/scope add|del <path> - Directories`,
             { parse_mode: 'Markdown', ...mainMenuKeyboard }
           );
           break;
 
         default:
-          bot.sendMessage(chatId, `Unbekannt. /help fuer Befehle.`, mainMenuKeyboard);
+          bot.sendMessage(chatId, `Unknown. /help for commands.`, mainMenuKeyboard);
       }
       return;
     }
@@ -207,40 +207,38 @@ function initBot() {
       userStates[chatId] = null;
       const url = text.trim();
       if (!url.startsWith('http')) {
-        return bot.sendMessage(chatId, '\u26a0\ufe0f Ungueltiger Link.', mainMenuKeyboard);
+        return bot.sendMessage(chatId, '⚠️ Invalid URL.', mainMenuKeyboard);
       }
-      bot.sendMessage(chatId, '\ud83d\udce6 Wird verarbeitet... (Coming soon)', mainMenuKeyboard);
+      bot.sendMessage(chatId, '📦 Processing... (Coming soon)', mainMenuKeyboard);
       return;
     }
 
     switch (text) {
       case '/start':
+      case '📊 Dashboard':
         sendDashboard(chatId);
         break;
-      case '\ud83d\udcca Dashboard':
-        sendDashboard(chatId);
-        break;
-      case '\ud83d\udcb0 Tokens':
+      case '💰 Tokens':
         bot.sendMessage(chatId, 'Tokens...', mainMenuKeyboard);
         break;
-      case '\u23f8\ufe0f Pausieren':
+      case '⏸️ Pause':
         scheduler.pause();
         config.update({ paused: true });
-        bot.sendMessage(chatId, '\u23f8\ufe0f Pausiert.', mainMenuKeyboard);
+        bot.sendMessage(chatId, '⏸️ Paused.', mainMenuKeyboard);
         break;
-      case '\u25b6\ufe0f Fortsetzen':
+      case '▶️ Resume':
         scheduler.resume();
         config.update({ paused: false });
-        bot.sendMessage(chatId, '\u25b6\ufe0f Fortgesetzt.', mainMenuKeyboard);
+        bot.sendMessage(chatId, '▶️ Resumed.', mainMenuKeyboard);
         break;
-      case '\ud83c\udf10 Scope':
-        bot.sendMessage(chatId, '/scope add|del <Pfad>', mainMenuKeyboard);
+      case '🌐 Scope':
+        bot.sendMessage(chatId, '/scope add|del <path>', mainMenuKeyboard);
         break;
-      case '\u2699\ufe0f Limit':
-        bot.sendMessage(chatId, '/limit <KB> z.B. /limit 100', mainMenuKeyboard);
+      case '⚙️ Limit':
+        bot.sendMessage(chatId, '/limit <KB> e.g. /limit 100', mainMenuKeyboard);
         break;
       default:
-        bot.sendMessage(chatId, '\ud83d\udcd6 /help fuer Befehle.', mainMenuKeyboard);
+        bot.sendMessage(chatId, '📖 /help for commands.', mainMenuKeyboard);
     }
   });
 }

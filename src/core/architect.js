@@ -94,35 +94,35 @@ async function callLLM(prompt) {
         cost
       };
     } catch (err) {
-      log('WARN', `Modell ${model} fehlgeschlagen: ${err.message}. Versuche Fallback...`);
+      log('WARN', `Model ${model} failed: ${err.message}. Trying fallback...`);
     }
   }
 
-  throw new Error('Alle LLM-Provider fehlgeschlagen.');
+  throw new Error('All LLM providers failed.');
 }
 
 async function generateOKFStructure(rawContent) {
   const cfg = config.get();
   const modelName = cfg.model || 'deepseek-chat';
 
-  const okfPrompt = `Du bist der OKF-Architect. Transformiere den folgenden Text in das Google Open Knowledge Format (OKF).
-Erstelle ein sauberes YAML-Frontmatter mit diesen Feldern:
-- name: Kurzer, praegnanter Skill-Name
-- description: Kerninhalt in 1-2 Saetzen
+  const okfPrompt = `You are the OKF Architect. Transform the following text into the Google Open Knowledge Format (OKF).
+Create clean YAML frontmatter with these fields:
+- name: Short, concise skill name
+- description: Core content in 1-2 sentences
 - type: skill
 - version: 1.0.0
-- tags: Array mit 3-5 relevanten Schlagwoertern
+- tags: Array with 3-5 relevant keywords
 
-Hier ist der Text:
+Here is the text:
 
 ${rawContent}
 
-Gib NUR das fertige Markdown zurueck, ohne umschliessende Code-Blocks.`;
+Return ONLY the finished markdown, without enclosing code blocks.`;
 
   const contentLength = rawContent.length;
 
   if (cfg.maxFileSize && contentLength > cfg.maxFileSize) {
-    throw new Error(`Datei zu gross (${contentLength} > ${cfg.maxFileSize} Zeichen Limit)`);
+    throw new Error(`File too large (${contentLength} > ${cfg.maxFileSize} Zeichen Limit)`);
   }
 
   log('INFO', `LLM-Call: ${modelName} (${contentLength} Zeichen Input)`);
@@ -136,7 +136,7 @@ function updateMasterIndex(skillName, filename) {
   const indexLine = `* [${skillName}](okf_ready/${filename}) - ${timestamp}\n`;
 
   if (!fs.existsSync(INDEX_FILE)) {
-    fs.writeFileSync(INDEX_FILE, `# OKF Master Index\n\n## Verfuegbare Skills\n\n`);
+    fs.writeFileSync(INDEX_FILE, `# OKF Master Index\n\n## Available Skills\n\n`);
   }
 
   const content = fs.readFileSync(INDEX_FILE, 'utf8');
@@ -157,7 +157,7 @@ function addLessonsLearned(filename, skillName, content, model, error) {
 name: ${skillName || filename}
 type: lessons-learned
 version: 1.0.0
-description: Fehlgeschlagene Transformation. Modell: ${model}. Fehler: ${error || 'Unbekannt'}
+description: Failed transformation. Modell: ${model}. Fehler: ${error || 'Unbekannt'}
 model: ${model}
 ---
 
