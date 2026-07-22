@@ -76,7 +76,7 @@ app.post('/login', express.urlencoded({ extended: false }), (req, res) => {
     return res.send(`<!DOCTYPE html><html lang="de" class="dark"><head><meta charset="UTF-8"><title>OKF Login</title><script src="https://cdn.tailwindcss.com"></script></head><body class="bg-gray-950 min-h-screen flex items-center justify-center"><div class="text-center"><p class="text-red-400 text-lg mb-4">Falsche PIN</p><a href="/login" class="text-teal-400 hover:underline">Erneut versuchen</a></div></body></html>`);
   }
   const sid = crypto.randomBytes(16).toString('hex');
-  sessions[sid] = { created: Date.now() };
+  sessions[sid] = { created: Date.now(), ip: req.ip || req.socket.remoteAddress || 'local' };
   res.cookie('okf_session', sid, { httpOnly: true, maxAge: 8 * 3600000 });
   res.redirect('/');
 });
@@ -95,6 +95,13 @@ app.get('/', (req, res) => {
   const idleStatus = isIdle();
   const cfg = config.get();
   const allEntries = tracker.getAll();
+  const activeSessions = Object.entries(sessions)
+    .filter(([,s]) => Date.now() - s.created < 8 * 3600000)
+    .map(([sid, s]) => ({
+      sid: sid.substring(0, 8) + '...',
+      ip: s.ip || 'local',
+      since: Math.round((Date.now() - s.created) / 60000)
+    }));
   const skillCount = allEntries.filter(e => e.status === 'okf_ready').length;
   const cpuLoad = getCpuLoad();
 
@@ -191,6 +198,7 @@ app.get('/', (req, res) => {
 <span class="text-xs font-medium text-gray-400">${status.paused ? 'Pausiert' : 'Aktiv'}</span>
 </div>
 <p class="text-xs text-gray-500">IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</p>
+${activeSessions.length > 0 ? `<p class="text-xs text-gray-600 mt-1">👤 ${activeSessions.map(s => s.ip + ' (' + s.since + 'min)').join(' · ')}</p>` : ''}
 </div>
 <a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
 </div>
