@@ -240,6 +240,7 @@ app.get('/', (req, res) => {
   const hasTelegram = !!(process.env.TELEGRAM_BOT_TOKEN && !process.env.TELEGRAM_BOT_TOKEN.includes('DEIN_BOT_TOKEN'));
   const tokens = architect.getTokenEstimate();
   const journalEntries = loadJournal().slice(-10).reverse();
+  const activity = status.activity || {};
 
   res.send(`<!DOCTYPE html><html lang="de" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -305,10 +306,11 @@ ${status.paused
 <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Aktive Agenten</h2>
 <div class="space-y-3">
 ${agentCard('Watcher', '👁️', 'blue', true, 'Überwacht: ' + (cfg.watchDirs || ['-']).map(d => path.basename(d)).join(', '), null)}
-${agentCard('Scout', '🕵️', 'indigo', true, 'Kopiert .md-Dateien, filtert nach Größe', cfg.model)}
-${agentCard('Architect', '🤖', 'teal', true, 'Transformiert via LLM ins OKF-Format', cfg.model + (cfg.fallbackModel ? ' → ' + cfg.fallbackModel : ''))}
-${agentCard('Scheduler', '⏱️', 'purple', status.running, 'Poll: 10s · Idle: ≥${cfg.idleThresholdSec}s · CPU < ${cfg.cpuThresholdPct}% · Batch: 5', null)}
-${agentCard('Telegram Bot', '📱', 'blue', hasTelegram, hasTelegram ? 'Chat-ID: ' + (process.env.ALLOWED_CHAT_ID || '-') : 'Token nicht konfiguriert', null)}
+${agentCard('Auto-Scanner', '🔎', 'indigo', status.running, (activity['auto-scanner'] ? activity['auto-scanner'].action + ': ' + (activity['auto-scanner'].detail || '') : 'Sucht alle 5min automatisch'), null)}
+${agentCard('Scout', '🕵️', 'teal', true, (activity['scout'] ? activity['scout'].action + ': ' + (activity['scout'].detail || '') : 'Kopiert .md-Dateien'), cfg.model)}
+${agentCard('Architect', '🤖', 'green', true, (activity['architect'] ? activity['architect'].action + ': ' + (activity['architect'].detail || '') : 'Transformiert via LLM'), cfg.model + (cfg.fallbackModel ? ' → ' + cfg.fallbackModel : ''))}
+${agentCard('Scheduler', '⏱️', 'purple', status.running, (activity['scheduler'] ? activity['scheduler'].action : 'Poll: 10s') + ' · Idle: ≥' + cfg.idleThresholdSec + 's · CPU < ' + cfg.cpuThresholdPct + '%', null)}
+${agentCard('Telegram Bot', '📱', 'blue', hasTelegram, hasTelegram ? 'Chat-ID: ' + (process.env.ALLOWED_CHAT_ID || '-') : 'Deaktiviert', null)}
 ${agentCard('Tray App', '🖥️', 'gray', true, 'Windows Taskleiste', null)}
 </div>
 </div>
