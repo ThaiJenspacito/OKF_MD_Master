@@ -32,12 +32,20 @@ function log(level, message) {
 }
 
 function getClient(model) {
-  if (model === 'deepseek-chat' && process.env.DEEPSEEK_API_KEY) {
+  if ((model === 'deepseek-chat' || model.startsWith('deepseek')) && process.env.DEEPSEEK_API_KEY) {
     return {
       client: new OpenAI({ baseURL: 'https://api.deepseek.com', apiKey: process.env.DEEPSEEK_API_KEY }),
       model: 'deepseek-chat',
       provider: 'deepseek',
       costPer1K: 0.014
+    };
+  }
+  if (model.includes('/') && process.env.OPENROUTER_API_KEY) {
+    return {
+      client: new OpenAI({ baseURL: 'https://openrouter.ai/api/v1', apiKey: process.env.OPENROUTER_API_KEY }),
+      model,
+      provider: 'openrouter',
+      costPer1K: model.includes(':free') ? 0 : 0.05
     };
   }
   if (process.env.OPENROUTER_API_KEY) {
@@ -48,7 +56,7 @@ function getClient(model) {
       costPer1K: 0
     };
   }
-  throw new Error('Kein LLM-Provider konfiguriert. Setze DEEPSEEK_API_KEY oder OPENROUTER_API_KEY.');
+  throw new Error('Kein LLM-Provider konfiguriert.');
 }
 
 async function callLLM(prompt) {
