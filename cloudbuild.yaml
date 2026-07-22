@@ -1,15 +1,15 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/okf-md-master', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/thai-jenspacito-okf-md', '.']
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/okf-md-master']
+    args: ['push', 'gcr.io/$PROJECT_ID/thai-jenspacito-okf-md']
   - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['run', 'deploy', 'okf-md-master',
-      '--image', 'gcr.io/$PROJECT_ID/okf-md-master',
+    args: ['run', 'deploy', 'thai-jenspacito-okf-md',
+      '--image', 'gcr.io/$PROJECT_ID/thai-jenspacito-okf-md',
       '--platform', 'managed',
       '--region', 'europe-west1',
       '--allow-unauthenticated',
       '--memory', '512Mi',
       '--port', '8080']
 images:
-  - 'gcr.io/$PROJECT_ID/okf-md-master'
+  - 'gcr.io/$PROJECT_ID/thai-jenspacito-okf-md'
