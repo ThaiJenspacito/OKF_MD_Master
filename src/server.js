@@ -21,6 +21,7 @@ const social = require('./core/social');
 const monitor = require('./core/monitor');
 const sync = require('./core/sync');
 const auth = require('./core/auth');
+const credits = require('./core/credits');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -287,7 +288,7 @@ app.get('/', (req, res) => {
   const journalEntries = loadJournal().slice(-10).reverse();
   const activity = status.activity || {};
   const user = getUser(req);
-  const userDisplay = user ? `<span class="text-xs text-gray-400">👤 ${user.name || user.email}</span>` : '';
+  const userDisplay = user ? `<span class="text-xs text-gray-400">👤 ${user.name || user.email} · 💰 ${credits.getUserCredits(user.email, user.name).credits || 0} credits</span>` : '';
 
   res.send(`<!DOCTYPE html><html lang="de" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -327,7 +328,7 @@ function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredProm
 <p class="text-xs text-gray-500">IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</p>
 ${activeSessions.length > 0 ? `<p class="text-xs text-gray-600 mt-1">👤 ${activeSessions.map(s => s.ip + ' (' + s.since + 'min)').join(' · ')}</p>` : ''}
 </div>
-<a href="/connect" class="text-xs text-green-400 hover:text-green-300 transition mr-3">🌐 Network</a><a href="/social" class="text-xs text-pink-400 hover:text-pink-300 transition mr-3">📱 Social</a><a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button>${userDisplay}<a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition ml-3">Logout</a>
+<a href="/settings" class="text-xs text-blue-400 hover:text-blue-300 transition mr-3">⚙️ Settings</a><a href="/enterprise" class="text-xs text-amber-400 hover:text-amber-300 transition mr-3">🏢 Enterprise</a><a href="/connect" class="text-xs text-green-400 hover:text-green-300 transition mr-3">🌐 Network</a><a href="/social" class="text-xs text-pink-400 hover:text-pink-300 transition mr-3">📱 Social</a><a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button>${userDisplay}<a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition ml-3">Logout</a>
 <script>setTimeout(()=>{if(deferredPrompt)document.getElementById('installBtn').classList.remove('hidden')},2000);</script>
 </div>
 <div class="flex space-x-2 mt-3">
@@ -555,7 +556,13 @@ app.post('/api/scout/scan', (req, res) => {
 app.post('/api/architect/process', (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
   architect.processAll().then(results => {
-    results.forEach(r => addJournalEntry('architect', r.filename, 'okf_created', r.model + ' ' + (r.tokens || '') + ' tokens'));
+    results.forEach(r => {
+      addJournalEntry('architect', r.filename, 'okf_created', r.model + ' ' + (r.tokens || '') + ' tokens');
+      const user = getUser(req);
+      if (user && user.email) {
+        credits.addProcessed(user.email, user.name, r.tokens || 1000, 1);
+      }
+    });
     res.json({ ok: true, processed: results.length, skills: results.map(r => r.skillName) });
   }).catch(err => {
     res.status(500).json({ error: err.message });
@@ -761,15 +768,118 @@ app.get('/api/journal', (req, res) => {
 });
 
 app.get('/api/download/:file', (req, res) => {
-  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   const file = req.params.file;
   const okfPath = path.join(OKF_READY_DIR, file);
-  if (!fs.existsSync(okfPath)) return res.status(404).json({ error: 'Nicht gefunden' });
+  if (!fs.existsSync(okfPath)) return res.status(404).json({ error: 'Not found' });
+
+  const user = getUser(req);
+  if (user && user.email) {
+    const check = credits.canDownload(user.email);
+    if (!check.allowed) {
+      return res.status(429).json({ error: 'Download limit reached. Process more files to earn credits.', credits: check.credits, limit: check.limit });
+    }
+    credits.trackDownload(user.email);
+    credits.addCpuContribution(user.email, 1);
+  }
+
   const count = trackDownload(file);
   res.set('Content-Type', 'text/markdown; charset=utf-8');
   res.set('Content-Disposition', 'attachment; filename="' + file + '"');
   res.set('X-Download-Count', String(count));
   res.sendFile(okfPath);
+});
+
+app.get('/api/credits', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  const email = user ? user.email : 'anonymous';
+  res.json(credits.getStats(email));
+});
+
+app.get('/api/credits/leaderboard', (req, res) => {
+  res.json(credits.getLeaderboard());
+});
+
+app.post('/api/credits/earn', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  const email = user ? user.email : 'anonymous';
+  const name = user ? user.name : email;
+  const result = credits.addProcessed(email, name, req.body.tokens || 0, req.body.files || 1);
+  res.json(result);
+});
+
+app.post('/api/credits/settings', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !user.email) return res.status(400).json({ error: 'Google login required' });
+  const updated = credits.updateSettings(user.email, req.body);
+  res.json({ ok: true, settings: updated.settings });
+});
+
+app.get('/settings', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  const user = getUser(req);
+  const email = user ? user.email : 'anonymous';
+  const stats = credits.getStats(email);
+  const leaderboard = credits.getLeaderboard();
+
+  res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Settings · OKF MD Master</title>
+<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
+</head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+<header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
+<div>
+<h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">Settings</h1>
+<p class="text-xs text-gray-500 mt-1">${user ? user.name || user.email : 'Guest'} · Power = Downloads</p>
+</div>
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Your Contribution</h2>
+<div class="grid grid-cols-2 gap-3 text-sm">
+<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Files Processed</p><p class="text-teal-400 text-xl font-bold">${stats.user.filesProcessed || 0}</p></div>
+<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Tokens Processed</p><p class="text-blue-400 text-xl font-bold">${(stats.user.tokensProcessed || 0).toLocaleString()}</p></div>
+<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Credits Earned</p><p class="text-green-400 text-xl font-bold">${stats.user.credits || 0}</p></div>
+<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">CPU Time</p><p class="text-purple-400 text-xl font-bold">${(stats.user.cpuContribution || 0).toFixed(1)}h</p></div>
+</div>
+<div class="mt-4 bg-gray-800 rounded-lg p-3">
+<p class="text-xs text-gray-500 mb-2">Download Limit</p>
+<div class="bg-gray-700 rounded-full h-3"><div class="bg-gradient-to-r from-teal-500 to-blue-500 h-3 rounded-full transition-all" style="width:${Math.min(100, ((stats.canDownload.limit - stats.canDownload.remaining) / stats.canDownload.limit) * 100)}%"></div></div>
+<p class="text-xs text-gray-400 mt-1">${stats.canDownload.remaining} of ${stats.canDownload.limit} downloads remaining</p>
+</div>
+</div>
+
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Contribution Settings</h2>
+<form onsubmit="saveSettings(event)" class="space-y-3 text-sm">
+<label class="flex items-center justify-between"><span class="text-gray-400">Share CPU Power</span><input type="checkbox" id="sharePower" ${stats.user.settings.sharePower ? 'checked' : ''} class="accent-teal-500"></label>
+<label class="flex items-center justify-between"><span class="text-gray-400">Auto-Process Files</span><input type="checkbox" id="autoProcess" ${stats.user.settings.autoProcess ? 'checked' : ''} class="accent-teal-500"></label>
+<div class="flex items-center justify-between"><span class="text-gray-400">Max Downloads</span><input type="number" id="maxDownloads" value="${stats.user.settings.maxDownloads || 50}" min="10" max="500" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-20 text-center text-gray-100"></div>
+<button class="bg-teal-600 hover:bg-teal-500 text-white text-sm px-4 py-2 rounded-lg transition">Save Settings</button>
+<p id="settingsMsg" class="text-xs text-gray-500"></p>
+</form>
+</div>
+</div>
+
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800 mb-6">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Leaderboard</h2>
+<table class="w-full text-xs">
+<thead><tr class="text-gray-500 uppercase border-b border-gray-800"><th class="py-2 px-2 text-left">#</th><th class="py-2 px-2 text-left">User</th><th class="py-2 px-2 text-right">Credits</th><th class="py-2 px-2 text-right">Files</th><th class="py-2 px-2 text-right">Tokens</th><th class="py-2 px-2 text-right">CPU</th></tr></thead>
+<tbody class="divide-y divide-gray-800/50">
+${leaderboard.map((e, i) => `<tr class="hover:bg-gray-800/30"><td class="py-1.5 px-2 text-gray-500">${i + 1}</td><td class="py-1.5 px-2 text-teal-300">${e.name || e.email}</td><td class="py-1.5 px-2 text-right text-green-400">${e.credits}</td><td class="py-1.5 px-2 text-right text-gray-400">${e.files}</td><td class="py-1.5 px-2 text-right text-gray-500">${e.tokens.toLocaleString()}</td><td class="py-1.5 px-2 text-right text-gray-600">${e.cpu}</td></tr>`).join('')}
+</tbody></table>
+</div>
+
+</div>
+<script>
+async function saveSettings(e){e.preventDefault();const s={sharePower:document.getElementById('sharePower').checked,autoProcess:document.getElementById('autoProcess').checked,maxDownloads:parseInt(document.getElementById('maxDownloads').value)};const r=await fetch('/api/credits/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(s)});const d=await r.json();document.getElementById('settingsMsg').innerHTML=d.ok?'✅ Settings saved':'❌ Error'}</script>
+</body></html>`);
 });
 
 app.get('/api/knowledge', (req, res) => {
@@ -1110,6 +1220,85 @@ function showState(d){
   }
 }
 </script></body></html>`);
+});
+
+app.get('/enterprise', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  const allSkills = getAllSkills().filter(s => s.dir === 'okf_ready');
+  const totalSize = allSkills.reduce((s, sk) => s + sk.size, 0);
+
+  res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Enterprise · OKF MD Master</title>
+<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
+</head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
+<div class="container mx-auto px-4 py-6 max-w-5xl">
+<header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
+<div>
+<h1 class="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Enterprise</h1>
+<p class="text-xs text-gray-500 mt-1">Data Migration · Bulk Processing · Custom LLMs</p>
+</div>
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800 lg:col-span-2">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Data Migration Services</h2>
+<div class="space-y-4 text-sm">
+<div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4">
+<h3 class="text-teal-300 font-bold mb-2">Bulk Import</h3>
+<p class="text-gray-400 text-xs">Migrate existing knowledge bases (Confluence, Notion, SharePoint, Word docs) to OKF format. Supports 50+ file formats.</p>
+<div class="mt-2 flex space-x-2"><button onclick="alert('Enterprise feature: contact support for API key')" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800">Request Demo</button></div>
+</div>
+<div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4">
+<h3 class="text-teal-300 font-bold mb-2">Bulk Export</h3>
+<p class="text-gray-400 text-xs">Export entire OKF knowledge base to JSON, CSV, XML, or custom formats. Scheduled exports available.</p>
+<div class="mt-2"><a href="/api/knowledge" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800">Download Bundle (${totalSize > 0 ? (totalSize/1024).toFixed(1) + ' KB' : '0 KB'})</a></div>
+</div>
+<div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4">
+<h3 class="text-teal-300 font-bold mb-2">Custom LLM Integration</h3>
+<p class="text-gray-400 text-xs">Run the OKF pipeline with your own LLM models (OpenAI, Anthropic, Azure, local). High-throughput processing for enterprise data volumes.</p>
+<div class="mt-2 flex space-x-2"><a href="/settings" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800">Configure Models</a></div>
+</div>
+</div>
+</div>
+
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Your Knowledge</h2>
+<div class="space-y-2 text-sm">
+<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Total Skills</p><p class="text-teal-400 text-xl font-bold">${allSkills.length}</p></div>
+<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Data Volume</p><p class="text-blue-400 text-xl font-bold">${(totalSize/1024).toFixed(1)} KB</p></div>
+<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Formats</p><p class="text-purple-400 text-xl font-bold">MD·OKF·JSON</p></div>
+</div>
+<div class="mt-4 pt-4 border-t border-gray-800">
+<p class="text-xs text-gray-500">Enterprise API: <span class="font-mono text-teal-400">/api/knowledge/context</span></p>
+<p class="text-xs text-gray-600 mt-1">Ready for RAG, LLM fine-tuning, and custom integration.</p>
+</div>
+</div>
+</div>
+
+<div class="bg-gray-900 p-5 rounded-xl border border-gray-800 mb-6">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Pricing & Plans</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+<div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+<h3 class="font-bold text-teal-300 mb-2">Free</h3>
+<p class="text-xs text-gray-400">Local processing<br>Up to 50 skills<br>Basic dashboard<br>GitHub sync</p>
+<p class="text-teal-400 font-bold mt-2">Free forever</p>
+</div>
+<div class="bg-gray-800 rounded-lg p-4 border border-amber-800/50 bg-amber-900/10">
+<h3 class="font-bold text-amber-300 mb-2">Pro</h3>
+<p class="text-xs text-gray-400">Bulk import/export<br>Priority queue<br>Custom models<br>API access</p>
+<p class="text-amber-400 font-bold mt-2">Coming soon</p>
+</div>
+<div class="bg-gray-800 rounded-lg p-4 border border-gray-700">
+<h3 class="font-bold text-gray-300 mb-2">Enterprise</h3>
+<p class="text-xs text-gray-400">On-premise deployment<br>SLA guarantee<br>Dedicated instance<br>Custom integrations</p>
+<p class="text-gray-400 font-bold mt-2">Contact us</p>
+</div>
+</div>
+</div>
+
+</div></body></html>`);
 });
 
 if (require.main === module) startServer();
