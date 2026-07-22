@@ -4,6 +4,8 @@ secrets/
 node_modules/
 .env.local
 .DS_Store
-*.log
+logs/*
+data/*
+!data/.gitkeep
 __pycache__/
 *.py[cod]
