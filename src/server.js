@@ -7,6 +7,8 @@ const matter = require('gray-matter');
 const multer = require('multer');
 const os = require('os');
 const dns = require('dns');
+const axios = require('axios');
+const Turndown = require('turndown');
 require('dotenv').config();
 
 const tracker = require('./state/tracker');
@@ -14,6 +16,7 @@ const scheduler = require('./core/scheduler');
 const config = require('./state/config');
 const { isIdle, getCpuLoad } = require('./core/idle-detector');
 const architect = require('./core/architect');
+const skillAgent = require('./core/skill-agent');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -261,7 +264,7 @@ app.get('/', (req, res) => {
 <p class="text-xs text-gray-500">IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</p>
 ${activeSessions.length > 0 ? `<p class="text-xs text-gray-600 mt-1">👤 ${activeSessions.map(s => s.ip + ' (' + s.since + 'min)').join(' · ')}</p>` : ''}
 </div>
-<a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
+<a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
 </div>
 <div class="flex space-x-2 mt-3">
 ${status.paused
@@ -327,6 +330,14 @@ ${agentCard('Tray App', '🖥️', 'gray', true, 'Windows Taskleiste', null)}
 <input type="file" id="fileInput" accept=".md" onchange="uploadFile(this.files[0])" class="hidden">
 </form>
 <p id="uploadMsg" class="text-xs mt-2 text-gray-600"></p>
+<div class="mt-3 pt-3 border-t border-gray-800">
+<p class="text-xs text-gray-500 mb-2">🌐 URL oder GitHub-Repo</p>
+<div class="flex space-x-2">
+<input id="urlInput" type="text" placeholder="https://..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-teal-500">
+<button onclick="fetchUrl()" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800 hover:bg-teal-800/50">Holen</button>
+</div>
+<p id="fetchMsg" class="text-xs mt-1 text-gray-600"></p>
+</div>
 </div>
 
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
@@ -408,6 +419,7 @@ function uploadFile(file){if(!file)return;document.getElementById('uploadMsg').i
 function scanLaptop(){const btn=document.getElementById('scanBtn');btn.disabled=true;btn.innerHTML='⏳...';fetch('/api/scan/laptop').then(r=>r.json()).then(d=>{btn.disabled=false;btn.innerHTML='💻 Suchen';const div=document.getElementById('scanResults');if(!d.files||!d.files.length){div.innerHTML='<p class=text-gray-600>Keine .md-Dateien gefunden.</p>';return}div.innerHTML=d.files.map(f=>'<div class=flex.justify-between.items-center.py-1.border-b.border-gray-800><span class=truncate.mr-2>'+f.dir+'/'+f.name+'</span><span class=text-gray-600.mr-2>'+(f.size/1024).toFixed(1)+'KB</span><button onclick=approvePath(\''+f.path+'\') class=text-teal-400>+</button></div>').join('')}).catch(()=>{btn.disabled=false;btn.innerHTML='💻 Suchen'})}
 function approvePath(dir){fetch('/api/scan/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:dir})}).then(r=>r.json()).then(d=>{if(d.ok)alert('✅ Pfad hinzugefuegt: '+d.watchDirs.join(', '));else alert('❌ Fehler')})}
 function checkHealth(){fetch('/api/health').then(r=>r.json()).then(h=>{document.getElementById('healthDisplay').innerHTML='<p>Scheduler: '+(h.scheduler?'🟢':'🔴')+'</p><p>LLM: '+(h.llm?'🟢':'🔴')+'</p><p>Memory: '+(h.memory?h.memory.used:'?')+'</p><p>Uptime: '+Math.round(h.uptime/60)+'min</p><p class='+(h.allOk?'text-green-400':'text-yellow-400')+'>'+(h.allOk?'✅ Alles OK':'⚠️ Probleme')+'</p>'})}
+function fetchUrl(){const u=document.getElementById('urlInput').value.trim();if(!u)return;document.getElementById('fetchMsg').innerHTML='⏳...';fetch('/api/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})}).then(r=>r.json()).then(d=>{document.getElementById('fetchMsg').innerHTML=d.ok?'✅ '+(d.type||'')+' '+d.filename+' ('+d.size+' Bytes)':'❌ '+d.error})}
 checkHealth();
 </script></body></html>`);
 });
@@ -674,6 +686,122 @@ app.get('/api/knowledge/context', (req, res) => {
     `## ${s.name}\n**Tags:** ${s.tags.join(', ')}\n**Typ:** ${s.type}\n\n${s.description}\n`
   ).join('\n');
   res.json({ ok: true, count: skills.length, context, usage: 'Diesen context-Teil als System-Prompt oder RAG-Kontext verwenden.' });
+});
+
+app.post('/api/fetch', express.json(), async (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const url = req.body.url;
+  if (!url || !url.startsWith('http')) return res.status(400).json({ error: 'Ungueltige URL' });
+
+  if (url.includes('github.com')) {
+    try {
+      const parts = url.replace('https://github.com/', '').split('/');
+      const owner = parts[0]; const repo = parts[1].replace('.git', '');
+      const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/README.md`;
+      const { data } = await axios.get(rawUrl, { timeout: 15000, headers: { 'User-Agent': 'OKF-MD-Master' } });
+      const filename = `${owner}-${repo}-README.md`;
+      const filePath = path.join(UPLOADS_DIR, filename);
+      fs.writeFileSync(filePath, `# Quelle: ${url}\n# GitHub: ${owner}/${repo}\n\n${data}`);
+      addJournalEntry('github', filename, 'repo-to-md', url);
+      res.json({ ok: true, filename, size: fs.statSync(filePath).size, path: filePath, type: 'github' });
+    } catch (e) {
+      try {
+        const parts = url.replace('https://github.com/', '').split('/');
+        const owner = parts[0]; const repo = parts[1].replace('.git', '');
+        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/master/README.md`;
+        const { data } = await axios.get(rawUrl, { timeout: 15000, headers: { 'User-Agent': 'OKF-MD-Master' } });
+        const filename = `${owner}-${repo}-README.md`;
+        const filePath = path.join(UPLOADS_DIR, filename);
+        fs.writeFileSync(filePath, `# Quelle: ${url}\n# GitHub: ${owner}/${repo}\n\n${data}`);
+        addJournalEntry('github', filename, 'repo-to-md', url);
+        res.json({ ok: true, filename, size: fs.statSync(filePath).size, path: filePath, type: 'github' });
+      } catch (e2) {
+        res.status(500).json({ error: 'GitHub repo nicht lesbar: ' + e2.message });
+      }
+    }
+    return;
+  }
+
+  try {
+    const { data } = await axios.get(url, { timeout: 15000, headers: { 'User-Agent': 'OKF-MD-Master/2.0' } });
+    const td = new Turndown();
+    const md = td.turndown(data);
+    const filename = (url.replace(/https?:\/\//, '').replace(/[\/:?&=]/g, '_').substring(0, 60)) + '.md';
+    const filePath = path.join(UPLOADS_DIR, filename);
+    fs.writeFileSync(filePath, `# Quelle: ${url}\n\n${md}`);
+    addJournalEntry('url-fetch', filename, 'web-to-md', url);
+    res.json({ ok: true, filename, size: fs.statSync(filePath).size, path: filePath });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/chat', express.json(), async (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const { question, history } = req.body;
+  if (!question) return res.status(400).json({ error: 'Keine Frage' });
+  try {
+    const result = await skillAgent.ask(question, history || []);
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/chat', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  const skills = skillAgent.getKnowledgeSummary();
+  res.send(`<!DOCTYPE html><html lang="de" class="dark"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OKF Skill Agent</title>
+<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
+</head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+<header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
+<div>
+<h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF Skill Agent</h1>
+<p class="text-xs text-gray-500 mt-1">${skills.length} Skills geladen · Wissensbasierter Chat</p>
+</div>
+<div class="flex space-x-3">
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+<a href="/logout" class="text-xs text-gray-600 hover:text-red-400">Logout</a>
+</div>
+</header>
+
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-4 mb-4 max-h-96 overflow-y-auto" id="chatHistory">
+<p class="text-gray-600 text-sm text-center">Stelle eine Frage zu deinem OKF-Wissen.</p>
+</div>
+
+<div class="flex space-x-2">
+<input id="question" type="text" placeholder="Frage stellen..." class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-teal-500" onkeydown="if(event.key==='Enter')ask()">
+<button onclick="ask()" class="bg-teal-600 hover:bg-teal-500 text-white font-semibold px-6 py-3 rounded-lg transition text-sm">Senden</button>
+</div>
+
+<div id="skillsInfo" class="mt-4 text-xs text-gray-600">
+${skills.length > 0 ? '<details class=cursor-pointer><summary class=text-teal-400>Verfuegbare Skills ('+skills.length+')</summary><div class=mt-2 space-y-1>' + skills.map(s => '<div class=bg-gray-900.p-2.rounded.border.border-gray-800><span class=text-teal-300>'+s.name+'</span><span class=text-gray-500.ml-2>'+s.tags.join(' ')+'</span></div>').join('') + '</div></details>' : ''}
+</div>
+</div>
+<script>
+let history=[];
+function ask(){
+  const q=document.getElementById('question').value.trim();
+  if(!q)return;
+  const div=document.getElementById('chatHistory');
+  div.innerHTML+='<div class=mb-3><span class=text-blue-400.font-bold>Du:</span><p class=text-gray-300.ml-4>'+q+'</p></div>';
+  document.getElementById('question').value='';
+  div.innerHTML+='<div class=mb-3><span class=text-teal-400.font-bold>Agent:</span><p class=text-gray-300.ml-4>⏳ Denke nach...</p></div>';
+  div.scrollTop=div.scrollHeight;
+  fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history})})
+    .then(r=>r.json()).then(d=>{
+      div.lastChild.remove();
+      const answer=d.answer||d.error;
+      div.innerHTML+='<div class=mb-3><span class=text-teal-400.font-bold>Agent:</span><p class=text-gray-300.ml-4>'+answer.replace(/\\n/g,'<br>')+'</p><p class=text-xs.text-gray-600.ml-4>'+d.model+' · '+(d.tokens||0)+' tokens · '+d.skillCount+' skills</p></div>';
+      history.push({role:'user',content:q},{role:'assistant',content:answer});
+      if(history.length>10)history=history.slice(-10);
+      div.scrollTop=div.scrollHeight;
+    }).catch(e=>{div.lastChild.remove();div.innerHTML+='<div class=mb-3><span class=text-red-400>Fehler:</span><p class=text-gray-300.ml-4>'+e.message+'</p></div>'});
+}
+</script></body></html>`);
 });
 
 if (require.main === module) startServer();
