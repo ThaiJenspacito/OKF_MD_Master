@@ -192,7 +192,7 @@ app.get('/', (req, res) => {
 </div>
 <p class="text-xs text-gray-500">IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</p>
 </div>
-<a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
+<a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
 </div>
 <div class="flex space-x-2 mt-3">
 ${status.paused
@@ -346,6 +346,138 @@ app.post('/api/architect/process', (req, res) => {
   }).catch(err => {
     res.status(500).json({ error: err.message });
   });
+});
+
+function getAllSkills() {
+  const skills = [];
+  const dirs = ['okf_ready', 'lessons-learned', 'failed', 'processed'];
+  dirs.forEach(sub => {
+    const dirPath = path.join(DATA_DIR, sub);
+    if (!fs.existsSync(dirPath)) return;
+    fs.readdirSync(dirPath).filter(f => f.endsWith('.md')).forEach(f => {
+      try {
+        const raw = fs.readFileSync(path.join(dirPath, f), 'utf8');
+        const parsed = matter(raw);
+        const stat = fs.statSync(path.join(dirPath, f));
+        skills.push({
+          file: f,
+          dir: sub,
+          name: parsed.data.name || f.replace('.md', ''),
+          type: parsed.data.type || 'skill',
+          description: parsed.data.description || '',
+          tags: parsed.data.tags || [],
+          version: parsed.data.version || '1.0.0',
+          model: parsed.data.model || '-',
+          size: stat.size,
+          modified: stat.mtime.toISOString().substring(0, 16).replace('T', ' ')
+        });
+      } catch {}
+    });
+  });
+  return skills;
+}
+
+app.get('/api/library', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  res.json(getAllSkills());
+});
+
+app.get('/library', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  const skills = getAllSkills();
+  const allTags = [...new Set(skills.flatMap(s => s.tags))].sort();
+
+  res.send(`<!DOCTYPE html><html lang="de" class="dark"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OKF Library</title>
+<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
+</head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
+<div class="container mx-auto px-4 py-6 max-w-7xl">
+
+<header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
+<div>
+<h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF Library</h1>
+<p class="text-xs text-gray-500 mt-1">${skills.length} Skills · ${allTags.length} Kategorien</p>
+</div>
+<div class="flex items-center space-x-3">
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300 transition">← Dashboard</a>
+<a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
+</div>
+</header>
+
+<div class="bg-gray-900 p-4 rounded-xl border border-gray-800 mb-6 flex flex-wrap gap-3 items-center">
+<input id="search" type="text" placeholder="Suche nach Name, Tag, Beschreibung..." class="flex-1 min-w-[200px] bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-100 focus:outline-none focus:border-teal-500" oninput="filter()">
+<select id="tagFilter" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none" onchange="filter()">
+<option value="">Alle Kategorien</option>
+${allTags.map(t => `<option value="${t}">${t}</option>`).join('')}
+</select>
+<select id="sortBy" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none" onchange="filter()">
+<option value="name">Name A-Z</option>
+<option value="date">Neueste</option>
+<option value="tags">Kategorie</option>
+<option value="size">Groesse</option>
+</select>
+<select id="dirFilter" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none" onchange="filter()">
+<option value="">Alle Ordner</option>
+<option value="okf_ready">✅ OKF Ready</option>
+<option value="lessons-learned">📚 Lessons</option>
+<option value="failed">⚠️ Failed</option>
+<option value="processed">📦 Processed</option>
+</select>
+</div>
+
+<div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+</div>
+<script>
+const skills = ${JSON.stringify(skills)};
+const dirIcons = {okf_ready:'✅', 'lessons-learned':'📚', failed:'⚠️', processed:'📦'};
+
+function render(items) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = items.map(s => \`
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-4 hover:border-gray-700 transition group">
+  <div class="flex justify-between items-start mb-2">
+    <span class="font-bold text-teal-300 text-sm truncate flex-1">\${s.name}</span>
+    <span class="text-xs text-gray-600 ml-2 whitespace-nowrap">\${dirIcons[s.dir] || ''}</span>
+  </div>
+  <p class="text-xs text-gray-500 line-clamp-2 mb-3">\${s.description || 'Keine Beschreibung'}</p>
+  <div class="flex flex-wrap gap-1 mb-3">
+    \${s.tags.map(t => \`<span class="text-xs bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded cursor-pointer hover:bg-teal-900/50 hover:text-teal-300" onclick="document.getElementById('tagFilter').value='\${t}';filter()">\${t}</span>\`).join('')}
+  </div>
+  <div class="flex justify-between items-center text-xs text-gray-600 border-t border-gray-800 pt-2">
+    <span>\${s.dir}</span>
+    <span>\${s.modified}</span>
+    <span>\${(s.size/1024).toFixed(1)} KB</span>
+    \${s.model !== '-' ? '<span class="font-mono text-gray-500">🤖 '+s.model.split('/').pop().substring(0,20)+'</span>' : ''}
+  </div>
+</div>\`).join('');
+}
+
+function filter() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const tag = document.getElementById('tagFilter').value;
+  const dir = document.getElementById('dirFilter').value;
+  const sort = document.getElementById('sortBy').value;
+
+  let filtered = skills.filter(s => {
+    if (q && !s.name.toLowerCase().includes(q) && !s.description.toLowerCase().includes(q) && !s.tags.some(t=>t.toLowerCase().includes(q))) return false;
+    if (tag && !s.tags.includes(tag)) return false;
+    if (dir && s.dir !== dir) return false;
+    return true;
+  });
+
+  if (sort === 'name') filtered.sort((a,b) => a.name.localeCompare(b.name));
+  else if (sort === 'date') filtered.sort((a,b) => b.modified.localeCompare(a.modified));
+  else if (sort === 'tags') filtered.sort((a,b) => (a.tags[0]||'').localeCompare(b.tags[0]||''));
+  else if (sort === 'size') filtered.sort((a,b) => b.size - a.size);
+
+  render(filtered);
+}
+
+render(skills);
+</script>
+</body></html>`);
 });
 
 if (require.main === module) startServer();
