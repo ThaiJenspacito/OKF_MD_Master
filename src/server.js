@@ -17,6 +17,7 @@ const config = require('./state/config');
 const { isIdle, getCpuLoad } = require('./core/idle-detector');
 const architect = require('./core/architect');
 const skillAgent = require('./core/skill-agent');
+const social = require('./core/social');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -277,7 +278,7 @@ function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredProm
 <p class="text-xs text-gray-500">IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</p>
 ${activeSessions.length > 0 ? `<p class="text-xs text-gray-600 mt-1">👤 ${activeSessions.map(s => s.ip + ' (' + s.since + 'min)').join(' · ')}</p>` : ''}
 </div>
-<a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
+<a href="/social" class="text-xs text-pink-400 hover:text-pink-300 transition mr-3">📱 Social</a><a href="/chat" class="text-xs text-purple-400 hover:text-purple-300 transition mr-3">💬 Chat</a><a href="/library" class="text-xs text-teal-400 hover:text-teal-300 transition mr-3">🗂 Library</a><button onclick="installPWA()" id="installBtn" class="text-xs bg-teal-900/50 text-teal-300 px-2 py-1 rounded border border-teal-800 hover:bg-teal-800/50 mr-3 hidden">📲 Installieren</button><a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
 <script>setTimeout(()=>{if(deferredPrompt)document.getElementById('installBtn').classList.remove('hidden')},2000);</script>
 </div>
 <div class="flex space-x-2 mt-3">
@@ -814,6 +815,115 @@ function ask(){
       if(history.length>10)history=history.slice(-10);
       div.scrollTop=div.scrollHeight;
     }).catch(e=>{div.lastChild.remove();div.innerHTML+='<div class=mb-3><span class=text-red-400>Fehler:</span><p class=text-gray-300.ml-4>'+e.message+'</p></div>'});
+}
+</script></body></html>`);
+});
+
+app.get('/api/social/skills', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  res.json(social.loadSkills());
+});
+
+app.post('/api/social/generate', express.json(), async (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  try {
+    const result = await social.generateAll(req.body.skillFile);
+    res.json(result);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/social/log', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const entry = social.logPost(req.body);
+  res.json({ ok: true, total: entry.length });
+});
+
+app.get('/social', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  const skills = social.loadSkills();
+  const history = social.getPostedHistory().slice(-10).reverse();
+  const platforms = social.PLATFORMS;
+
+  res.send(`<!DOCTYPE html><html lang="de" class="dark"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Social Media Manager</title>
+<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
+</head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
+<div class="container mx-auto px-4 py-6 max-w-6xl">
+<header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
+<div>
+<h1 class="text-xl font-bold bg-gradient-to-r from-pink-400 to-purple-500 bg-clip-text text-transparent">Social Media Manager</h1>
+<p class="text-xs text-gray-500 mt-1">OKF Skills → Posts fuer ${Object.keys(platforms).length} Plattformen</p>
+</div>
+<div class="flex space-x-3">
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+<a href="/logout" class="text-xs text-gray-600 hover:text-red-400">Logout</a>
+</div>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+<div class="lg:col-span-1 bg-gray-900 p-4 rounded-xl border border-gray-800">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Skills</h2>
+<div class="space-y-1 max-h-96 overflow-y-auto">
+${skills.length === 0 ? '<p class="text-gray-600 text-xs">Keine Skills</p>' : ''}
+${skills.map(s => `<div class="bg-gray-800/50 rounded border border-gray-700/50 p-2 cursor-pointer hover:border-teal-700" onclick="document.getElementById('skill-select').value='${s.file}';document.getElementById('skill-label').innerHTML='<b>${s.name}</b><br><span class=text-gray-500>${s.tags.join(' ')}</span>'"><span class="text-teal-300 text-xs">${s.name}</span></div>`).join('')}
+</div>
+</div>
+
+<div class="lg:col-span-3 space-y-4">
+<div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
+<input type="hidden" id="skill-select" value="${skills[0]?.file || ''}">
+<div id="skill-label" class="text-sm mb-3">${skills[0] ? '<b>'+skills[0].name+'</b><br><span class=text-gray-500>'+skills[0].tags.join(' ')+'</span>' : 'Keine Skills'}</div>
+<button onclick="generatePosts()" id="genBtn" class="text-sm bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-pink-500 hover:to-purple-500 transition">🚀 Posts generieren</button>
+<span id="genStatus" class="text-xs text-gray-500 ml-3"></span>
+</div>
+
+<div id="postsArea" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+${Object.entries(platforms).map(([key, p]) => `
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+<div class="flex justify-between items-center mb-2">
+<span class="font-bold text-sm">${p.name}</span>
+<span class="text-xs text-gray-600">${p.maxChars} Zeichen max</span>
+</div>
+<textarea id="post-${key}" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-xs text-gray-300 h-32 resize-none focus:outline-none focus:border-pink-600" placeholder="Post erscheint hier..."></textarea>
+<div class="flex justify-between mt-2">
+<span class="text-xs text-gray-600" id="count-${key}">0 Zeichen</span>
+<button onclick="copyPost('${key}')" class="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded border border-gray-700 hover:bg-gray-700">📋 Kopieren</button>
+</div>
+</div>
+`).join('')}
+</div>
+
+${history.length > 0 ? `
+<div class="bg-gray-900 p-4 rounded-xl border border-gray-800 mt-4">
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Verlauf</h2>
+${history.map(h => `<div class="text-xs border-b border-gray-800 py-1"><span class=text-gray-500>${h.posted?.substring(0,16)||''}</span> <span class=text-pink-400>${h.platformName}</span> → ${h.skillName?.substring(0,30)}</div>`).join('')}
+</div>` : ''}
+
+</div></div>
+
+<script>
+const platforms=${JSON.stringify(platforms)};
+async function generatePosts(){
+  const file=document.getElementById('skill-select').value;
+  if(!file)return;
+  document.getElementById('genBtn').disabled=true;
+  document.getElementById('genStatus').innerHTML='⏳ Generiere...';
+  try{
+    const r=await fetch('/api/social/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skillFile:file})});
+    const d=await r.json();
+    if(d.posts)d.posts.forEach(p=>{
+      const ta=document.getElementById('post-'+p.platform);
+      if(ta){ta.value=p.text;document.getElementById('count-'+p.platform).innerHTML=p.text.length+' Zeichen'}
+    });
+    document.getElementById('genStatus').innerHTML='✅ Fertig';
+  }catch(e){document.getElementById('genStatus').innerHTML='❌ '+e.message}
+  document.getElementById('genBtn').disabled=false;
+}
+function copyPost(platform){
+  const ta=document.getElementById('post-'+platform);
+  ta.select();navigator.clipboard.writeText(ta.value);
+  fetch('/api/social/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform,platformName:platforms[platform]?.name,skillName:document.getElementById('skill-select').value,text:ta.value})});
 }
 </script></body></html>`);
 });
