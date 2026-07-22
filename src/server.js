@@ -91,6 +91,20 @@ const upload = multer({
   }
 });
 
+const DOWNLOADS_FILE = path.join(DATA_DIR, 'downloads.json');
+
+function trackDownload(skillFile) {
+  const dl = fs.existsSync(DOWNLOADS_FILE) ? JSON.parse(fs.readFileSync(DOWNLOADS_FILE, 'utf8')) : {};
+  dl[skillFile] = (dl[skillFile] || 0) + 1;
+  fs.writeFileSync(DOWNLOADS_FILE, JSON.stringify(dl, null, 2));
+  return dl[skillFile];
+}
+
+function getDownloads() {
+  if (!fs.existsSync(DOWNLOADS_FILE)) return {};
+  return JSON.parse(fs.readFileSync(DOWNLOADS_FILE, 'utf8'));
+}
+
 const sessions = {};
 
 function readLines(filePath) {
@@ -490,7 +504,7 @@ return `<tr class="hover:bg-gray-800/30"><td class="py-2 px-2 font-medium text-g
 
 </div>
 <script>
-function uploadFile(file){if(!file)return;document.getElementById('uploadMsg').innerHTML='⏳...';const fd=new FormData();fd.append('file',file);fetch('/api/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{document.getElementById('uploadMsg').innerHTML=d.ok?'✅ <b>'+d.filename+'</b> ('+d.size+' Bytes)':'❌ '+d.error}).catch(()=>document.getElementById('uploadMsg').innerHTML='❌ Fehler')}
+function uploadFile(file){if(!file)return;const msg=document.getElementById('uploadMsg');msg.innerHTML='<div class=bg-gray-800.rounded-full.h-2.mb-1><div id=uploadBar class=bg-teal-500.h-2.rounded-full.transition-all style=width:0%></div></div><span id=uploadPct>0%</span>';const xhr=new XMLHttpRequest();xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);document.getElementById('uploadBar').style.width=pct+'%';document.getElementById('uploadPct').innerHTML=pct+'%'}};xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);msg.innerHTML=d.ok?'✅ <b>'+d.filename+'</b> ('+d.size+' Bytes)':'❌ '+d.error}catch(e){msg.innerHTML='❌ Fehler'}};xhr.onerror=()=>{msg.innerHTML='❌ Fehler'};const fd=new FormData();fd.append('file',file);xhr.open('POST','/api/upload');xhr.send(fd)}
 function scanLaptop(){const btn=document.getElementById('scanBtn');btn.disabled=true;btn.innerHTML='⏳...';fetch('/api/scan/laptop').then(r=>r.json()).then(d=>{btn.disabled=false;btn.innerHTML='💻 Suchen';const div=document.getElementById('scanResults');if(!d.files||!d.files.length){div.innerHTML='<p class=text-gray-600>Keine .md-Dateien gefunden.</p>';return}div.innerHTML=d.files.map(f=>'<div class=flex.justify-between.items-center.py-1.border-b.border-gray-800><span class=truncate.mr-2>'+f.dir+'/'+f.name+'</span><span class=text-gray-600.mr-2>'+(f.size/1024).toFixed(1)+'KB</span><button onclick=approvePath(\''+f.path+'\') class=text-teal-400>+</button></div>').join('')}).catch(()=>{btn.disabled=false;btn.innerHTML='💻 Suchen'})}
 function approvePath(dir){fetch('/api/scan/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:dir})}).then(r=>r.json()).then(d=>{if(d.ok)alert('✅ Pfad hinzugefuegt: '+d.watchDirs.join(', '));else alert('❌ Fehler')})}
 function checkHealth(){fetch('/api/health').then(r=>r.json()).then(h=>{document.getElementById('healthDisplay').innerHTML='<p>Scheduler: '+(h.scheduler?'🟢':'🔴')+'</p><p>LLM: '+(h.llm?'🟢':'🔴')+'</p><p>Memory: '+(h.memory?h.memory.used:'?')+'</p><p>Uptime: '+Math.round(h.uptime/60)+'min</p><p class='+(h.allOk?'text-green-400':'text-yellow-400')+'>'+(h.allOk?'✅ Alles OK':'⚠️ Probleme')+'</p>'})}
@@ -585,6 +599,8 @@ app.get('/api/library', (req, res) => {
 app.get('/library', (req, res) => {
   if (!isLoggedIn(req)) return res.redirect('/login');
   const skills = getAllSkills();
+  const downloads = getDownloads();
+  skills.forEach(s => { s.downloads = downloads[s.file] || 0; });
   const allTags = [...new Set(skills.flatMap(s => s.tags))].sort();
 
   res.send(`<!DOCTYPE html><html lang="de" class="dark"><head>
@@ -647,9 +663,8 @@ function render(items) {
   </div>
   <div class="flex justify-between items-center text-xs text-gray-600 border-t border-gray-800 pt-2">
     <span>\${s.dir}</span>
-    <span>\${s.modified}</span>
+    <a href="/api/download/\${s.file}" class="text-teal-400 hover:text-teal-300" title="Download">⬇ \${s.downloads||0}</a>
     <span>\${(s.size/1024).toFixed(1)} KB</span>
-    \${s.model !== '-' ? '<span class="font-mono text-gray-500">🤖 '+s.model.split('/').pop().substring(0,20)+'</span>' : ''}
   </div>
 </div>\`).join('');
 }
@@ -743,6 +758,18 @@ app.get('/api/journal', (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
   const entries = loadJournal();
   res.json(entries.slice(-20));
+});
+
+app.get('/api/download/:file', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  const file = req.params.file;
+  const okfPath = path.join(OKF_READY_DIR, file);
+  if (!fs.existsSync(okfPath)) return res.status(404).json({ error: 'Nicht gefunden' });
+  const count = trackDownload(file);
+  res.set('Content-Type', 'text/markdown; charset=utf-8');
+  res.set('Content-Disposition', 'attachment; filename="' + file + '"');
+  res.set('X-Download-Count', String(count));
+  res.sendFile(okfPath);
 });
 
 app.get('/api/knowledge', (req, res) => {
