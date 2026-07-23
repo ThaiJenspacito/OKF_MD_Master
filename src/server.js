@@ -225,10 +225,6 @@ ${ghClientId ? `
 ${(gClientId || ghClientId) ? '<div class="divider"><div class="divider-line"></div><span class="divider-text">or</span><div class="divider-line"></div></div>' : ''}
 
 <a href="/auth/dev" class="dev-btn">⚡ Continue without password</a>
-<form method="POST" action="/login" class="pin-section" style="margin-top:10px">
-<input type="password" name="pin" placeholder="PIN" maxlength="8">
-<button>→</button>
-</form>
 </div>
 
 <div class="vision-quote">

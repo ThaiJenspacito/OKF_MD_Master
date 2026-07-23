@@ -23,13 +23,6 @@ if (!isCloudRun) {
   scheduler.start();
 
   try {
-    const { initBot } = require('./bot');
-    initBot();
-  } catch (err) {
-    console.log('Telegram Bot: deaktiviert');
-  }
-
-  try {
     tray.start(scheduler);
   } catch (err) {
     console.log('Tray: nicht verfuegbar');

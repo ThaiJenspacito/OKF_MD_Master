@@ -203,7 +203,6 @@ const agents=[
 {icon:'🕵️',name:'Scout',detail:(activity['scout']?.action||'Idle')+': '+(activity['scout']?.detail||'waiting'),active:true},
 {icon:'🤖',name:'Architect',detail:'Model: '+(cfg.model||'-')+' → '+(cfg.fallbackModel||''),active:!!h.llm},
 {icon:'⏱️',name:'Scheduler',detail:'Poll: 10s · Idle: ≥120s · CPU <30%',active:s.scheduler.running},
-{icon:'📱',name:'Telegram',detail:'Disabled',active:false},
 {icon:'🖥️',name:'Tray',detail:'Windows',active:true}
 ];
 document.getElementById('agentCards').innerHTML=agents.map(a=>'<div class=agent-row><div class=agent-icon>'+a.icon+'</div><div class=agent-info><div class=agent-name>'+a.name+'</div><div class=agent-detail>'+a.detail+'</div></div><span class="badge '+(a.active?'badge-green':'badge-red')+'">'+(a.active?'Active':'Off')+'</span></div>').join('')
