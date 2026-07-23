@@ -68,6 +68,16 @@ input,select{background:#1e293b;border:1px solid #334155;border-radius:6px;paddi
 </nav>
 </header>
 
+<div style="text-align:center;padding:16px;background:#0f172a;border-radius:12px;border:1px solid #1e293b;margin-top:16px;font-size:11px;color:#64748b">
+🌐 <b>Ecosystem:</b>
+<a href="https://github.com/langchain-ai/langchain" target="_blank" style="color:#14b8a6">LangChain</a> ·
+<a href="https://github.com/crewAIInc/crewAI" target="_blank" style="color:#14b8a6">CrewAI</a> ·
+<a href="https://github.com/Mintplex-Labs/anything-llm" target="_blank" style="color:#14b8a6">AnythingLLM</a> ·
+<a href="https://github.com/nicklaus-dev/private-gpt" target="_blank" style="color:#14b8a6">PrivateGPT</a> ·
+<a href="https://github.com/nicklaus-dev/continue" target="_blank" style="color:#14b8a6">Continue.dev</a>
+<br>OKF skills work as context for all these tools. <a href="/connect" style="color:#f59e0b">Connect yours →</a>
+</div>
+
 <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
 <button class="btn" onclick="apiCall('/api/scheduler/pause','POST').then(()=>location.reload())" id="pauseBtn">Pause</button>
 <button class="btn btn-teal" onclick="apiCall('/api/scout/scan','POST').then(d=>{alert('Scout: '+d.discovered+' files found');location.reload()})">Scout Now</button>

@@ -147,6 +147,25 @@ We're building the future of AI knowledge infrastructure — and you can be part
 
 ---
 
+---
+
+## 🔗 Ecosystem & Integrations
+
+OKF MD Master works alongside the best tools in the AI ecosystem. Our skills serve as structured context for any LLM pipeline:
+
+| Project | Integration | How OKF Helps |
+|---------|------------|---------------|
+| [LangChain](https://github.com/langchain-ai/langchain) | Use OKF skills as Document loaders | Structured metadata for better retrieval |
+| [CrewAI](https://github.com/crewAIInc/crewAI) | Load OKF skills as Agent tools | Multi-agent knowledge sharing |
+| [AnythingLLM](https://github.com/Mintplex-Labs/anything-llm) | Import OKF vault directly | Pre-tagged, AI-ready documents |
+| [PrivateGPT](https://github.com/zylon-ai/private-gpt) | Ingest OKF skills folder | Local RAG with structured context |
+| [Continue.dev](https://github.com/continuedev/continue) | Use OKF as custom context provider | IDE-integrated AI with your knowledge |
+| [n8n](https://github.com/n8n-io/n8n) | Webhook to OKF pipeline | Automated workflow → structured knowledge |
+
+**Are we missing your project?** [Open an issue](https://github.com/ThaiJenspacito/OKF_MD_Master/issues) — we'll add it.
+
+---
+
 ## 💎 Pricing
 
 | Tier | Price | Features |
