@@ -1,15 +1,14 @@
 {
   "name": "okf-md-master",
   "version": "2.0.0",
-  "description": "Autonome Bruecke fuer Markdown-Notizen ins Google Open Knowledge Format. Zero Data Loss, Idle-aware, Windows Tray.",
-  "main": "src/tray.js",
+  "description": "The first complete system running on Open Knowledge Format. 9 autonomous agents turn markdown into AI-ready structured knowledge.",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node src/tray.js",
+    "start": "node src/index.js",
     "dashboard": "node src/server.js",
-    "scout": "node src/core/scout.js",
-    "architect": "node src/core/architect.js",
-    "bot": "node src/bot.js",
-    "pipeline": "node src/core/scout.js && node src/core/architect.js",
+    "pipeline": "node src/agents/okf-pipeline-runner.js",
+    "star-hunter": "node src/agents/github-star-hunter.js",
+    "quality": "node src/core/okf-quality-agent.js",
     "reset-failed": "node src/core/reset-failed.js"
   },
   "dependencies": {
