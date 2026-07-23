@@ -234,9 +234,13 @@ ${(gClientId || ghClientId) ? '<div class="divider"><div class="divider-line"></
 <p class="author">— OKF MD Master · Open Knowledge Format</p>
 </div>
 <div style="text-align:center;margin-top:20px;font-size:11px;color:#475569">
-⭐ <a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" style="color:#f59e0b;text-decoration:none">Star us on GitHub</a> · 
-🐙 <a href="https://github.com/ThaiJenspacito/OKF_MD_Master/issues" target="_blank" style="color:#14b8a6;text-decoration:none">Report an issue</a> · 
-🤖 <a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" style="color:#8b5cf6;text-decoration:none">Contribute</a>
+🐙 <a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" style="color:#f59e0b;text-decoration:none">GitHub</a> ·
+💼 <a href="https://linkedin.com" target="_blank" style="color:#0A66C2;text-decoration:none">LinkedIn</a> ·
+📘 <a href="https://www.facebook.com/profile.php?id=61592172550155" target="_blank" style="color:#1877F2;text-decoration:none">Facebook</a> ·
+💬 <a href="https://wa.me/4915123445864" target="_blank" style="color:#25D366;text-decoration:none">WhatsApp</a> ·
+📱 <a href="https://t.me/JensBeckerBot" target="_blank" style="color:#26A5E4;text-decoration:none">Telegram</a> ·
+🟢 <a href="#" target="_blank" style="color:#06C755;text-decoration:none">LINE</a> ·
+☁️ <a href="https://thai-jenspacito-okf-md.eu.run.app" target="_blank" style="color:#14b8a6;text-decoration:none">Live Demo</a>
 </div>
 </div>
 </body></html>`);

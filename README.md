@@ -10,6 +10,13 @@
   [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ThaiJenspacito/OKF_MD_Master/pulls)
   [![FREE for 100 users](https://img.shields.io/badge/FREE-first%20100%20users-orange)](#-pricing)
 
+  **Connect:**
+  [![LinkedIn](https://img.shields.io/badge/LinkedIn-OKF_MD_Master-0A66C2)](https://linkedin.com)
+  [![Facebook](https://img.shields.io/badge/Facebook-Page-1877F2)](https://www.facebook.com/profile.php?id=61592172550155)
+  [![WhatsApp](https://img.shields.io/badge/WhatsApp-Chat-25D366)](https://wa.me/4915123445864)
+  [![Telegram](https://img.shields.io/badge/Telegram-Bot-26A5E4)](https://t.me/JensBeckerBot)
+  [![Discord](https://img.shields.io/badge/Discord-Community-5865F2)](#)
+
   <hr width="50%">
 </div>
 
