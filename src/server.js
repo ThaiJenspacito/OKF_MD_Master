@@ -24,6 +24,7 @@ const auth = require('./core/auth');
 const credits = require('./core/credits');
 const githubBot = require('./core/github-bot');
 const qualityAgent = require('./core/okf-quality-agent');
+const lineBot = require('./core/line-bot');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -159,8 +160,10 @@ function okfCard(name, description, tags, date) {
 
 app.get('/login', (req, res) => {
   if (isLoggedIn(req)) return res.redirect('/');
+  // Auto-detect mobile
+  const ua = (req.get('user-agent') || '').toLowerCase();
+  const isMobile = /mobile|android|iphone|ipad/.test(ua);
   const gClientId = auth.GOOGLE_CLIENT_ID || '';
-  const ghClientId = auth.GH_CLIENT_ID || '';
 
   res.send(`<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -168,82 +171,56 @@ app.get('/login', (req, res) => {
 <link rel="icon" href="/icon.svg">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100dvh;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
 .bg-grid{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,#1e293b 1px,transparent 0);background-size:40px 40px;pointer-events:none}
 .bg-glow{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(120px);opacity:.15;pointer-events:none}
 .glow-1{top:-200px;left:-100px;background:#14b8a6}.glow-2{bottom:-200px;right:-100px;background:#3b82f6}.glow-3{top:50%;left:50%;transform:translate(-50%,-50%);background:#8b5cf6;width:400px;height:400px}
 .container{max-width:480px;width:100%;padding:24px;position:relative;z-index:1}
-.logo{text-align:center;margin-bottom:32px}
+.logo{text-align:center;margin-bottom:28px}
 .logo h1{font-size:32px;background:linear-gradient(135deg,#14b8a6,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800;letter-spacing:-.5px}
 .logo p{color:#64748b;font-size:13px;margin-top:6px}
-.features{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:28px}
-.feat{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:14px;text-align:center}.feat-icon{font-size:22px;margin-bottom:6px}.feat-title{font-size:12px;font-weight:600;color:#e2e8f0}.feat-desc{font-size:10px;color:#64748b;margin-top:4px;line-height:1.4}
 .login-card{background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:24px}
-.auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;border:none}
-.auth-google{background:#fff;color:#1e293b}.auth-google:hover{background:#f1f5f9}
-.auth-github{background:#24292f;color:#fff;margin-top:10px}.auth-github:hover{background:#2d363f}
+.auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;border:none}
+.auth-google{background:#fff;color:#1e293b;margin-bottom:8px}.auth-google:hover{background:#f1f5f9}
+.auth-github{background:#24292f;color:#fff;margin-bottom:8px}.auth-github:hover{background:#2d363f}
 .auth-github svg{width:18px;height:18px}
 .divider{display:flex;align-items:center;margin:16px 0;gap:10px}.divider-line{flex:1;height:1px;background:#1e293b}.divider-text{color:#475569;font-size:11px}
-.dev-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:#0f766e15;color:#14b8a6;border:1px solid #0f766e40;transition:all .2s}.dev-btn:hover{background:#0f766e25}
-.pin-section{margin-top:10px;display:flex;gap:8px}.pin-section input{flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 14px;color:#e2e8f0;font-size:13px;text-align:center;letter-spacing:4px}.pin-section input:focus{outline:none;border-color:#14b8a6}.pin-section button{background:#14b8a6;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}.pin-section button:hover{background:#0d9488}
-.vision-quote{text-align:center;margin-top:32px;padding:20px;background:linear-gradient(135deg,#0f172a,#0c4a6e10);border-radius:14px;border:1px solid #1e293b}
-.vision-quote p{color:#94a3b8;font-size:12px;line-height:1.6;font-style:italic}.vision-quote .author{color:#64748b;font-size:10px;margin-top:8px;font-style:normal}
+.dev-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:14px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:#0f766e15;color:#14b8a6;border:1px solid #0f766e40;text-decoration:none;transition:all .2s}.dev-btn:hover{background:#0f766e25}
+.qr-section{text-align:center;margin-top:20px;padding:16px;background:#0f172a;border:1px solid #1e293b;border-radius:12px}
+.qr-section p{font-size:11px;color:#64748b;margin-bottom:8px}
+.qr-section img{width:120px;height:120px;border-radius:8px}
+.social-bar{text-align:center;margin-top:20px;font-size:11px;color:#475569}
+.social-bar a{color:#64748b;text-decoration:none;margin:0 6px}.social-bar a:hover{color:#e2e8f0}
 .free-badge{display:inline-block;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:10px;padding:3px 8px;border-radius:20px;margin-bottom:12px;font-weight:700;letter-spacing:.5px}
 </style>
 </head><body>
 <div class="bg-grid"></div>
-<div class="bg-glow glow-1"></div>
-<div class="bg-glow glow-2"></div>
-<div class="bg-glow glow-3"></div>
-
+<div class="bg-glow glow-1"></div><div class="bg-glow glow-2"></div><div class="bg-glow glow-3"></div>
 <div class="container">
 <div class="logo">
 <div class="free-badge">FREE · FIRST 100 USERS</div>
 <h1>OKF MD Master</h1>
-<p>Autonomous Knowledge Pipeline · Open Knowledge Format</p>
+<p>Autonomous AI Knowledge Pipeline</p>
 </div>
-
-<div class="features">
-<div class="feat"><div class="feat-icon">🔄</div><div class="feat-title">Auto-Transform</div><div class="feat-desc">.md files to structured OKF skills automatically</div></div>
-<div class="feat"><div class="feat-icon">🤖</div><div class="feat-title">AI-Powered</div><div class="feat-desc">DeepSeek, Gemini & Cohere via smart routing</div></div>
-<div class="feat"><div class="feat-icon">🔗</div><div class="feat-title">P2P Network</div><div class="feat-desc">Share computing power, earn download credits</div></div>
-<div class="feat"><div class="feat-icon">📱</div><div class="feat-title">Everywhere</div><div class="feat-desc">PWA on Android, iOS, Windows & macOS</div></div>
-</div>
-
 <div class="login-card">
-${gClientId ? `
-<div id="g_id_onload" data-client_id="${gClientId}" data-callback="onGoogleSignin" data-auto_prompt="false"></div>
-<button class="auth-btn auth-google" onclick="document.querySelector('.g_id_signin div[role=button]').click()">
-<svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-Continue with Google
-</button>
-<div class="g_id_signin" style="display:none" data-type="standard" data-theme="filled_black"></div>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script>function onGoogleSignin(r){fetch('/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:r.credential})}).then(x=>x.json()).then(d=>{if(d.ok)location.href='/';else alert(d.error)})}</script>
-` : ''}
-${ghClientId ? `
-<a href="/auth/github" class="auth-btn auth-github"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>Continue with GitHub</a>
-` : ''}
-${(gClientId || ghClientId) ? '<div class="divider"><div class="divider-line"></div><span class="divider-text">or</span><div class="divider-line"></div></div>' : ''}
-
+${gClientId ? '<div id="g_id_onload" data-client_id="'+gClientId+'" data-callback="onGoogleSignin" data-auto_prompt="false"></div><button class="auth-btn auth-google" onclick="document.querySelector(\'.g_id_signin div[role=button]\').click()"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button><div class="g_id_signin" style="display:none"></div><script src="https://accounts.google.com/gsi/client" async defer></script><script>function onGoogleSignin(r){fetch("/auth/google",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({credential:r.credential})}).then(x=>x.json()).then(d=>{if(d.ok)location.href="/";else alert(d.error)})}</script>' : ''}
+${auth.GH_CLIENT_ID ? '<a href="/auth/github" class="auth-btn auth-github"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>Continue with GitHub</a>' : ''}
+${(gClientId || auth.GH_CLIENT_ID) ? '<div class="divider"><div class="divider-line"></div><span class="divider-text">or</span><div class="divider-line"></div></div>' : ''}
 <a href="/auth/dev" class="dev-btn">⚡ Continue without password</a>
+<form method="POST" action="/login" style="display:flex;gap:8px;margin-top:10px"><input type="password" name="pin" placeholder="PIN" maxlength="8" style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;color:#e2e8f0;font-size:13px;text-align:center;letter-spacing:4px"><button style="background:#14b8a6;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer">→</button></form>
 </div>
-
-<div class="vision-quote">
-<p>"Turn any text into structured, AI-ready knowledge — automatically. Your knowledge base powers every AI agent."</p>
-<p class="author">— OKF MD Master · Open Knowledge Format</p>
+<div class="qr-section">
+<p>📱 Mobile App — scan to install</p>
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://thai-jenspacito-okf-md.eu.run.app/mobile" alt="QR to Mobile App">
 </div>
-<div style="text-align:center;margin-top:20px;font-size:11px;color:#475569">
-🐙 <a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" style="color:#f59e0b;text-decoration:none">GitHub</a> ·
-💼 <a href="https://linkedin.com" target="_blank" style="color:#0A66C2;text-decoration:none">LinkedIn</a> ·
-📘 <a href="https://www.facebook.com/profile.php?id=61592172550155" target="_blank" style="color:#1877F2;text-decoration:none">Facebook</a> ·
-💬 <a href="https://wa.me/4915123445864" target="_blank" style="color:#25D366;text-decoration:none">WhatsApp</a> ·
-📱 <a href="https://t.me/JensBeckerBot" target="_blank" style="color:#26A5E4;text-decoration:none">Telegram</a> ·
-🟢 <a href="#" target="_blank" style="color:#06C755;text-decoration:none">LINE</a> ·
-☁️ <a href="https://thai-jenspacito-okf-md.eu.run.app" target="_blank" style="color:#14b8a6;text-decoration:none">Live Demo</a>
+<div class="social-bar">
+<a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank">GitHub</a> ·
+<a href="https://linkedin.com" target="_blank">LinkedIn</a> ·
+<a href="https://www.facebook.com/profile.php?id=61592172550155" target="_blank">Facebook</a> ·
+<a href="https://wa.me/4915123445864" target="_blank">WhatsApp</a> ·
+<a href="https://line.me/R/ti/p/@okf-md-master" target="_blank">LINE</a>
 </div>
-</div>
-</body></html>`);
+</div></body></html>`);
 });
 
 app.get('/auth/dev', (req, res) => {
@@ -611,62 +588,88 @@ app.get('/settings', (req, res) => {
   const user = getUser(req);
   const email = user ? user.email : 'anonymous';
   const stats = credits.getStats(email);
+  const cfg = config.get();
   const leaderboard = credits.getLeaderboard();
 
-  res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
+  res.send(`<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Settings Â· OKF MD Master</title>
-<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
+<title>Settings · OKF MD Master</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-4xl">
 <header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
-<div>
-<h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">Settings</h1>
-<p class="text-xs text-gray-500 mt-1">${user ? user.name || user.email : 'Guest'} Â· Power = Downloads</p>
-</div>
-<a href="/" class="text-xs text-teal-400 hover:text-teal-300">â† Dashboard</a>
+<div><h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">Settings</h1>
+<p class="text-xs text-gray-500 mt-1">${user ? user.name || user.email : 'Guest'} · Power = Downloads</p></div>
+<a href="/" class="text-xs text-teal-400">← Dashboard</a>
 </header>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Your Contribution</h2>
-<div class="grid grid-cols-2 gap-3 text-sm">
-<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Files Processed</p><p class="text-teal-400 text-xl font-bold">${stats.user.filesProcessed || 0}</p></div>
-<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Tokens Processed</p><p class="text-blue-400 text-xl font-bold">${(stats.user.tokensProcessed || 0).toLocaleString()}</p></div>
-<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Credits Earned</p><p class="text-green-400 text-xl font-bold">${stats.user.credits || 0}</p></div>
-<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">CPU Time</p><p class="text-purple-400 text-xl font-bold">${(stats.user.cpuContribution || 0).toFixed(1)}h</p></div>
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Scope Control</h2>
+<form onsubmit="saveScope(event)" class="space-y-3 text-sm">
+
+<label class="flex items-center justify-between">
+<span class="text-gray-400">Root Access</span>
+<input type="checkbox" id="rootAccess" ${cfg.rootAccess ? 'checked' : ''} class="accent-red-500">
+</label>
+<p class="text-xs text-red-500/70">⚠️ Allows scanning entire filesystem. Use with caution.</p>
+
+<div class="pt-3 border-t border-gray-800">
+<span class="text-gray-400 text-xs">Watch Directories</span>
+<div id="watchDirsList" class="space-y-1 mt-2">
+${(cfg.watchDirs || []).map(d => '<div class=flex.justify-between.items-center.bg-gray-800.rounded.px-3.py-1><span class=text-xs.text-blue-300>'+d+'</span><button onclick=removeDir(\''+d+'\') class=text-red-400.text-xs>×</button></div>').join('')}
 </div>
-<div class="mt-4 bg-gray-800 rounded-lg p-3">
-<p class="text-xs text-gray-500 mb-2">Download Limit</p>
-<div class="bg-gray-700 rounded-full h-3"><div class="bg-gradient-to-r from-teal-500 to-blue-500 h-3 rounded-full transition-all" style="width:${Math.min(100, ((stats.canDownload.limit - stats.canDownload.remaining) / stats.canDownload.limit) * 100)}%"></div></div>
-<p class="text-xs text-gray-400 mt-1">${stats.canDownload.remaining} of ${stats.canDownload.limit} downloads remaining</p>
+<div class="flex gap-2 mt-2">
+<input id="newDir" placeholder="Add directory path..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs">
+<button type="button" onclick="addDir()" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800">Add</button>
 </div>
+</div>
+
+<div class="pt-3 border-t border-gray-800">
+<span class="text-gray-400 text-xs">Excluded Paths</span>
+<div id="excludedList" class="space-y-1 mt-2">
+${(cfg.excludePaths || ['node_modules','.git','data','logs']).map(d => '<div class=flex.justify-between.items-center.bg-gray-800.rounded.px-3.py-1><span class=text-xs.text-yellow-300>'+d+'</span><button onclick=removeExclude(\''+d+'\') class=text-red-400.text-xs>×</button></div>').join('')}
+</div>
+<div class="flex gap-2 mt-2">
+<input id="newExclude" placeholder="Exclude pattern..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs">
+<button type="button" onclick="addExclude()" class="text-xs bg-yellow-900/50 text-yellow-300 px-3 py-1 rounded border border-yellow-800">Exclude</button>
+</div>
+</div>
+
+<button class="bg-teal-600 hover:bg-teal-500 text-white text-sm px-4 py-2 rounded-lg transition w-full mt-4">Save Scope Settings</button>
+</form>
+<p id="scopeMsg" class="text-xs text-gray-500 mt-2"></p>
 </div>
 
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Contribution Settings</h2>
-<form onsubmit="saveSettings(event)" class="space-y-3 text-sm">
-<label class="flex items-center justify-between"><span class="text-gray-400">Share CPU Power</span><input type="checkbox" id="sharePower" ${stats.user.settings.sharePower ? 'checked' : ''} class="accent-teal-500"></label>
-<label class="flex items-center justify-between"><span class="text-gray-400">Auto-Process Files</span><input type="checkbox" id="autoProcess" ${stats.user.settings.autoProcess ? 'checked' : ''} class="accent-teal-500"></label>
-<div class="flex items-center justify-between"><span class="text-gray-400">Max Downloads</span><input type="number" id="maxDownloads" value="${stats.user.settings.maxDownloads || 50}" min="10" max="500" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-20 text-center text-gray-100"></div>
-<button class="bg-teal-600 hover:bg-teal-500 text-white text-sm px-4 py-2 rounded-lg transition">Save Settings</button>
-<p id="settingsMsg" class="text-xs text-gray-500"></p>
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">LLM Settings</h2>
+<form onsubmit="saveLLM(event)" class="space-y-3 text-sm">
+<div><span class="text-gray-400 text-xs">Primary Model</span>
+<select id="modelSelect" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs mt-1">
+${['cohere/north-mini-code:free','deepseek-chat','gemini','deepseek/deepseek-chat-v3-0324:free'].map(m => '<option value='+m+' '+(cfg.model===m?'selected':'')+'>'+m+'</option>').join('')}
+</select></div>
+<div><span class="text-gray-400 text-xs">Fallback Model</span>
+<select id="fallbackSelect" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs mt-1">
+${['deepseek-chat','gemini','cohere/north-mini-code:free','google/gemma-3-27b-it:free'].map(m => '<option value='+m+' '+(cfg.fallbackModel===m?'selected':'')+'>'+m+'</option>').join('')}
+</select></div>
+<div class="flex items-center justify-between"><span class="text-gray-400 text-xs">Max Tokens</span><input id="maxTokens" type="number" value="${cfg.maxTokens||4096}" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-24 text-xs text-center"></div>
+<div class="flex items-center justify-between"><span class="text-gray-400 text-xs">Max File Size (KB)</span><input id="maxFileSize" type="number" value="${Math.round((cfg.maxFileSize||50000)/1024)}" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-24 text-xs text-center"></div>
+<div class="flex items-center justify-between"><span class="text-gray-400 text-xs">Idle Threshold (sec)</span><input id="idleThreshold" type="number" value="${cfg.idleThresholdSec||120}" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-24 text-xs text-center"></div>
+<div class="flex items-center justify-between"><span class="text-gray-400 text-xs">CPU Threshold (%)</span><input id="cpuThreshold" type="number" value="${cfg.cpuThresholdPct||30}" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-24 text-xs text-center"></div>
+<button class="bg-teal-600 hover:bg-teal-500 text-white text-sm px-4 py-2 rounded-lg transition w-full">Save LLM Settings</button>
 </form>
+<p id="llmMsg" class="text-xs text-gray-500 mt-2"></p>
 </div>
 </div>
 
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800 mb-6">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Leaderboard</h2>
-<table class="w-full text-xs">
-<thead><tr class="text-gray-500 uppercase border-b border-gray-800"><th class="py-2 px-2 text-left">#</th><th class="py-2 px-2 text-left">User</th><th class="py-2 px-2 text-right">Credits</th><th class="py-2 px-2 text-right">Files</th><th class="py-2 px-2 text-right">Tokens</th><th class="py-2 px-2 text-right">CPU</th></tr></thead>
-<tbody class="divide-y divide-gray-800/50">
-${leaderboard.map((e, i) => `<tr class="hover:bg-gray-800/30"><td class="py-1.5 px-2 text-gray-500">${i + 1}</td><td class="py-1.5 px-2 text-teal-300">${e.name || e.email}</td><td class="py-1.5 px-2 text-right text-green-400">${e.credits}</td><td class="py-1.5 px-2 text-right text-gray-400">${e.files}</td><td class="py-1.5 px-2 text-right text-gray-500">${e.tokens.toLocaleString()}</td><td class="py-1.5 px-2 text-right text-gray-600">${e.cpu}</td></tr>`).join('')}
-</tbody></table>
-</div>
-
-</div>
 <script>
-async function saveSettings(e){e.preventDefault();const s={sharePower:document.getElementById('sharePower').checked,autoProcess:document.getElementById('autoProcess').checked,maxDownloads:parseInt(document.getElementById('maxDownloads').value)};const r=await fetch('/api/credits/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(s)});const d=await r.json();document.getElementById('settingsMsg').innerHTML=d.ok?'âœ… Settings saved':'âŒ Error'}</script>
+async function saveScope(e){e.preventDefault();const d={rootAccess:document.getElementById('rootAccess').checked};const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();document.getElementById('scopeMsg').innerHTML=j.ok?'✅ Saved':'❌ Error'}
+async function saveLLM(e){e.preventDefault();const d={model:document.getElementById('modelSelect').value,fallbackModel:document.getElementById('fallbackSelect').value,maxTokens:parseInt(document.getElementById('maxTokens').value),maxFileSize:parseInt(document.getElementById('maxFileSize').value)*1024,idleThresholdSec:parseInt(document.getElementById('idleThreshold').value),cpuThresholdPct:parseInt(document.getElementById('cpuThreshold').value)};const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();document.getElementById('llmMsg').innerHTML=j.ok?'✅ Saved · Restart required for some changes':'❌ Error'}
+async function addDir(){const v=document.getElementById('newDir').value.trim();if(!v)return;const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({watchDirs:[...(${JSON.stringify(cfg.watchDirs||['mock_documents'])}),v]})});await r.json();location.reload()}
+async function removeDir(d){const dirs=(${JSON.stringify(cfg.watchDirs||['mock_documents'])}).filter(x=>x!==d);await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({watchDirs:dirs})});location.reload()}
+async function addExclude(){const v=document.getElementById('newExclude').value.trim();if(!v)return;const ex=[...(${JSON.stringify(cfg.excludePaths||['node_modules','.git'])}),v];await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({excludePaths:ex})});location.reload()}
+async function removeExclude(d){const ex=(${JSON.stringify(cfg.excludePaths||['node_modules','.git'])}).filter(x=>x!==d);await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({excludePaths:ex})});location.reload()}
+</script>
 </body></html>`);
 });
 
@@ -1140,6 +1143,12 @@ app.post('/api/quality/audit', (req, res) => {
 app.get('/api/quality/report', (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   res.json(qualityAgent.getReport());
+});
+
+app.post('/api/settings', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const updated = config.update(req.body);
+  res.json({ ok: true, config: updated });
 });
 
 if (require.main === module) startServer();
