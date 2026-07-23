@@ -23,6 +23,7 @@ const sync = require('./core/sync');
 const auth = require('./core/auth');
 const credits = require('./core/credits');
 const githubBot = require('./core/github-bot');
+const qualityAgent = require('./core/okf-quality-agent');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -1120,6 +1121,16 @@ app.post('/api/fetch/model', express.json(), async (req, res) => {
 
 app.get('/info', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/info.html'));
+});
+
+app.post('/api/quality/audit', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  res.json(qualityAgent.runAudit());
+});
+
+app.get('/api/quality/report', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  res.json(qualityAgent.getReport());
 });
 
 if (require.main === module) startServer();
