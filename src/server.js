@@ -249,7 +249,7 @@ ${(gClientId || ghClientId) ? '<div class="divider"><div class="divider-line"></
 app.get('/auth/dev', (req, res) => {
   const sid = crypto.randomBytes(16).toString('hex');
   sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'dev@localhost', name: 'Developer', picture: null } };
-  res.cookie('okf_session', sid, { httpOnly: true, maxAge: 8 * 3600000 });
+  res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
   res.redirect('/');
 });
 
@@ -259,7 +259,7 @@ app.post('/auth/google', express.json(), async (req, res) => {
     const user = auth.getOrCreateUser(payload.email, payload.name, payload.picture);
     const sid = crypto.randomBytes(16).toString('hex');
     sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user };
-    res.cookie('okf_session', sid, { httpOnly: true, maxAge: 8 * 3600000 });
+    res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
     res.json({ ok: true });
   } catch (e) { res.status(401).json({ error: e.message }); }
 });
@@ -278,7 +278,7 @@ app.get('/auth/github/callback', async (req, res) => {
     const user = auth.getOrCreateUser(ghUser.email, ghUser.name, ghUser.picture, ghUser.login);
     const sid = crypto.randomBytes(16).toString('hex');
     sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user };
-    res.cookie('okf_session', sid, { httpOnly: true, maxAge: 8 * 3600000 });
+    res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
     res.redirect('/');
   } catch (e) { res.redirect('/login?error=' + encodeURIComponent(e.message)); }
 });
@@ -289,7 +289,7 @@ app.post('/login', express.urlencoded({ extended: false }), (req, res) => {
   }
   const sid = crypto.randomBytes(16).toString('hex');
   sessions[sid] = { created: Date.now(), ip: req.ip || req.socket.remoteAddress || 'local' };
-  res.cookie('okf_session', sid, { httpOnly: true, maxAge: 8 * 3600000 });
+  res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
   res.redirect('/');
 });
 
@@ -1121,6 +1121,11 @@ app.post('/api/fetch/model', express.json(), async (req, res) => {
     if (results.length === 0) return res.status(404).json({ error: 'No docs found' });
     res.json({ ok: true, model: modelId, files: results });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/mobile', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  res.sendFile(path.join(__dirname, '../public/mobile.html'));
 });
 
 app.get('/info', (req, res) => {

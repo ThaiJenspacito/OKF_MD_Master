@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>OKF Mobile</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="OKF">
+<link rel="apple-touch-icon" href="/icon.svg">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100dvh;display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent}
+.header{background:#0f172a;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e293b;position:sticky;top:0;z-index:10}
+.header h1{font-size:16px;background:linear-gradient(135deg,#14b8a6,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;animation:pulse 2s infinite}.pulse-green{background:#22c55e;box-shadow:0 0 6px #22c55e}.pulse-yellow{background:#eab308}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.content{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px;margin-bottom:10px}
+.card-header{font-size:11px;text-transform:uppercase;color:#64748b;letter-spacing:.5px;margin-bottom:10px}
+.stat-row{display:flex;gap:8px;margin-bottom:10px}
+.stat{flex:1;background:#1a2332;border-radius:8px;padding:10px;text-align:center}
+.stat-val{font-size:22px;font-weight:800}.stat-lbl{font-size:9px;color:#64748b;text-transform:uppercase;margin-top:2px}
+.agent-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e293b;font-size:12px}
+.agent-icon{font-size:18px;min-width:24px}.agent-info{flex:1}.agent-name{font-weight:600}.agent-detail{color:#64748b;font-size:10px}
+.bar-container{background:#1e293b;border-radius:8px;height:12px;overflow:hidden;margin-top:4px}
+.bar-fill{height:100%;border-radius:8px;transition:width .5s}
+.bar-label{display:flex;justify-content:space-between;font-size:10px;color:#64748b;margin-bottom:4px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#1e293b;color:#e2e8f0;width:100%;transition:all .15s}.btn:active{transform:scale(.97)}
+.btn-teal{background:#0f766e;color:#fff}.btn-teal:active{background:#0d9488}
+.btn-blue{background:#1d4ed8;color:#fff}.btn-purple{background:#7c3aed;color:#fff}
+.btn-row{display:flex;gap:8px;margin-bottom:10px}.btn-row .btn{flex:1}
+.tabbar{background:#0f172a;border-top:1px solid #1e293b;display:flex;padding:6px 0 env(safe-area-inset-bottom,0)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;font-size:10px;color:#64748b;border:none;background:none;cursor:pointer;transition:all .15s}
+.tab.active{color:#14b8a6}.tab svg{width:20px;height:20px}
+.chat-input{display:flex;gap:8px;padding:8px;background:#0f172a;border-top:1px solid #1e293b}
+.chat-input input{flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;color:#e2e8f0;font-size:13px}.chat-input input:focus{outline:none;border-color:#14b8a6}
+.chat-input button{background:#14b8a6;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.chat-msg{padding:8px 12px;border-radius:10px;margin-bottom:8px;font-size:12px;line-height:1.5;max-width:90%}
+.msg-user{background:#1d4ed8;align-self:flex-end;margin-left:auto}
+.msg-bot{background:#1e293b;align-self:flex-start}
+.tab-content{display:none}.tab-content.active{display:block}
+.loading{text-align:center;padding:20px;color:#64748b;font-size:12px}
+.skill-card{background:#1a2332;border-radius:8px;padding:10px;margin-bottom:6px;font-size:12px}
+.skill-name{font-weight:600;color:#14b8a6}.skill-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tag{background:#1e293b;color:#64748b;font-size:9px;padding:2px 6px;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="header">
+<h1>OKF MD Master</h1>
+<span class="status-dot pulse-green" id="statusDot"></span>
+</div>
+
+<div class="content">
+
+<div class="tab-content active" id="tab-home">
+<div class="card"><div class="card-header">Server Report</div><div id="reportBars"></div></div>
+<div class="card"><div class="stat-row" id="statsRow"></div></div>
+<div class="btn-row">
+<button class="btn btn-teal" onclick="quickScout()">🔍 Scout</button>
+<button class="btn btn-blue" onclick="quickProcess()">🤖 Process</button>
+</div>
+<div class="card"><div class="card-header">Agents</div><div id="agentsList"></div></div>
+</div>
+
+<div class="tab-content" id="tab-skills">
+<div class="card"><div class="card-header">OKF Skills</div><div id="skillsList"></div></div>
+</div>
+
+<div class="tab-content" id="tab-chat">
+<div id="chatMessages" style="min-height:200px;display:flex;flex-direction:column"></div>
+<div class="chat-input">
+<input id="chatInput" type="text" placeholder="Ask OKF..." onkeydown="if(event.key==='Enter')sendChat()">
+<button onclick="sendChat()">→</button>
+</div>
+<div style="display:flex;align-items:center;gap:8px;padding:0 8px 4px 8px;font-size:10px;color:#64748b">
+<span>Model:</span>
+<select id="modelSelect" onchange="switchModel(this.value)" style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:4px 8px;color:#e2e8f0;font-size:10px">
+<option value="cohere">Cohere (Online, Free)</option>
+<option value="gemini">Gemini Nano (Offline, Fast)</option>
+<option value="phi2">Phi-2 (Offline, Precise)</option>
+<option value="cloud">Cloud Agent (OKF Knowledge)</option>
+</select>
+</div>
+</div>
+
+</div>
+
+<div class="tabbar">
+<button class="tab active" onclick="switchTab('home','🏠 Home',this)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Home</button>
+<button class="tab" onclick="switchTab('skills','📚 Skills',this)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Skills</button>
+<button class="tab" onclick="switchTab('chat','💬 Chat',this)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>Chat</button>
+</div>
+
+<script>
+async function api(url,method='GET',body=null){const o={method,headers:{}};if(body){o.headers['Content-Type']='application/json';o.body=JSON.stringify(body)}const r=await fetch(url,o);if(r.status===401)window.location='/login';return r.json()}
+
+function switchTab(tab,title,btn){
+document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+document.getElementById('tab-'+tab).classList.add('active');btn.classList.add('active');
+}
+
+async function loadHome(){
+const[status,report,health]=await Promise.all([api('/api/status'),api('/api/report'),api('/api/health')]);
+const s=status.scheduler,act=s.activity||{},cfg=status.config||{};
+document.getElementById('statusDot').className='status-dot '+(s.paused?'pulse-yellow':'pulse-green');
+const m=report.metrics;
+document.getElementById('reportBars').innerHTML=['cpu','ram','disk'].map(k=>{const d=m[k];const c=d.status==='under'?'#10b981':d.status==='ok'?'#06b6d4':d.status==='warn'?'#f59e0b':'#ef4444';return'<div style=margin-bottom:10px><div class=bar-label><span>'+k.toUpperCase()+'</span><span>'+d.ist+(d.unit||'%')+'</span></div><div class=bar-container><div class=bar-fill style=width:'+Math.min(d.bar,100)+'%;background:'+c+'></div></div></div>'}).join('');
+document.getElementById('statsRow').innerHTML=[{l:'Skills',v:s.stats.okf_ready,c:'#14b8a6'},{l:'Queue',v:s.discoveryQueueSize,c:'#8b5cf6'},{l:'Health',v:h.allOk?'OK':'?',c:h.allOk?'#22c55e':'#eab308'}].map(x=>'<div class=stat><div class=stat-val style=color:'+x.c+'>'+x.v+'</div><div class=stat-lbl>'+x.l+'</div></div>').join('');
+const agents=[{i:'👁️',n:'Watcher',d:'Watching: '+((cfg.watchDirs||[]).map(d=>d.split('/').pop()).join(',')),a:true},{i:'🔎',n:'Scanner',d:(act['auto-scanner']?.action||'Idle')+': '+(act['auto-scanner']?.detail||'5min'),a:s.running},{i:'🕵️',n:'Scout',d:(act['scout']?.action||'Idle')+': '+(act['scout']?.detail||'waiting'),a:true},{i:'🤖',n:'Architect',d:'Model: '+(cfg.model||'-'),a:!!h.llm},{i:'✅',n:'Quality',d:'Validates YAML & content',a:true}];
+document.getElementById('agentsList').innerHTML=agents.map(a=>'<div class=agent-item><div class=agent-icon>'+a.i+'</div><div class=agent-info><div class=agent-name>'+a.n+'</div><div class=agent-detail>'+a.d+'</div></div><span style=font-size:10px;color:'+(a.a?'#22c55e':'#64748b')+'>'+(a.a?'Active':'Off')+'</span></div>').join('');
+}
+
+async function loadSkills(){
+const skills=await api('/api/library');
+const div=document.getElementById('skillsList');
+if(!skills||!skills.length){div.innerHTML='<p class=loading>No skills yet</p>';return}
+div.innerHTML=skills.map(s=>'<div class=skill-card><div class=skill-name>'+s.name+'</div><div class=skill-tags>'+(s.tags||[]).map(t=>'<span class=tag>'+t+'</span>').join('')+'</div><div style=font-size:10px;color:#64748b;margin-top:4px>⬇'+s.downloads+' · '+(s.size/1024).toFixed(1)+'KB</div></div>').join('');
+}
+
+async function sendChat(){
+const q=document.getElementById('chatInput').value.trim();if(!q)return;
+const model=document.getElementById('modelSelect').value;
+const div=document.getElementById('chatMessages');
+div.innerHTML+='<div class="chat-msg msg-user">'+q+'</div>';
+document.getElementById('chatInput').value='';
+div.innerHTML+='<div class="chat-msg msg-bot">Thinking...</div>';
+div.scrollTop=div.scrollHeight;
+try{
+let r;
+if(model==='cloud'){r=await api('/api/chat','POST',{question:q,history:[]})}
+else{r={answer:'Model '+model+' selected. Switch to Cloud Agent for full OKF knowledge.',model:model,tokens:0}}
+div.lastChild.remove();
+div.innerHTML+='<div class="chat-msg msg-bot">'+r.answer.replace(/\n/g,'<br>')+'</div>';div.scrollTop=div.scrollHeight
+}catch(e){div.lastChild.remove();div.innerHTML+='<div class="chat-msg msg-bot">Error</div>'}
+}
+function switchModel(m){document.getElementById('chatInput').placeholder='Ask OKF ('+m+')...'}
+
+async function quickScout(){const r=await api('/api/scout/scan','POST');alert('Scout: '+r.discovered+' files found');loadHome()}
+async function quickProcess(){const r=await api('/api/architect/process','POST');alert('Architect: '+r.processed+' skills');loadHome()}
+
+loadHome();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
+</script>
+</body>
+</html>
