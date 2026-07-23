@@ -229,8 +229,13 @@ ${(gClientId || ghClientId) ? '<div class="divider"><div class="divider-line"></
 </div>
 
 <div class="vision-quote">
-<p>"Transform any text into structured, AI-ready knowledge — automatically, losslessly, and without a single line of code. Your knowledge base becomes the power source for every AI agent."</p>
+<p>"Turn any text into structured, AI-ready knowledge — automatically. Your knowledge base powers every AI agent."</p>
 <p class="author">— OKF MD Master · Open Knowledge Format</p>
+</div>
+<div style="text-align:center;margin-top:20px;font-size:11px;color:#475569">
+⭐ <a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" style="color:#f59e0b;text-decoration:none">Star us on GitHub</a> · 
+🐙 <a href="https://github.com/ThaiJenspacito/OKF_MD_Master/issues" target="_blank" style="color:#14b8a6;text-decoration:none">Report an issue</a> · 
+🤖 <a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" style="color:#8b5cf6;text-decoration:none">Contribute</a>
 </div>
 </div>
 </body></html>`);

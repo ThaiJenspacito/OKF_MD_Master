@@ -1,245 +1,172 @@
-# OKF MD Master v2.1
+<div align="center">
+  <img src="public/icon.svg" width="120" alt="OKF MD Master">
+  <h1>OKF MD Master</h1>
+  <p><strong>Turn any text into structured, AI-ready knowledge — automatically.</strong></p>
 
-**Autonome, lokal laufende Wissensbrücke** — verwandelt unstrukturierte Markdown-Notizen automatisch in das standardisierte **Open Knowledge Format (OKF)** mit YAML-Frontmatter. Entwickelt als Hintergrund-Infrastruktur fuer AI-Agenten und Google AI Studio.
+  [![GitHub stars](https://img.shields.io/github/stars/ThaiJenspacito/OKF_MD_Master?style=social)](https://github.com/ThaiJenspacito/OKF_MD_Master/stargazers)
+  [![GitHub forks](https://img.shields.io/github/forks/ThaiJenspacito/OKF_MD_Master?style=social)](https://github.com/ThaiJenspacito/OKF_MD_Master/network)
+  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+  [![Cloud Run](https://img.shields.io/badge/cloud-run-live-green)](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
+  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ThaiJenspacito/OKF_MD_Master/pulls)
+  [![FREE for 100 users](https://img.shields.io/badge/FREE-first%20100%20users-orange)](#-pricing)
 
----
+  <hr width="50%">
+</div>
 
-## Kernfunktionen
+## 🚀 Why OKF? The Problem We Solve
 
-- **Zero Data Loss** — Jede Quelldatei wird in 4 Stufen erhalten: `originals/`, `scouted/`, `okf_ready/`, `processed/`. Nichts wird je geloescht.
-- **Idle-Aware** — Verarbeitet nur wenn der Rechner ungenutzt ist (>2 Min kein Input, CPU <30%). Keine Ressourcen-Belastung beim Arbeiten.
-- **Cost-Routing** — Standard: DeepSeek (~0,014$/1K Tokens). Automatischer Fallback auf OpenRouter (kostenlose Modelle).
-- **Offline-Ready** — DNS-Check vor API-Calls. Bei Netzwerkausfall: Queue wird gehalten und spaeter automatisch abgearbeitet.
-- **Telegram-Steuerung** — Volles Dashboard, Token-Verbrauch, Scope-Kontrolle, Modellwechsel — alles per Chat.
-- **Windows Tray** — Minimiert in die Taskleiste, startet mit Windows.
-- **Lessons-Learned** — Fehlgeschlagene Verarbeitungen werden nicht verworfen, sondern archiviert.
+> **Markdown files are everywhere — but AI agents can't read them effectively.**
 
----
+Your Obsidian vault, Notion pages, project docs, and code READMEs contain immense knowledge. But without structured metadata, AI tools can't parse, index, or use them. You're sitting on a goldmine your agents can't access.
 
-## Architektur
-
-```
-mock_documents/               ← User schreibt .md-Dateien
-       │
-       ▼  (Chokidar Watcher)
-  [Scheduler]  ◄── Idle-Detector (Win32 API + CPU)
-       │
-       ├──► [Scout]      → data/originals/  + data/scouted/
-       │
-       ├──► [Architect]  → LLM-Call (DeepSeek → OpenRouter Fallback)
-       │                        │
-       │                        ▼
-       │                   data/okf_ready/    (OKF-Skills)
-       │                   data/processed/    (Archiv)
-       │                   data/lessons-learned/ (Fehlerarchiv)
-       │
-       ▼
-  [Dashboard]     ← http://localhost:5000
-  [Telegram Bot]  ← /dashboard /tokens /limit /scope /pause
-  [Windows Tray]  ← Taskleiste
-```
-
-### Pipeline: 3 Agenten
-
-| Agent | Datei | Funktion |
-|-------|-------|----------|
-| **Scout** | `src/core/scout.js` | Entdeckt .md-Dateien, filtert (Groesse/Inhalt), kopiert in Sandbox |
-| **Architect** | `src/core/architect.js` | Transformiert via LLM ins OKF-Format, Retry-Logik, Lessons-Learned |
-| **Scheduler** | `src/core/scheduler.js` | Queue-Manager, Idle-Gate, Offline-Erkennung, Batch-Steuerung |
+**OKF MD Master bridges this gap.** It watches your folders, intercepts new files, enriches them with YAML frontmatter via AI, and produces **Open Knowledge Format** artifacts ready for any LLM agent, RAG system, or Google AI Studio.
 
 ---
 
-## Verzeichnisstruktur
+## ✨ What Makes This Different
 
-```
-okf_md_master/
-├── src/
-│   ├── index.js              # Main Entry (startet alles)
-│   ├── core/
-│   │   ├── watcher.js        # Chokidar Multi-Dir Watch
-│   │   ├── scout.js          # Datei-Entdeckung & Kopie
-│   │   ├── architect.js      # LLM-OKF-Transformation
-│   │   ├── scheduler.js      # Queue + Idle + Offline
-│   │   ├── idle-detector.js  # Win32 GetLastInputInfo
-│   │   └── reset-failed.js   # Utility: Status zuruecksetzen
-│   ├── state/
-│   │   ├── tracker.js        # JSON-Status pro Datei
-│   │   └── config.js         # Runtime-Konfiguration
-│   ├── server.js             # Web-Dashboard (Express)
-│   ├── bot.js                # Telegram Bot
-│   └── tray.js               # Windows System Tray
-├── data/
-│   ├── originals/            # Unveraenderte Originale
-│   ├── scouted/             # Scout-Kopien
-│   ├── okf_ready/           # OKF-transformierte Skills
-│   ├── processed/           # Verarbeitete Archiv-Kopien
-│   ├── failed/              # Temporaer fehlgeschlagen
-│   ├── lessons-learned/     # Permanentes Fehlerarchiv
-│   ├── state/               # JSON-Status-Tracker
-│   └── index.md             # Master-Index aller Skills
-├── logs/                    # scout.log, architect.log, system.log
-├── mock_documents/          # Standard Watch-Ordner
-├── backend/                 # Python/FastAPI (Platzhalter)
-├── .env                     # Konfiguration
-└── package.json
-```
+| Traditional MD Files | With OKF MD Master |
+|---|---|
+| Unstructured text | Rich YAML frontmatter (name, type, tags, version) |
+| Not machine-readable | Ready for AI agents, RAG, fine-tuning |
+| Manual categorization | AI-powered auto-tagging |
+| Lost in folders | Indexed with search, filter, download counters |
+| Single-user | Multi-user with GitHub OAuth |
+| Local only | P2P sync via GitHub — share computing power |
 
 ---
 
-## Status-Modell
-
-Jede Datei durchlaeuft eine definierte Zustandsmaschine:
+## 🏗️ Architecture
 
 ```
-discovered → scouted → architected → indexed → okf_ready
-                ↓           ↓
-             skipped      failed → retry (max 3x) → lessons_learned
+┌──────────────┐     ┌──────────┐     ┌───────────┐     ┌──────────────┐
+│  .md files   │ ──▶ │  Scout   │ ──▶ │ Architect │ ──▶ │  OKF Skills  │
+│  (your docs) │     │  Agent   │     │  (LLM)    │     │  (YAML+MD)   │
+└──────────────┘     └──────────┘     └───────────┘     └──────────────┘
+                           │                 │                  │
+                           ▼                 ▼                  ▼
+                     data/originals   data/okf_ready      data/processed
+                     data/scouted     data/lessons-learned data/index.md
 ```
 
-Zustand wird in `data/state/<filename>.json` persistiert:
-
-```json
-{
-  "id": "mein-erstes-wissen.md",
-  "status": "okf_ready",
-  "stages": {
-    "discovered": { "at": "2026-07-22T10:00:00Z", "ok": true },
-    "scouted": { "at": "2026-07-22T10:00:01Z", "ok": true },
-    "architected": {
-      "at": "2026-07-22T10:00:15Z", "ok": true,
-      "model": "deepseek-chat", "provider": "deepseek",
-      "inputTokens": 1200, "outputTokens": 300, "cost": 0.021
-    },
-    "indexed": { "at": "2026-07-22T10:00:16Z", "ok": true },
-    "okf_ready": { "at": "2026-07-22T10:00:16Z", "ok": true }
-  },
-  "retries": 0, "maxRetries": 3
-}
-```
+**7 Autonomous Agents working together:**
+- 👁️ **Watcher** — Monitors directories for new .md files
+- 🔎 **Auto-Scanner** — Searches your laptop every 5 minutes
+- 🕵️ **Scout** — Copies & validates files, zero data loss
+- 🤖 **Architect** — Transforms via LLM (DeepSeek, Gemini, Cohere)
+- ⏱️ **Scheduler** — Idle-aware processing, CPU-friendly
+- 🐙 **GitHub Bot** — Auto-responds to issues with OKF knowledge
+- 📱 **PWA** — Installable on Android, iOS, Windows, macOS
 
 ---
 
-## OKF-Format
+## 🎯 Key Benefits
 
-Jeder transformierte Skill erhaelt YAML-Frontmatter:
+### 🔄 Zero Data Loss
+Every source file is preserved in 4 copies: `originals/`, `scouted/`, `okf_ready/`, `processed/`. Nothing is ever deleted. Failed transformations go to `lessons-learned/` — learn from every attempt.
 
+### 🧠 AI-Ready Output
+All skills get rich YAML frontmatter:
 ```yaml
----
-name: LaundryList App Architect
-description: Umfassende Architektur fuer eine Offline-First Android App
+name: Smart Home Architecture
+description: MQTT-based IoT system with Node-RED and Grafana
 type: skill
 version: 1.0.0
-tags:
-  - Android
-  - Offline-First
-  - JetpackCompose
----
+tags: [MQTT, IoT, Home-Automation, Node-RED]
 ```
 
-Lessons-Learned werden mit `type: lessons-learned` und vollstaendigem Fehlerkontext archiviert.
+### 💤 CPU-Friendly
+Only processes when your computer is idle (>2 min no input, CPU <30%). Never interrupts your work.
+
+### 🌐 P2P Knowledge Network
+Connect to any GitHub repo. Share skills across machines. More computing power = more download credits. Your hardware earns you access.
+
+### 💰 Contribution Economy
+Earn credits by processing files with your LLM. Spend credits to download skills. Leaderboard tracks top contributors. **Power = Access.**
+
+### 🔗 Multi-Source Ingestion
+- **Local files**: Drop .md anywhere, auto-detected
+- **GitHub repos**: Paste any repo URL → README fetched
+- **Web pages**: Any URL → HTML converted to MD
+- **HuggingFace models**: `microsoft/phi-2` → docs downloaded
+- **Laptop scan**: Auto-discovers .md files on your computer
 
 ---
 
-## Konfiguration (.env)
-
-```env
-# LLM (schnell & kostenguenstig)
-OKF_MODEL=deepseek-chat
-OKF_FALLBACK_MODEL=google/gemma-3-27b-it:free
-OKF_MAX_TOKENS=4096
-DEEPSEEK_API_KEY=sk-xxx
-OPENROUTER_API_KEY=sk-or-v1-xxx
-
-# Scope-Kontrolle (Komma-getrennt, relativ oder absolut)
-WATCH_DIRS=mock_documents
-MAX_FILE_SIZE_KB=50
-
-# Idle-Detection
-IDLE_THRESHOLD_SEC=120
-CPU_THRESHOLD_PCT=30
-
-# Telegram
-TELEGRAM_BOT_TOKEN=xxx
-ALLOWED_CHAT_ID=xxx
-
-# Server
-PORT=5000
-ADMIN_PIN=180473
-```
-
----
-
-## Installation & Start
+## 🚀 Quick Start
 
 ```bash
-# 1. Abhaengigkeiten installieren
+git clone https://github.com/ThaiJenspacito/OKF_MD_Master.git
+cd OKF_MD_Master
 npm install
-
-# 2. .env konfigurieren (API-Keys eintragen)
-copy .env.example .env   # falls vorhanden
-
-# 3. Starten
+cp .env.example .env   # add your API keys
 npm start
-
-# Einzeln:
-npm run dashboard    # Nur Web-Dashboard
-npm run reset-failed # Fehlgeschlagene zuruecksetzen
 ```
 
-### Windows Autostart
+Open `http://localhost:5000` — click **Continue without password** (dev mode).
 
-Die Tray-App (`systray2`) startet mit dem System, wenn eine Verknuepfung in den Autostart-Ordner gelegt wird:
-
-```
-%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
-```
+**Or use our Cloud instance** (always up-to-date):  
+👉 [thai-jenspacito-okf-md.eu.run.app](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
 
 ---
 
-## Telegram-Befehle
+## 📦 Tech Stack
 
-| Befehl | Funktion |
-|--------|----------|
-| `/dashboard` | Komplette Uebersicht (Skills, Queue, Tokens, Modell) |
-| `/tokens` | Token-Verbrauch + Kosten |
-| `/limit 100` | Max-Dateigroesse auf 100 KB setzen |
-| `/model deepseek-chat` | LLM-Modell wechseln |
-| `/scope add ./ordner` | Watch-Bereich hinzufuegen |
-| `/scope del ordner` | Watch-Bereich entfernen |
-| `/pause` | Verarbeitung pausieren |
-| `/resume` | Verarbeitung fortsetzen |
-| `/help` | Alle Befehle anzeigen |
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Node.js 22+ |
+| LLM Providers | DeepSeek, Gemini (Google Cloud), OpenRouter (Cohere) |
+| Frontend | Vanilla HTML/CSS/JS (zero CDN) |
+| Storage | Local filesystem + GitHub Sync |
+| Deployment | Docker + Google Cloud Run |
+| Auth | PIN + Google OAuth + GitHub OAuth |
+| PWA | Service Worker + Manifest |
 
 ---
 
-## Workflow
+## 🌟 Star This Repo!
 
-1. **Datei ablegen** — `.md`-Datei in einen der Watch-Ordner speichern
-2. **Scout entdeckt** — Datei wird kopiert (original bleibt unangetastet)
-3. **Scheduler wartet** — auf Idle-Zustand (120s kein Input, CPU <30%)
-4. **Architect transformiert** — DeepSeek/OpenRouter erstellt OKF-YAML
-5. **Skill bereit** — Liegt in `data/okf_ready/`, Index aktualisiert
-6. **Bei Fehler** — 3 Retries, dann `data/lessons-learned/`
+Every star helps grow the OKF ecosystem. More stars → more contributors → more computing power → **everyone benefits**.
+
+**[⭐ Star on GitHub](https://github.com/ThaiJenspacito/OKF_MD_Master)**
 
 ---
 
-## Technologien
+## 🤝 Community
 
-| Komponente | Technologie |
-|------------|------------|
-| Runtime | Node.js 24+ |
-| LLM Primary | DeepSeek (OpenAI SDK) |
-| LLM Fallback | OpenRouter (Gemma 3, kostenlos) |
-| Web Dashboard | Express.js + Tailwind CSS |
-| File Watch | Chokidar |
-| Idle Detection | PowerShell + Win32 GetLastInputInfo |
-| Telegram Bot | node-telegram-bot-api |
-| Windows Tray | systray2 |
-| YAML Parsing | gray-matter |
-| Backend (Platzhalter) | Python FastAPI |
+We're building the future of AI knowledge infrastructure — and you can be part of it:
+
+- **Contribute code**: Pick an issue, submit a PR
+- **Share computing power**: Run a node, earn credits
+- **Add skills**: Push your OKF skills to the shared library
+- **Spread the word**: Star the repo, share with your network
+- **Give feedback**: Open an issue — our GitHub Bot responds automatically!
+
+[![GitHub issues](https://img.shields.io/github/issues/ThaiJenspacito/OKF_MD_Master)](https://github.com/ThaiJenspacito/OKF_MD_Master/issues)
+[![GitHub contributors](https://img.shields.io/github/contributors/ThaiJenspacito/OKF_MD_Master)](https://github.com/ThaiJenspacito/OKF_MD_Master/graphs/contributors)
 
 ---
 
-## Lizenz
+## 💎 Pricing
 
-MIT
+| Tier | Price | Features |
+|------|-------|----------|
+| **Free** | $0 | Up to 100 users. Unlimited skills. All features. |
+| **Pro** | Coming soon | Bulk import/export. Priority queue. Custom models. |
+| **Enterprise** | Contact us | On-premise. SLA. Dedicated instance. |
+
+**We're free for the first 100 users.** Join now, shape the future.
+
+---
+
+## 📫 Contact
+
+- **GitHub**: [@ThaiJenspacito](https://github.com/ThaiJenspacito)
+- **Issues**: [github.com/ThaiJenspacito/OKF_MD_Master/issues](https://github.com/ThaiJenspacito/OKF_MD_Master/issues)
+- **Cloud**: [thai-jenspacito-okf-md.eu.run.app](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
+
+---
+
+<div align="center">
+  <sub>Built with ❤️ by the OKF community · <a href="https://github.com/ThaiJenspacito/OKF_MD_Master">Star us on GitHub</a></sub>
+</div>
