@@ -178,6 +178,28 @@ OKF MD Master works alongside the best tools in the AI ecosystem. Our skills ser
 
 ---
 
+---
+
+## 👤 About the Creator
+
+**20+ years of entrepreneurial leadership** across IT, logistics, retail, and hospitality — now building the infrastructure for agentic AI knowledge.
+
+**Background:**
+- Business Administration (Bachelor)
+- Founder & CEO of multiple companies (2002–2023)
+- International trade: Export Manager in Beijing & Shenzhen
+- Franchise development & multi-location operations
+- 5 retail locations, 4,000 m² logistics center with SAP B1
+
+**Tech:**
+- LLM, GPT, HTML, CSS, Canvas
+- Windows & macOS, SAP B1, MS Office
+- Self-taught full-stack developer
+
+**Languages:** German (native) · English (professional)
+
+---
+
 ## 📫 Contact
 
 - **GitHub**: [@ThaiJenspacito](https://github.com/ThaiJenspacito)
