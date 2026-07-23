@@ -1,4 +1,5 @@
 const axios = require('axios');
+const personality = require('./bot-personality');
 require('dotenv').config();
 
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
@@ -45,19 +46,17 @@ async function handleUpdate(body, skillAgent) {
 
   try {
     let answer;
-    if (userText === '/start' || userText.toLowerCase().includes('hi') || userText.toLowerCase().includes('hello')) {
-      answer = `👋 Hello ${userName}! I am the OKF MD Master AI.\n\n📊 /dashboard — Live status\n📚 /skills — OKF Library\n💬 Ask me anything — I answer from the knowledge base.\n\n🌐 https://thai-jenspacito-okf-md.eu.run.app`;
+    if (userText === '/start' || userText.toLowerCase().includes('hi') || userText.toLowerCase().includes('hello') || userText.toLowerCase().includes('hey')) {
+      answer = personality.responses.start(userName);
     } else if (userText === '/dashboard' || userText === '/status') {
-      answer = `📊 OKF MD Master\n━━━━━━━━━━━━━━━━━━━━━━\n✅ 14 OKF Skills\n🤖 9 Agents Active\n☁️ Cloud Run 24/7\n🌐 https://thai-jenspacito-okf-md.eu.run.app`;
+      answer = personality.responses.dashboard();
     } else if (userText === '/skills' || userText === '/library') {
-      answer = `📚 OKF Library: https://thai-jenspacito-okf-md.eu.run.app/library\n14 skills, search & filter.`;
+      answer = personality.responses.skills();
     } else if (skillAgent) {
       const result = await skillAgent.ask(userText, []);
-      answer = result.answer;
-      if (answer.length > 3800) answer = answer.substring(0, 3800) + '\n\n... [truncated]';
+      answer = personality.formatAnswer(result.answer);
     } else {
-      answer = `I received: "${userText}".\n\nThe Skill Agent is not available right now.`;
-    }
+      answer = `I got your message! But my brain is taking a quick nap 😴 Try the web dashboard meanwhile: https://thai-jenspacito-okf-md.eu.run.app`;
 
     await sendMessage(chatId, answer);
     return { chatId, userName, text: userText, answered: true };

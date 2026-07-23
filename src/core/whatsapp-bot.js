@@ -1,4 +1,5 @@
 const axios = require('axios');
+const personality = require('./bot-personality');
 require('dotenv').config();
 
 const WA_TOKEN = process.env.WHATSAPP_TOKEN || '';
@@ -36,19 +37,17 @@ async function handleWebhook(body, skillAgent) {
 
         try {
           let answer;
-          if (userText === '/start' || userText.toLowerCase().includes('hi') || userText.toLowerCase().includes('hello')) {
-            answer = `👋 Hello ${userName}! I am the OKF MD Master AI.\n\n📊 /dashboard — Live status\n📚 /skills — OKF Library\n💬 Ask me anything — I answer from the knowledge base.`;
+          if (userText === '/start' || userText.toLowerCase().includes('hi') || userText.toLowerCase().includes('hello') || userText.toLowerCase().includes('hey')) {
+            answer = personality.responses.start(userName);
           } else if (userText === '/dashboard') {
-            answer = `📊 OKF MD Master — 14 Skills · 9 Agents · Cloud Run 24/7\n🌐 https://thai-jenspacito-okf-md.eu.run.app`;
+            answer = personality.responses.dashboard();
           } else if (userText === '/skills') {
-            answer = `📚 OKF Library: https://thai-jenspacito-okf-md.eu.run.app/library`;
+            answer = personality.responses.skills();
           } else if (skillAgent) {
             const result = await skillAgent.ask(userText, []);
-            answer = result.answer;
-            if (answer.length > 3800) answer = answer.substring(0, 3800) + '\n\n... [truncated]';
+            answer = personality.formatAnswer(result.answer);
           } else {
-            answer = `I received: "${userText}". Skill Agent offline.`;
-          }
+            answer = `Got your message! Brain's taking a break 😴 Try the dashboard: https://thai-jenspacito-okf-md.eu.run.app`;
 
           await sendMessage(from, answer);
           results.push({ from, userName, text: userText });

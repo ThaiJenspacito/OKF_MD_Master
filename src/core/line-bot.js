@@ -1,4 +1,5 @@
 const axios = require('axios');
+const personality = require('./bot-personality');
 require('dotenv').config();
 
 const LINE_TOKEN = process.env.LINE_CHANNEL_TOKEN || '';
@@ -48,20 +49,18 @@ async function handleWebhook(body, skillAgent) {
     console.log('Line message: ' + userText + ' from ' + displayName);
 
     try {
-      let answer;
-      if (userText === '/start' || userText.toLowerCase().includes('hi') || userText.toLowerCase().includes('hello')) {
-        answer = '👋 Hello ' + displayName + '! I am the OKF MD Master AI.\n\n📊 /dashboard — Live status\n📚 /skills — Browse OKF skills\n💬 Ask me anything — I answer from the OKF knowledge base.\n\n🌐 ' + (process.env.CLOUD_RUN_URL || 'http://localhost:5000');
-      } else if (userText === '/dashboard' || userText === '/status') {
-        answer = '📊 Dashboard: https://thai-jenspacito-okf-md.eu.run.app\nCloud Run 24/7 · 9 agents · 15+ OKF skills';
-      } else if (userText === '/skills' || userText === '/library') {
-        answer = '📚 OKF Library: https://thai-jenspacito-okf-md.eu.run.app/library\nBrowse all skills with search and filters.';
-      } else if (skillAgent) {
-        const result = await skillAgent.ask(userText, []);
-        answer = result.answer;
-        if (answer.length > 4500) answer = answer.substring(0, 4500) + '\n\n... [truncated]';
-      } else {
-        answer = 'I received: "' + userText + '"\n\nThe Skill Agent is not available right now. Try the web dashboard.';
-      }
+        let answer;
+        if (userText === '/start' || userText.toLowerCase().includes('hi') || userText.toLowerCase().includes('hello') || userText.toLowerCase().includes('hey')) {
+          answer = personality.responses.start(displayName);
+        } else if (userText === '/dashboard' || userText === '/status') {
+          answer = personality.responses.dashboard();
+        } else if (userText === '/skills' || userText === '/library') {
+          answer = personality.responses.skills();
+        } else if (skillAgent) {
+          const result = await skillAgent.ask(userText, []);
+          answer = personality.formatAnswer(result.answer);
+        } else {
+          answer = `Got your message! Brain's taking a break 😴 Try the dashboard: https://thai-jenspacito-okf-md.eu.run.app`;
 
       await replyMessage(replyToken, answer);
       results.push({ userId, displayName, text: userText, answered: true });
