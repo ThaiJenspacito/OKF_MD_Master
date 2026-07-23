@@ -25,6 +25,8 @@ const credits = require('./core/credits');
 const githubBot = require('./core/github-bot');
 const qualityAgent = require('./core/okf-quality-agent');
 const lineBot = require('./core/line-bot');
+const tgBot = require('./core/telegram-bot');
+const waBot = require('./core/whatsapp-bot');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -172,6 +174,58 @@ app.post('/line/webhook', express.json(), async (req, res) => {
   }
 });
 
+app.get('/choose', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  const user = getUser(req);
+  const name = user ? (user.name || user.email || 'User') : 'User';
+
+  res.send(`<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OKF · Choose Interface</title>
+<link rel="icon" href="/icon.svg">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100dvh;display:flex;align-items:center;justify-content:center}
+.bg-grid{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,#1e293b 1px,transparent 0);background-size:40px 40px;pointer-events:none}
+.container{max-width:500px;width:100%;padding:24px;position:relative;z-index:1;text-align:center}
+h1{font-size:24px;background:linear-gradient(135deg,#14b8a6,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.sub{color:#64748b;font-size:13px;margin-bottom:28px}
+.cards{display:grid;gap:10px}
+.card{display:flex;align-items:center;gap:14px;padding:16px;border-radius:12px;text-decoration:none;transition:all .2s;border:1px solid #1e293b;background:#0f172a;text-align:left}
+.card:hover{transform:translateY(-1px);border-color:#14b8a6}
+.card-icon{font-size:28px;min-width:40px;text-align:center}
+.card-info{flex:1}.card-name{font-size:15px;font-weight:700;color:#e2e8f0}.card-desc{font-size:11px;color:#64748b;margin-top:2px}
+.logout{font-size:11px;color:#475569;margin-top:24px;display:inline-block;text-decoration:none}.logout:hover{color:#ef4444}
+</style>
+</head><body>
+<div class="bg-grid"></div>
+<div class="container">
+<h1>Welcome, ${name}</h1>
+<p class="sub">Choose your interface</p>
+<div class="cards">
+<a href="/" class="card">
+<div class="card-icon">📊</div><div class="card-info"><div class="card-name">Web Dashboard</div><div class="card-desc">Full control · 9 agents · charts · settings</div></div>
+</a>
+<a href="/mobile" class="card">
+<div class="card-icon">📱</div><div class="card-info"><div class="card-name">Mobile App</div><div class="card-desc">Touch-optimized · installable · offline-ready</div></div>
+</a>
+<a href="/chat" class="card">
+<div class="card-icon">💬</div><div class="card-info"><div class="card-name">Chat AI</div><div class="card-desc">Ask the OKF knowledge base directly</div></div>
+</a>
+<a href="https://wa.me/4915123445864" target="_blank" class="card">
+<div class="card-icon">💚</div><div class="card-info"><div class="card-name">WhatsApp</div><div class="card-desc">Chat with OKF AI via WhatsApp</div></div>
+</a>
+<a href="https://line.me/R/ti/p/@okf-md-master" target="_blank" class="card">
+<div class="card-icon">🟢</div><div class="card-info"><div class="card-name">LINE</div><div class="card-desc">Chat with OKF AI via LINE</div></div>
+</a>
+<a href="https://t.me/JensBeckerBot" target="_blank" class="card">
+<div class="card-icon">📱</div><div class="card-info"><div class="card-name">Telegram</div><div class="card-desc">Chat with OKF AI via Telegram @JensBeckerBot</div></div>
+</a>
+</div>
+<a href="/logout" class="logout">Logout</a>
+</div></body></html>`);
+});
+
 app.get('/login', (req, res) => {
   if (isLoggedIn(req)) return res.redirect('/');
   // Auto-detect mobile
@@ -241,7 +295,7 @@ app.get('/auth/dev', (req, res) => {
   const sid = crypto.randomBytes(16).toString('hex');
   sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'dev@localhost', name: 'Developer', picture: null } };
   res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
-  res.redirect('/');
+  res.redirect('/choose');
 });
 
 app.post('/auth/google', express.json(), async (req, res) => {
@@ -270,7 +324,7 @@ app.get('/auth/github/callback', async (req, res) => {
     const sid = crypto.randomBytes(16).toString('hex');
     sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user };
     res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
-    res.redirect('/');
+    res.redirect('/choose');
   } catch (e) { res.redirect('/login?error=' + encodeURIComponent(e.message)); }
 });
 
@@ -281,7 +335,7 @@ app.post('/login', express.urlencoded({ extended: false }), (req, res) => {
   const sid = crypto.randomBytes(16).toString('hex');
   sessions[sid] = { created: Date.now(), ip: req.ip || req.socket.remoteAddress || 'local' };
   res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
-  res.redirect('/');
+  res.redirect('/choose');
 });
 
 app.get('/logout', (req, res) => {
@@ -1163,6 +1217,33 @@ app.post('/api/settings', express.json(), (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   const updated = config.update(req.body);
   res.json({ ok: true, config: updated });
+});
+
+app.post('/telegram/webhook', express.json(), async (req, res) => {
+  try {
+    const result = await tgBot.handleUpdate(req.body, skillAgent);
+    res.json({ ok: true, result });
+  } catch (e) {
+    console.error('Telegram webhook error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/whatsapp/webhook', (req, res) => {
+  const result = waBot.verifyWebhook(req.query['hub.mode'], req.query['hub.challenge'], req.query['hub.verify_token']);
+  if (result) return res.send(result);
+  res.status(403).send('Invalid');
+});
+
+app.post('/whatsapp/webhook', express.json(), async (req, res) => {
+  try {
+    const results = await waBot.handleWebhook(req.body, skillAgent);
+    res.json({ ok: true, results });
+  } catch (e) {
+    console.error('WhatsApp webhook error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+  res.sendStatus(200);
 });
 
 if (require.main === module) startServer();

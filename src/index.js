@@ -34,3 +34,12 @@ if (!isCloudRun) {
 
 startServer();
 console.log('Dashboard: http://localhost:' + PORT);
+
+// Register Telegram webhook
+const tgBot = require('./core/telegram-bot');
+const CLOUD_URL = process.env.CLOUD_RUN_URL || ('http://localhost:' + PORT);
+if (tgBot.TG_TOKEN) {
+  tgBot.setWebhook(CLOUD_URL + '/telegram/webhook').then(r => {
+    console.log('Telegram webhook: ' + (r.ok ? '✅ set' : '❌ ' + r.description));
+  }).catch(() => {});
+}
