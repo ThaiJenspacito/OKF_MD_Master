@@ -75,7 +75,7 @@ async function handleWebhook(body, skillAgent) {
 }
 
 function verifySignature(body, signature) {
-  if (!LINE_SECRET) return true;
+  if (!LINE_SECRET) return true; // skip verification if no secret configured
   try {
     const crypto = require('crypto');
     const hash = crypto.createHmac('sha256', LINE_SECRET).update(JSON.stringify(body)).digest('base64');

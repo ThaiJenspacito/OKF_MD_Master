@@ -158,6 +158,20 @@ function okfCard(name, description, tags, date) {
 </div>`;
 }
 
+app.post('/line/webhook', express.json(), async (req, res) => {
+  const signature = req.get('x-line-signature') || '';
+  if (!lineBot.verifySignature(req.body, signature)) {
+    return res.status(403).json({ error: 'Invalid signature' });
+  }
+  try {
+    const results = await lineBot.handleWebhook(req.body, skillAgent);
+    res.json({ ok: true, processed: results.length, results });
+  } catch (e) {
+    console.error('LINE webhook error:', e.message);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get('/login', (req, res) => {
   if (isLoggedIn(req)) return res.redirect('/');
   // Auto-detect mobile
