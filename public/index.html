@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OKF MD Master</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="/icon.svg">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0b0f19;color:#e2e8f0;min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #1e293b;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+h1{font-size:20px;background:linear-gradient(135deg,#14b8a6,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}.status-dot.active{background:#22c55e;box-shadow:0 0 6px #22c55e}.status-dot.paused{background:#eab308}
+nav{display:flex;gap:4px;flex-wrap:wrap}nav a,nav button{font-size:12px;color:#94a3b8;text-decoration:none;padding:4px 10px;border-radius:6px;background:transparent;border:none;cursor:pointer;transition:all .15s}nav a:hover,nav button:hover{background:#1e293b;color:#e2e8f0}nav a.active{background:#1e293b;color:#14b8a6}
+.btn{font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #334155;cursor:pointer;background:#1e293b;color:#94a3b8;transition:all .15s}.btn:hover{background:#334155}.btn-teal{background:#0f766e33;color:#14b8a6;border-color:#0f766e}.btn-teal:hover{background:#0f766e66}.btn-red{color:#ef4444}.btn-red:hover{background:#7f1d1d33}
+.grid{display:grid;gap:16px}
+.grid-4{grid-template-columns:repeat(4,1fr)}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:768px){.grid-4,.grid-3{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}}
+.card{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:16px}
+.card-header{font-size:11px;text-transform:uppercase;color:#64748b;letter-spacing:.5px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.stat-label{font-size:10px;color:#64748b;text-transform:uppercase}.stat-value{font-size:28px;font-weight:700;margin-top:4px}
+.bar-container{background:#1e293b;border-radius:10px;height:16px;overflow:hidden;margin-top:8px}
+.bar-fill{height:100%;border-radius:10px;transition:width .6s ease,background .3s}
+.metric-label{font-size:11px;color:#94a3b8;margin-top:6px;line-height:1.5}
+.badge{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;margin-right:2px}
+.badge-green{background:#16653455;color:#4ade80}.badge-blue{background:#1e3a5f55;color:#60a5fa}.badge-yellow{background:#78350f55;color:#fbbf24}.badge-red{background:#7f1d1d55;color:#f87171}.badge-amber{background:#78350f55;color:#fcd34d}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td,th{padding:6px 8px;text-align:left;border-bottom:1px solid #1e293b}
+th{color:#64748b;font-weight:600}
+.agent-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1e293b;font-size:12px}
+.agent-icon{font-size:18px;min-width:24px;text-align:center}.agent-info{flex:1}.agent-name{font-weight:600}.agent-detail{color:#64748b;font-size:10px;margin-top:2px}
+input,select{background:#1e293b;border:1px solid #334155;border-radius:6px;padding:6px 10px;color:#e2e8f0;font-size:12px;width:100%}input:focus,select:focus{outline:none;border-color:#14b8a6}
+.drag-zone{border:2px dashed #334155;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s}.drag-zone:hover{border-color:#14b8a6}
+.progress-bar{background:#1e293b;border-radius:6px;height:6px;overflow:hidden;margin-top:6px}.progress-fill{background:#14b8a6;height:100%;border-radius:6px;transition:width .3s;width:0}
+.dropdown{position:relative;display:inline-block}.dropdown-menu{display:none;position:absolute;right:0;top:100%;margin-top:4px;background:#1e293b;border:1px solid #334155;border-radius:8px;min-width:160px;z-index:50;padding:4px;box-shadow:0 10px 25px #00000055}.dropdown:hover .dropdown-menu,.dropdown-menu.show{display:block}.dropdown-menu a,.dropdown-menu button{display:block;width:100%;text-align:left;font-size:12px;padding:6px 10px;color:#94a3b8;text-decoration:none;border:none;background:transparent;cursor:pointer;border-radius:4px}.dropdown-menu a:hover,.dropdown-menu button:hover{background:#334155;color:#e2e8f0}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+<div style="display:flex;align-items:center;gap:12px">
+<h1>OKF MD Master</h1>
+<span class="status-dot active" id="statusDot"></span>
+<span style="font-size:11px;color:#64748b" id="statusText">Loading...</span>
+</div>
+<nav>
+<a href="/" class="active">Dashboard</a>
+<a href="/library">Library</a>
+<a href="/chat">Chat</a>
+<div class="dropdown">
+<a href="#" onclick="return false">More ▾</a>
+<div class="dropdown-menu">
+<a href="/social">Social</a>
+<a href="/connect">Network</a>
+<a href="/enterprise">Enterprise</a>
+<a href="/settings">Settings</a>
+<a href="/api/knowledge">Export Bundle</a>
+</div>
+</div>
+<span style="font-size:11px;color:#475569" id="creditsDisplay"></span>
+<a href="/logout" class="btn btn-red">Logout</a>
+</nav>
+</header>
+
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+<button class="btn" onclick="apiCall('/api/scheduler/pause','POST').then(()=>location.reload())" id="pauseBtn">Pause</button>
+<button class="btn btn-teal" onclick="apiCall('/api/scout/scan','POST').then(d=>{alert('Scout: '+d.discovered+' files found');location.reload()})">Scout Now</button>
+<button class="btn btn-teal" onclick="apiCall('/api/architect/process','POST').then(d=>{alert('Architect: '+d.processed+' skills created');location.reload()})">Process Now</button>
+</div>
+
+<div class="grid grid-4" id="statsGrid" style="margin-bottom:20px"></div>
+
+<div class="grid grid-2" style="margin-bottom:20px">
+<div class="card">
+<div class="card-header">📊 Server Report</div>
+<div id="reportBars"><p style="color:#64748b;font-size:12px">Loading...</p></div>
+</div>
+<div class="card">
+<div class="card-header">Active Agents</div>
+<div id="agentCards"><p style="color:#64748b;font-size:12px">Loading...</p></div>
+</div>
+</div>
+
+<div class="grid grid-3" style="margin-bottom:20px">
+<div class="card">
+<div class="card-header">📥 Upload .md File</div>
+<div class="drag-zone" id="dropZone" onclick="document.getElementById('fileUpload').click()">
+<p style="font-size:13px;color:#64748b">Drop .md file here or click</p>
+</div>
+<input type="file" id="fileUpload" accept=".md" style="display:none" onchange="doUpload(this.files[0])">
+<div id="uploadProgress" style="margin-top:8px"></div>
+<p style="font-size:10px;color:#64748b;margin-top:8px">or: </p>
+<form action="/api/upload" method="POST" enctype="multipart/form-data" target="_blank" style="display:flex;gap:8px;margin-top:4px">
+<input type="file" name="file" accept=".md" style="flex:1">
+<button class="btn btn-teal">Upload</button>
+</form>
+</div>
+<div class="card">
+<div class="card-header">🔍 Scan Laptop</div>
+<p style="font-size:11px;color:#64748b;margin-bottom:8px">Finds .md files in common directories.</p>
+<button class="btn btn-teal" onclick="scanLaptop()" id="scanBtn">Search</button>
+<div id="scanResults" style="margin-top:8px;font-size:11px;max-height:160px;overflow-y:auto"></div>
+</div>
+<div class="card">
+<div class="card-header">💚 Health</div>
+<div id="healthInfo" style="font-size:11px;line-height:1.8"></div>
+</div>
+</div>
+
+<div class="grid grid-2" style="margin-bottom:20px">
+<div class="card">
+<div class="card-header">📁 Directory Tree</div>
+<div id="dirTree" style="font-family:monospace;font-size:11px;line-height:1.8"></div>
+</div>
+<div class="card">
+<div class="card-header">📋 Input Journal</div>
+<div id="journalEntries" style="font-size:11px;max-height:200px;overflow-y:auto"></div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-header">Recent Activity</div>
+<div style="overflow-x:auto"><table id="activityTable"><thead><tr><th>File</th><th>Status</th><th>Last Updated</th></tr></thead><tbody></tbody></table></div>
+</div>
+
+</div>
+
+<script>
+const BASE='';
+let state={};
+
+async function apiCall(url,method='GET',body=null){
+const opts={method,headers:{}};
+if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body)}
+const r=await fetch(BASE+url,opts);
+if(r.status===401){location.href='/login';return}
+return r.json()
+}
+
+async function loadAll(){
+try{
+const s=await apiCall('/api/status');
+const h=await apiCall('/api/health');
+const r=await apiCall('/api/report');
+const c=await apiCall('/api/credits');
+state={status:s,health:h,report:r,credits:c};
+render();
+}catch(e){console.error(e)}
+}
+
+function render(){
+const {status,health,report}=state;
+if(!status)return;
+
+document.getElementById('statusDot').className='status-dot '+(status.scheduler.paused?'paused':'active');
+document.getElementById('statusText').textContent=(status.scheduler.paused?'Paused':'Active')+' · CPU '+report.metrics.cpu.ist+'% · '+report.metrics.uptime.formatted+' up';
+document.getElementById('pauseBtn').textContent=status.scheduler.paused?'Resume':'Pause';
+document.getElementById('pauseBtn').onclick=()=>{
+apiCall('/api/scheduler/'+(status.scheduler.paused?'resume':'pause'),'POST').then(()=>location.reload())
+};
+
+renderStats(status);
+renderReport(report);
+renderAgents(status,report,health);
+renderHealth(health);
+renderDirTree(report);
+renderJournal();
+renderActivity(status);
+renderCredits();
+}
+
+function renderStats(s){
+const st=s.scheduler.stats;
+document.getElementById('statsGrid').innerHTML=[
+{label:'OKF Skills',val:st.okf_ready,color:'#14b8a6'},
+{label:'Total',val:st.total,color:'#3b82f6'},
+{label:'In Queue',val:s.scheduler.discoveryQueueSize,color:'#8b5cf6'},
+{label:'Learnings',val:st.lessons_learned||0,color:'#f59e0b'}
+].map(x=>'<div class=card><p class=stat-label>'+x.label+'</p><p class=stat-value style=color:'+x.color+'>'+x.val+'</p></div>').join('')
+}
+
+function renderReport(r){
+const m=r.metrics;
+document.getElementById('reportBars').innerHTML=['cpu','ram','disk'].map(k=>{
+const d=m[k];const color=d.status==='under'?'#10b981':d.status==='ok'?'#06b6d4':d.status==='warn'?'#f59e0b':'#ef4444';
+const u=k==='ram'?'GB':'%';
+return'<div style=margin-bottom:12px><div style=display:flex;justify-content:space-between;font-size:11px><span style=color:#94a3b8>'+k.toUpperCase()+'</span><span>SOLL '+d.soll+u+' · <b style=color:'+color+'>'+d.ist+u+'</b> · MAX '+d.max+u+'</span></div><div class=bar-container><div class=bar-fill style=width:'+Math.min(d.bar,100)+'%;background:'+color+'></div></div></div>'
+}).join('')
+}
+
+function renderAgents(s,r,h){
+const cfg=s.config||{};
+const activity=s.scheduler.activity||{};
+const agents=[
+{icon:'👁️',name:'Watcher',detail:'Watching: mock_documents',active:true},
+{icon:'🔎',name:'Auto-Scanner',detail:(activity['auto-scanner']?.action||'Idle')+': '+(activity['auto-scanner']?.detail||'every 5min'),active:s.scheduler.running},
+{icon:'🕵️',name:'Scout',detail:(activity['scout']?.action||'Idle')+': '+(activity['scout']?.detail||'waiting'),active:true},
+{icon:'🤖',name:'Architect',detail:'Model: '+(cfg.model||'-')+' → '+(cfg.fallbackModel||''),active:!!h.llm},
+{icon:'⏱️',name:'Scheduler',detail:'Poll: 10s · Idle: ≥120s · CPU <30%',active:s.scheduler.running},
+{icon:'📱',name:'Telegram',detail:'Disabled',active:false},
+{icon:'🖥️',name:'Tray',detail:'Windows',active:true}
+];
+document.getElementById('agentCards').innerHTML=agents.map(a=>'<div class=agent-row><div class=agent-icon>'+a.icon+'</div><div class=agent-info><div class=agent-name>'+a.name+'</div><div class=agent-detail>'+a.detail+'</div></div><span class="badge '+(a.active?'badge-green':'badge-red')+'">'+(a.active?'Active':'Off')+'</span></div>').join('')
+}
+
+function renderHealth(h){
+const items=[
+['Scheduler',h.scheduler],
+['LLM Reachable',h.llm],
+['Memory',h.memory?.used||'?'],
+['All Systems',h.allOk]
+];
+document.getElementById('healthInfo').innerHTML=items.map(([l,v])=>'<div>'+l+': '+(typeof v==='boolean'?(v?'🟢':'🔴'):v)+'</div>').join('')+
+'<p style=margin-top:8px;color:'+(h.allOk?'#22c55e':'#eab308')+'>'+(h.allOk?'✅ All OK':'⚠️ Issues')+'</p>'
+}
+
+function renderDirTree(r){
+const m=r.metrics;
+const dirs=[
+{name:'data',icon:'📁'},
+{name:'originals',icon:'📄',count:0},
+{name:'scouted',icon:'📋',count:0},
+{name:'okf_ready',icon:'✅',count:0},
+{name:'processed',icon:'📦',count:0},
+{name:'failed',icon:'⚠️',count:0},
+{name:'lessons-learned',icon:'📚',count:0},
+{name:'state',icon:'🔧',count:0}
+];
+document.getElementById('dirTree').innerHTML=dirs.map(d=>
+'<div>'+(d.name==='data'?'📁 <b>data/</b>':'  ├─ '+d.icon+' '+d.name+'/ <span style=color:#64748b>'+d.count+' files</span>')+'</div>'
+).join('')+'<div style=color:#64748b>  └─ 📋 index.md</div>'
+}
+
+function renderJournal(){
+apiCall('/api/journal').then(d=>{
+const entries=(d||[]).slice(-8).reverse();
+document.getElementById('journalEntries').innerHTML=entries.length===0?'<p style=color:#64748b;font-size:11px>No entries yet</p>':
+entries.map(e=>'<div style="border-bottom:1px solid #1e293b;padding:4px 0"><span style=color:#64748b>'+e.at.substring(11,16)+'</span> <b>'+e.filename+'</b><br><span style=color:#475569;font-size:10px>'+e.source+' → '+e.action+'</span></div>').join('')
+})
+}
+
+function renderActivity(s){
+const activity=s.scheduler.activity||{};
+const entries=Object.entries(activity).map(([k,v])=>({id:k,status:v.action||'idle',time:v.at||''}));
+const tbody=document.querySelector('#activityTable tbody');
+tbody.innerHTML=entries.length===0?'<tr><td colspan=3 style=color:#64748b>No activity</td></tr>':
+entries.slice(0,10).map(e=>'<tr><td>'+e.id+'</td><td><span class=badge.badge-blue>'+e.status+'</span></td><td style=color:#64748b>'+e.time.substring(11,19)+'</td></tr>').join('')
+}
+
+function renderCredits(){
+apiCall('/api/credits').then(d=>{
+if(d&&d.user)document.getElementById('creditsDisplay').textContent='· '+d.user.credits+'¢'
+})
+}
+
+function doUpload(file){
+if(!file)return;
+const div=document.getElementById('uploadProgress');
+div.innerHTML='<div class=progress-bar><div class=progress-fill id=uploadFill></div></div><p style=font-size:10px;color:#64748b;margin-top:4px id=uploadPct>0%</p>';
+const xhr=new XMLHttpRequest();
+xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);document.getElementById('uploadFill').style.width=p+'%';document.getElementById('uploadPct').textContent=p+'%'}};
+xhr.onload=()=>{
+try{const d=JSON.parse(xhr.responseText);div.innerHTML=d.ok?'<p style=color:#22c55e;font-size:11px>✅ '+d.filename+' ('+d.size+' Bytes)</p>':'<p style=color:#ef4444>Error</p>'}catch(e){div.innerHTML='<p style=color:#ef4444>Error</p>'}
+};
+xhr.onerror=()=>{div.innerHTML='<p style=color:#ef4444>Error</p>'};
+const fd=new FormData();fd.append('file',file);xhr.open('POST','/api/upload');xhr.send(fd)
+}
+
+function scanLaptop(){
+const btn=document.getElementById('scanBtn');btn.disabled=true;btn.textContent='Searching...';
+apiCall('/api/scan/laptop').then(d=>{
+btn.disabled=false;btn.textContent='Search';
+const div=document.getElementById('scanResults');
+if(!d.files||!d.files.length){div.innerHTML='<p style=color:#64748b>No .md files found.</p>';return}
+div.innerHTML=d.files.map(f=>'<div style=display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1e293b><span>'+f.dir+'/<b>'+f.name+'</b></span><span style=color:#64748b>'+f.size+'B</span></div>').join('')
+}).catch(()=>{btn.disabled=false;btn.textContent='Search'})
+}
+
+const dropZone=document.getElementById('dropZone');
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.style.borderColor='#14b8a6'});
+dropZone.addEventListener('dragleave',()=>{dropZone.style.borderColor='#334155'});
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.style.borderColor='#334155';if(e.dataTransfer.files[0])doUpload(e.dataTransfer.files[0])});
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e});
+
+loadAll();
+setInterval(loadAll,30000);
+</script>
+</body>
+</html>

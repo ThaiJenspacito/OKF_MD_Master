@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -132,7 +132,7 @@ function getUser(req) {
 }
 
 function agentCard(name, icon, color, status, detail, model) {
-  const dot = status ? '🟢' : '🔴';
+  const dot = status ? 'ðŸŸ¢' : 'ðŸ”´';
   return `<div class="bg-gray-700/50 rounded-lg border border-gray-600/50 p-4 flex items-start space-x-3">
   <span class="text-2xl">${icon}</span>
   <div class="flex-1 min-w-0">
@@ -141,7 +141,7 @@ function agentCard(name, icon, color, status, detail, model) {
       <span class="text-xs bg-${status ? 'green' : 'red'}-900/40 text-${status ? 'green' : 'red'}-300 px-2 py-0.5 rounded">${dot} ${status ? 'Active' : 'Inactive'}</span>
     </div>
     <p class="text-xs text-gray-400 mt-1">${detail}</p>
-    ${model ? `<p class="text-xs font-mono text-gray-500 mt-1">🤖 ${model}</p>` : ''}
+    ${model ? `<p class="text-xs font-mono text-gray-500 mt-1">ðŸ¤– ${model}</p>` : ''}
   </div>
 </div>`;
 }
@@ -176,7 +176,7 @@ app.get('/login', (req, res) => {
 
   const separator = (googleBtn || githubBtn) ? '<div class="flex items-center my-4"><div class="flex-1 border-t border-gray-700"></div><span class="px-3 text-xs text-gray-600">or</span><div class="flex-1 border-t border-gray-700"></div></div>' : '';
 
-  res.send(`<!DOCTYPE html><html lang="en" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>OKF Login</title><script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script></head><body class="bg-gray-950 min-h-screen flex items-center justify-center"><div class="bg-gray-900 p-8 rounded-2xl border border-gray-800 w-full max-w-sm shadow-2xl"><div class="text-center mb-6"><h1 class="text-2xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF MD Master</h1><p class="text-gray-500 text-sm mt-1">Sign in</p></div><div class="space-y-3">${googleBtn}${githubBtn}</div>${separator}<form method="POST" action="/login"><input type="password" name="pin" placeholder="PIN" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 text-center text-lg tracking-widest focus:outline-none focus:border-teal-500 mb-4" maxlength="8" autofocus><button class="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-lg transition">Sign in with PIN</button></form><div class="mt-6 pt-4 border-t border-gray-800 text-center"><p class="text-xs bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent font-bold">FREE for the first 100 users</p><p class="text-gray-600 text-xs mt-1">Share your computing power · Earn credits · Unlimited OKF skills</p></div></div></body></html>`);
+  res.send(`<!DOCTYPE html><html lang="en" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>OKF Login</title><script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script></head><body class="bg-gray-950 min-h-screen flex items-center justify-center"><div class="bg-gray-900 p-8 rounded-2xl border border-gray-800 w-full max-w-sm shadow-2xl"><div class="text-center mb-6"><h1 class="text-2xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF MD Master</h1><p class="text-gray-500 text-sm mt-1">Sign in</p></div><div class="space-y-3">${googleBtn}${githubBtn}</div>${separator}<form method="POST" action="/login"><input type="password" name="pin" placeholder="PIN" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 text-center text-lg tracking-widest focus:outline-none focus:border-teal-500 mb-4" maxlength="8" autofocus><button class="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold py-3 rounded-lg transition">Sign in with PIN</button></form><div class="mt-6 pt-4 border-t border-gray-800 text-center"><p class="text-xs bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent font-bold">FREE for the first 100 users</p><p class="text-gray-600 text-xs mt-1">Share your computing power Â· Earn credits Â· Unlimited OKF skills</p></div></div></body></html>`);
 });
 
 app.post('/auth/google', express.json(), async (req, res) => {
@@ -228,346 +228,7 @@ app.get('/logout', (req, res) => {
 
 app.get('/', (req, res) => {
   if (!isLoggedIn(req)) return res.redirect('/login');
-
-  const status = scheduler.getStatus();
-  const idleStatus = isIdle();
-  const cfg = config.get();
-  const allEntries = tracker.getAll();
-  const activeSessions = Object.entries(sessions)
-    .filter(([,s]) => Date.now() - s.created < 8 * 3600000)
-    .map(([sid, s]) => ({
-      sid: sid.substring(0, 8) + '...',
-      ip: s.ip || 'local',
-      since: Math.round((Date.now() - s.created) / 60000)
-    }));
-  const skillCount = allEntries.filter(e => e.status === 'okf_ready').length;
-  const cpuLoad = getCpuLoad();
-
-  const indexLines = readLines(INDEX_FILE).filter(l => l.startsWith('*'));
-  const skills = indexLines.map(line => {
-    const match = line.match(/\* \[(.*?)\]\((.*?)\) - (.*)/);
-    if (match) return { name: match[1], path: match[2], date: match[3] };
-    return null;
-  }).filter(Boolean);
-
-  const recentActivity = allEntries
-    .sort((a, b) => {
-      const aTime = a.stages?.okf_ready?.at || a.stages?.discovered?.at || '';
-      const bTime = b.stages?.okf_ready?.at || b.stages?.discovered?.at || '';
-      return bTime.localeCompare(aTime);
-    })
-    .slice(0, 10);
-
-  const statusBadge = (s) => {
-    const map = {
-      okf_ready: 'bg-green-900/40 text-green-300 border-green-700',
-      scouted: 'bg-blue-900/40 text-blue-300 border-blue-700',
-      architected: 'bg-teal-900/40 text-teal-300 border-teal-700',
-      failed: 'bg-yellow-900/40 text-yellow-300 border-yellow-700',
-      lessons_learned: 'bg-amber-900/40 text-amber-300 border-amber-700',
-      discovered: 'bg-gray-700 text-gray-300 border-gray-600',
-      skipped: 'bg-gray-800 text-gray-500 border-gray-700'
-    };
-    return map[s] || 'bg-gray-700 text-gray-400 border-gray-600';
-  };
-
-  const treeFolders = [
-    { name: 'data', icon: '📁' },
-    { name: 'originals', icon: '📄', parent: 'data' },
-    { name: 'scouted', icon: '📋', parent: 'data' },
-    { name: 'okf_ready', icon: '✅', parent: 'data' },
-    { name: 'processed', icon: '📦', parent: 'data' },
-    { name: 'failed', icon: '⚠️', parent: 'data' },
-    { name: 'lessons-learned', icon: '📚', parent: 'data' },
-    { name: 'state', icon: '🔧', parent: 'data' }
-  ];
-
-  const treeData = treeFolders.map(f => {
-    const fp = path.join(DATA_DIR, f.name);
-    let count = 0;
-    if (fs.existsSync(fp)) {
-      count = fs.readdirSync(fp).filter(x => x.endsWith('.md') || x.endsWith('.json')).length;
-    }
-    return { ...f, count };
-  });
-
-  const categoryMap = {};
-  if (fs.existsSync(OKF_READY_DIR)) {
-    fs.readdirSync(OKF_READY_DIR).filter(f => f.endsWith('.md')).forEach(f => {
-      try {
-        const parsed = matter(fs.readFileSync(path.join(OKF_READY_DIR, f), 'utf8'));
-        const tags = parsed.data.tags || ['Uncategorized'];
-        const cat = tags[0];
-        if (!categoryMap[cat]) categoryMap[cat] = [];
-        categoryMap[cat].push({ file: f, name: parsed.data.name || f, description: parsed.data.description || '', tags, date: '' });
-      } catch {}
-    });
-  }
-
-  const categoryTree = Object.entries(categoryMap).map(([cat, files]) => ({
-    category: cat,
-    count: files.length,
-    files
-  }));
-
-  const hasTelegram = !!(process.env.TELEGRAM_BOT_TOKEN && !process.env.TELEGRAM_BOT_TOKEN.includes('DEIN_BOT_TOKEN'));
-  const tokens = architect.getTokenEstimate();
-  const journalEntries = loadJournal().slice(-10).reverse();
-  const activity = status.activity || {};
-  const user = getUser(req);
-  const userDisplay = user ? `<span class="text-xs text-gray-400">👤 ${user.name || user.email} · 💰 ${credits.getUserCredits(user.email, user.name).credits || 0} credits</span>` : '';
-
-  res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>OKF MD Master</title>
-<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0d9488">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="OKF Master">
-<link rel="apple-touch-icon" href="/icon.svg">
-<meta http-equiv="refresh" content="30">
-<script>
-if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; });
-function installPWA(){ if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(()=>{deferredPrompt=null}) } }
-</script>
-</head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
-<div class="container mx-auto px-4 py-6 max-w-7xl">
-
-<header class="flex flex-wrap items-center justify-between border-b border-gray-800 pb-4 mb-6 gap-3">
-<div class="flex items-center space-x-4">
-<h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF MD Master</h1>
-<span class="hidden sm:inline-flex items-center space-x-1">
-<span class="flex h-2 w-2 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full ${!status.paused ? 'bg-green-400' : 'bg-yellow-400'} opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 ${!status.paused ? 'bg-green-500' : 'bg-yellow-500'}"></span></span>
-<span class="text-xs text-gray-500">${status.paused ? 'Paused' : 'Active'} · IDLE ${idleStatus.idleSeconds}s · CPU ${cpuLoad}%</span>
-</span>
-</div>
-
-<nav class="flex items-center space-x-1 text-xs">
-<a href="/" class="text-teal-300 px-2 py-1 rounded hover:bg-gray-800 font-medium">Home</a>
-<a href="/library" class="text-gray-400 hover:text-teal-300 px-2 py-1 rounded hover:bg-gray-800">Library</a>
-<a href="/chat" class="text-gray-400 hover:text-teal-300 px-2 py-1 rounded hover:bg-gray-800">Chat</a>
-<div class="relative inline-block text-left" x-data="{open:false}" id="moreMenu">
-<button onclick="document.getElementById('moreDropdown').classList.toggle('hidden')" class="text-gray-400 hover:text-teal-300 px-2 py-1 rounded hover:bg-gray-800">More ▾</button>
-<div id="moreDropdown" class="hidden absolute right-0 mt-1 w-44 bg-gray-900 border border-gray-700 rounded-lg shadow-xl z-50 py-1">
-<a href="/social" class="block px-3 py-1.5 hover:bg-gray-800 text-gray-400 hover:text-pink-300">📱 Social</a>
-<a href="/connect" class="block px-3 py-1.5 hover:bg-gray-800 text-gray-400 hover:text-green-300">🌐 Network</a>
-<a href="/enterprise" class="block px-3 py-1.5 hover:bg-gray-800 text-gray-400 hover:text-amber-300">🏢 Enterprise</a>
-<a href="/settings" class="block px-3 py-1.5 hover:bg-gray-800 text-gray-400 hover:text-blue-300">⚙️ Settings</a>
-<div class="border-t border-gray-800 my-1"></div>
-<a href="/api/knowledge" class="block px-3 py-1.5 hover:bg-gray-800 text-purple-400">🧠 Export Bundle</a>
-</div>
-</div>
-${user ? `<span class="text-gray-500 text-xs ml-1">· ${user.credits || 0}¢</span>` : ''}
-<a href="/logout" class="text-gray-600 hover:text-red-400 ml-2">Logout</a>
-</nav>
-
-<div class="flex space-x-1 w-full sm:w-auto">
-${status.paused
-  ? '<button onclick="fetch(\'/api/scheduler/resume\',{method:\'POST\'}).then(()=>location.reload())" class="text-xs bg-green-900/40 text-green-300 px-2 py-1 rounded border border-green-800/50 hover:bg-green-800/50">▶</button>'
-  : '<button onclick="fetch(\'/api/scheduler/pause\',{method:\'POST\'}).then(()=>location.reload())" class="text-xs bg-yellow-900/40 text-yellow-300 px-2 py-1 rounded border border-yellow-800/50 hover:bg-yellow-800/50">⏸</button>'
-}
-<button onclick="fetch('/api/scout/scan',{method:'POST'}).then(r=>r.json()).then(d=>{location.reload()})" class="text-xs bg-blue-900/40 text-blue-300 px-2 py-1 rounded border border-blue-800/50 hover:bg-blue-800/50" title="Scout scan">🔍</button>
-<button onclick="fetch('/api/architect/process',{method:'POST'}).then(r=>r.json()).then(d=>{location.reload()})" class="text-xs bg-teal-900/40 text-teal-300 px-2 py-1 rounded border border-teal-800/50 hover:bg-teal-800/50" title="Process">🤖</button>
-<button onclick="installPWA()" id="installBtn" class="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded border border-gray-700 hover:bg-gray-700 hidden" title="Install app">📲</button>
-</div>
-<script>setTimeout(()=>{if(deferredPrompt)document.getElementById('installBtn').classList.remove('hidden')},2000)</script>
-</header>
-
-<div class="bg-gradient-to-r from-amber-900/30 via-purple-900/30 to-teal-900/30 border border-amber-800/50 rounded-xl p-4 mb-6">
-<div class="flex items-center justify-between">
-<div>
-<span class="text-amber-400 font-bold text-sm">🚀 WikiLLM</span>
-<span class="text-gray-400 text-xs ml-2">— The new fast open-source model for OKF</span>
-<p class="text-gray-500 text-xs mt-1">🔗 <a href="https://wikillm.org" target="_blank" class="text-teal-400 hover:text-teal-300">wikillm.org</a> · More models coming soon</p>
-</div>
-<span class="text-xs bg-amber-900/50 text-amber-300 px-3 py-1 rounded-full border border-amber-700">NEW</span>
-</div>
-</div>
-
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800 mb-6">
-<div class="flex justify-between items-center mb-4">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">📊 Server Report · TARGET / CURRENT / MAX</h2>
-<button onclick="loadReport()" class="text-xs text-gray-600 hover:text-teal-400">↻ Refresh</button>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-<div class="bg-gray-800 rounded-lg p-3 text-center">
-<p class="text-xs text-gray-500 mb-2">CPU</p>
-<div class="bg-gray-700 rounded-full h-4 mb-1"><div id="cpuBar" class="h-4 rounded-full transition-all duration-700" style="width:0;background:#06b6d4"></div></div>
-<p class="text-xs text-gray-400" id="cpuLabel2">SOLL 20% · IST - · MAX 95%</p>
-</div>
-<div class="bg-gray-800 rounded-lg p-3 text-center">
-<p class="text-xs text-gray-500 mb-2">RAM</p>
-<div class="bg-gray-700 rounded-full h-4 mb-1"><div id="ramBar" class="h-4 rounded-full transition-all duration-700" style="width:0;background:#06b6d4"></div></div>
-<p class="text-xs text-gray-400" id="ramLabel2">SOLL 4GB · IST - · MAX 16GB</p>
-</div>
-<div class="bg-gray-800 rounded-lg p-3 text-center">
-<p class="text-xs text-gray-500 mb-2">Disk</p>
-<div class="bg-gray-700 rounded-full h-4 mb-1"><div id="diskBar" class="h-4 rounded-full transition-all duration-700" style="width:0;background:#06b6d4"></div></div>
-<p class="text-xs text-gray-400" id="diskLabel2">SOLL 50% · IST - · MAX 95%</p>
-</div>
-</div>
-<div id="reportSummary" class="text-xs text-gray-500 mt-3 text-right"></div>
-</div>
-
-<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-<div class="bg-gray-900 p-3 rounded-xl border border-gray-800"><p class="text-gray-500 text-xs uppercase">OKF Skills</p><p class="text-2xl font-bold text-teal-400">${skillCount}</p></div>
-<div class="bg-gray-900 p-3 rounded-xl border border-gray-800"><p class="text-gray-500 text-xs uppercase">Total</p><p class="text-2xl font-bold text-blue-400">${status.stats.total}</p></div>
-<div class="bg-gray-900 p-3 rounded-xl border border-gray-800"><p class="text-gray-500 text-xs uppercase">Queue</p><p class="text-2xl font-bold text-purple-400">${status.discoveryQueueSize}</p></div>
-<div class="bg-gray-900 p-3 rounded-xl border border-gray-800"><p class="text-gray-500 text-xs uppercase">Tokens</p><p class="text-2xl font-bold text-amber-400">${(tokens / 1000).toFixed(1)}K</p></div>
-<div class="bg-gray-900 p-3 rounded-xl border border-gray-800"><p class="text-gray-500 text-xs uppercase">Learnings</p><p class="text-2xl font-bold text-amber-400">${status.stats.lessons_learned || 0}</p></div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Active Agents</h2>
-<div class="space-y-3">
-${agentCard('Watcher', '👁️', 'blue', true, 'Watching: ' + (cfg.watchDirs || ['-']).map(d => path.basename(d)).join(', '), null)}
-${agentCard('Auto-Scanner', '🔎', 'indigo', status.running, (activity['auto-scanner'] ? activity['auto-scanner'].action + ': ' + (activity['auto-scanner'].detail || '') : 'Auto-scans every 5min'), null)}
-${agentCard('Scout', '🕵️', 'teal', true, (activity['scout'] ? activity['scout'].action + ': ' + (activity['scout'].detail || '') : 'Copies .md files'), cfg.model)}
-${agentCard('Architect', '🤖', 'green', true, (activity['architect'] ? activity['architect'].action + ': ' + (activity['architect'].detail || '') : 'Transforms via LLM'), cfg.model + (cfg.fallbackModel ? ' → ' + cfg.fallbackModel : ''))}
-${agentCard('Scheduler', '⏱️', 'purple', status.running, (activity['scheduler'] ? activity['scheduler'].action : 'Poll: 10s') + ' · Idle: ≥' + cfg.idleThresholdSec + 's · CPU < ' + cfg.cpuThresholdPct + '%', null)}
-${agentCard('Telegram Bot', '📱', 'blue', hasTelegram, hasTelegram ? 'Chat-ID: ' + (process.env.ALLOWED_CHAT_ID || '-') : 'Disabled', null)}
-${agentCard('Tray App', '🖥️', 'gray', true, 'Windows Taskbar', null)}
-</div>
-</div>
-
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">System</h2>
-<table class="w-full text-xs">
-<tbody class="divide-y divide-gray-800">
-<tr><td class="py-1.5 text-gray-500">LLM Primary</td><td class="py-1.5 font-mono text-green-400">${cfg.model || '-'}</td></tr>
-<tr><td class="py-1.5 text-gray-500">LLM Fallback</td><td class="py-1.5 font-mono text-green-400/70">${cfg.fallbackModel || '-'}</td></tr>
-<tr><td class="py-1.5 text-gray-500">Max Tokens</td><td class="py-1.5 text-gray-300">${cfg.maxTokens}</td></tr>
-<tr><td class="py-1.5 text-gray-500">Max File Size</td><td class="py-1.5 text-gray-300">${Math.round((cfg.maxFileSize || 50000) / 1024)} KB</td></tr>
-<tr><td class="py-1.5 text-gray-500">Watch Dirs</td><td class="py-1.5 font-mono text-blue-300 text-xs">${(cfg.watchDirs || []).join(', ')}</td></tr>
-<tr><td class="py-1.5 text-gray-500">Providers</td><td class="py-1.5 text-xs">${process.env.DEEPSEEK_API_KEY ? '🟢 DeepSeek ' : '🔴 DeepSeek '}${process.env.GEMINI_API_KEY ? '🟢 Gemini ' : '🔴 Gemini '}${process.env.OPENROUTER_API_KEY ? '🟢 OpenRouter' : '🔴 OpenRouter'}</td></tr>
-<tr><td class="py-1.5 text-gray-500">Port</td><td class="py-1.5 text-gray-300">${PORT}</td></tr>
-<tr><td class="py-1.5 text-gray-500">Session</td><td class="py-1.5 text-gray-500">8h valid</td></tr>
-</tbody></table>
-</div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">📥 Upload .md File</h2>
-<form id="uploadForm" class="space-y-2">
-<div id="dropZone" class="border-2 border-dashed border-gray-700 rounded-lg p-6 text-center hover:border-teal-600 transition cursor-pointer"
-  ondragover="this.classList.add('border-teal-500');event.preventDefault()"
-  ondragleave="this.classList.remove('border-teal-500')"
-  ondrop="this.classList.remove('border-teal-500');event.preventDefault();uploadFile(event.dataTransfer.files[0])"
-  onclick="document.getElementById('fileInput').click()">
-<p class="text-gray-500 text-sm">📄 Drop .md file here</p>
-<p class="text-gray-600 text-xs mt-1">or click</p>
-</div>
-<input type="file" id="fileInput" accept=".md" onchange="uploadFile(this.files[0])" class="hidden">
-</form>
-<p id="uploadMsg" class="text-xs mt-2 text-gray-600"></p>
-<div class="mt-3 pt-3 border-t border-gray-800">
-<p class="text-xs text-gray-500 mb-2">or simple form</p>
-<form action="/api/upload" method="POST" enctype="multipart/form-data" target="_blank" class="flex space-x-2">
-<input type="file" name="file" accept=".md" class="text-xs text-gray-400 file:bg-gray-800 file:border file:border-gray-700 file:rounded file:text-gray-300 file:px-2 file:py-1 file:text-xs file:hover:bg-gray-700">
-<button type="submit" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800">Upload</button>
-</form>
-</div>
-<p class="text-xs text-gray-500 mb-2">🌐 URL or GitHub Repo</p>
-<div class="flex space-x-2">
-<input id="urlInput" type="text" placeholder="https://..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-teal-500">
-<button onclick="fetchUrl()" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800 hover:bg-teal-800/50">Fetch</button>
-</div>
-<p id="fetchMsg" class="text-xs mt-1 text-gray-600"></p>
-</div>
-</div>
-
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">🔍 Scan Laptop</h2>
-<p class="text-xs text-gray-600 mb-3">Finds .md files in Documents, Desktop, Downloads. For approval.</p>
-<button onclick="scanLaptop()" id="scanBtn" class="text-xs bg-indigo-900/50 text-indigo-300 px-3 py-2 rounded border border-indigo-800 hover:bg-indigo-800/50 w-full">💻 Search</button>
-<div id="scanResults" class="mt-3 text-xs text-gray-500 max-h-36 overflow-y-auto space-y-1"></div>
-</div>
-
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">💚 System Health</h2>
-<div id="healthDisplay" class="text-xs space-y-1 text-gray-400"><p>Loading...</p></div>
-<button onclick="checkHealth()" class="text-xs text-gray-600 hover:text-teal-400 mt-2">↻ Refresh</button>
-</div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">📁 Directory Tree / data</h2>
-<div class="font-mono text-sm space-y-1">
-${treeData.filter(t => !t.parent).map(root => `
-<div class="text-teal-300 mb-2">${root.icon} <span class="font-bold">${root.name}/</span></div>
-${treeData.filter(t => t.parent === root.name).map(child => {
-  const color = child.name === 'okf_ready' ? 'text-green-400' : child.name === 'failed' ? 'text-yellow-400' : child.name === 'lessons-learned' ? 'text-amber-400' : 'text-gray-400';
-   return `<div class="ml-5 flex justify-between"><span class="${color}">├─ ${child.icon} ${child.name}/</span><span class="text-gray-600">${child.count} files</span></div>`;
-}).join('')}
-`).join('')}
-<div class="ml-5 text-gray-600">└─ 📋 index.md</div>
-</div>
-</div>
-
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">🏷️ Categories</h2>
-${categoryTree.length === 0 ? '<p class="text-gray-600 italic text-sm">—</p>' : ''}
-<div class="space-y-2 max-h-64 overflow-y-auto">
-${categoryTree.map(cat => `
-<div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-3">
-<div class="flex justify-between items-center mb-2">
-<span class="font-semibold text-teal-300 text-sm">🏷️ ${cat.category}</span>
-<span class="text-xs bg-gray-800 px-2 py-0.5 rounded text-gray-500">${cat.count}</span>
-</div>
-<div class="space-y-1.5">
-${cat.files.slice(0, 5).map(f => okfCard(f.name, f.description, f.tags, f.date)).join('')}
-${cat.count > 5 ? `<p class="text-xs text-gray-600 italic pl-1">+ ${cat.count - 5} more</p>` : ''}
-</div>
-</div>
-`).join('')}
-</div>
-</div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<div class="lg:col-span-1 bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">📋 Input Journal</h2>
-${journalEntries.length === 0 ? '<p class="text-gray-600 italic text-xs">No entries yet.</p>' : ''}
-<div class="text-xs space-y-1.5 max-h-48 overflow-y-auto">
-${journalEntries.map(e => `<div class="border-b border-gray-800/50 pb-1"><span class="text-gray-500">${(e.at || '').substring(11)}</span> <span class="text-teal-300">${e.filename}</span><br><span class="text-gray-600">${e.source} → ${e.action}</span></div>`).join('')}
-</div>
-</div>
-
-<div class="lg:col-span-2 bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Recent Activity</h2>
-<table class="w-full text-xs">
-<thead><tr class="text-gray-500 uppercase border-b border-gray-800"><th class="py-2 px-2 text-left">File</th><th class="py-2 px-2 text-left">Status</th><th class="py-2 px-2 text-left">Last</th></tr></thead>
-<tbody class="divide-y divide-gray-800/50">
-${recentActivity.length === 0 ? '<tr><td colspan="3" class="py-4 text-center text-gray-600 italic">No activity</td></tr>' : ''}
-${recentActivity.map(e => {
-const lastStage = Object.keys(e.stages || {}).pop();
-const lastTime = e.stages?.[lastStage]?.at?.substring(0, 16) || '';
-return `<tr class="hover:bg-gray-800/30"><td class="py-2 px-2 font-medium text-gray-300">${e.id}</td><td class="py-2 px-2"><span class="px-1.5 py-0.5 text-xs rounded border ${statusBadge(e.status)}">${e.status}</span></td><td class="py-2 px-2 text-gray-600">${lastTime}</td></tr>`;
-}).join('')}
-</tbody></table>
-</div>
-</div>
-
-</div>
-<script>
-function uploadFile(file){if(!file)return;const msg=document.getElementById('uploadMsg');msg.innerHTML='<div class=bg-gray-800.rounded-full.h-2.mb-1><div id=uploadBar class=bg-teal-500.h-2.rounded-full.transition-all style=width:0%></div></div><span id=uploadPct>0%</span>';const xhr=new XMLHttpRequest();xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);document.getElementById('uploadBar').style.width=pct+'%';document.getElementById('uploadPct').innerHTML=pct+'%'}};xhr.onload=()=>{try{const d=JSON.parse(xhr.responseText);msg.innerHTML=d.ok?'✅ <b>'+d.filename+'</b> ('+d.size+' Bytes)':'❌ '+d.error}catch(e){msg.innerHTML='❌ Error'}};xhr.onerror=()=>{msg.innerHTML='❌ Error'};const fd=new FormData();fd.append('file',file);xhr.open('POST','/api/upload');xhr.send(fd)}
-function scanLaptop(){const btn=document.getElementById('scanBtn');btn.disabled=true;btn.innerHTML='⏳...';fetch('/api/scan/laptop').then(r=>r.json()).then(d=>{btn.disabled=false;btn.innerHTML='💻 Search';const div=document.getElementById('scanResults');if(!d.files||!d.files.length){div.innerHTML='<p class=text-gray-600>No .md files found.</p>';return}div.innerHTML=d.files.map(f=>'<div class=flex.justify-between.items-center.py-1.border-b.border-gray-800><span class=truncate.mr-2>'+f.dir+'/'+f.name+'</span><span class=text-gray-600.mr-2>'+(f.size/1024).toFixed(1)+'KB</span><button onclick=approvePath(\''+f.path+'\') class=text-teal-400>+</button></div>').join('')}).catch(()=>{btn.disabled=false;btn.innerHTML='💻 Search'})}
-function approvePath(dir){fetch('/api/scan/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:dir})}).then(r=>r.json()).then(d=>{if(d.ok)alert('✅ Path added: '+d.watchDirs.join(', '));else alert('❌ Error')})}
-function checkHealth(){fetch('/api/health').then(r=>r.json()).then(h=>{document.getElementById('healthDisplay').innerHTML='<p>Scheduler: '+(h.scheduler?'🟢':'🔴')+'</p><p>LLM: '+(h.llm?'🟢':'🔴')+'</p><p>Memory: '+(h.memory?h.memory.used:'?')+'</p><p>Uptime: '+Math.round(h.uptime/60)+'min</p><p class='+(h.allOk?'text-green-400':'text-yellow-400')+'>'+(h.allOk?'✅ All OK':'⚠️ Issues')+'</p>'})}
-function fetchUrl(){const u=document.getElementById('urlInput').value.trim();if(!u)return;document.getElementById('fetchMsg').innerHTML='⏳...';fetch('/api/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})}).then(r=>r.json()).then(d=>{document.getElementById('fetchMsg').innerHTML=d.ok?'✅ '+(d.type||'')+' '+d.filename+' ('+d.size+' Bytes)':'❌ '+d.error})}
-let gauges={};
-let chartRetries=0;
-function loadReport(){fetch('/api/report').then(r=>r.json()).then(r=>{const m=r.metrics;['cpu','ram','disk'].forEach(k=>{const d=m[k];const color=d.status==='under'?'#10b981':d.status==='ok'?'#06b6d4':d.status==='warn'?'#f59e0b':'#ef4444';const bar=document.getElementById(k+'Bar');if(bar){bar.style.width=Math.min(d.bar,100)+'%';bar.style.background=color}const u=d.unit||'%';const label=document.getElementById(k+'Label2');if(label)label.innerHTML='TARGET '+d.soll+u+' · CURRENT <b style=color:'+color+'>'+d.ist+u+'</b> · MAX '+d.max+u});const s=document.getElementById('reportSummary');if(s)s.innerHTML='Uptime '+m.uptime.formatted+' · RSS '+m.process.rss+(m.disk.free?' · Disk '+m.disk.free:'')})}
-checkHealth();
-loadReport();
-</script></body></html>`);
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 app.get('/api/status', (req, res) => {
@@ -582,7 +243,7 @@ app.get('/api/status', (req, res) => {
 
 function startServer() {
   app.listen(PORT, () => {
-    console.log('🚀 Dashboard: http://localhost:' + PORT);
+    console.log('ðŸš€ Dashboard: http://localhost:' + PORT);
   });
 }
 
@@ -673,10 +334,10 @@ app.get('/library', (req, res) => {
 <header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
 <div>
 <h1 class="text-2xl font-bold tracking-tight bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF Library</h1>
-<p class="text-xs text-gray-500 mt-1">${skills.length} Skills · ${allTags.length} Categories</p>
+<p class="text-xs text-gray-500 mt-1">${skills.length} Skills Â· ${allTags.length} Categories</p>
 </div>
 <div class="flex items-center space-x-3">
-<a href="/" class="text-xs text-teal-400 hover:text-teal-300 transition">← Dashboard</a>
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300 transition">â† Dashboard</a>
 <a href="/logout" class="text-xs text-gray-600 hover:text-red-400 transition">Logout</a>
 </div>
 </header>
@@ -695,10 +356,10 @@ ${allTags.map(t => `<option value="${t}">${t}</option>`).join('')}
 </select>
 <select id="dirFilter" class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none" onchange="filter()">
 <option value="">All Folders</option>
-<option value="okf_ready">✅ OKF Ready</option>
-<option value="lessons-learned">📚 Lessons</option>
-<option value="failed">⚠️ Failed</option>
-<option value="processed">📦 Processed</option>
+<option value="okf_ready">âœ… OKF Ready</option>
+<option value="lessons-learned">ðŸ“š Lessons</option>
+<option value="failed">âš ï¸ Failed</option>
+<option value="processed">ðŸ“¦ Processed</option>
 </select>
 </div>
 
@@ -707,7 +368,7 @@ ${allTags.map(t => `<option value="${t}">${t}</option>`).join('')}
 </div>
 <script>
 const skills = ${JSON.stringify(skills)};
-const dirIcons = {okf_ready:'✅', 'lessons-learned':'📚', failed:'⚠️', processed:'📦'};
+const dirIcons = {okf_ready:'âœ…', 'lessons-learned':'ðŸ“š', failed:'âš ï¸', processed:'ðŸ“¦'};
 
 function render(items) {
   const grid = document.getElementById('grid');
@@ -723,7 +384,7 @@ function render(items) {
   </div>
   <div class="flex justify-between items-center text-xs text-gray-600 border-t border-gray-800 pt-2">
     <span>\${s.dir}</span>
-    <a href="/api/download/\${s.file}" class="text-teal-400 hover:text-teal-300" title="Download">⬇ \${s.downloads||0}</a>
+    <a href="/api/download/\${s.file}" class="text-teal-400 hover:text-teal-300" title="Download">â¬‡ \${s.downloads||0}</a>
     <span>\${(s.size/1024).toFixed(1)} KB</span>
   </div>
 </div>\`).join('');
@@ -880,16 +541,16 @@ app.get('/settings', (req, res) => {
 
   res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Settings · OKF MD Master</title>
+<title>Settings Â· OKF MD Master</title>
 <script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-4xl">
 <header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
 <div>
 <h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">Settings</h1>
-<p class="text-xs text-gray-500 mt-1">${user ? user.name || user.email : 'Guest'} · Power = Downloads</p>
+<p class="text-xs text-gray-500 mt-1">${user ? user.name || user.email : 'Guest'} Â· Power = Downloads</p>
 </div>
-<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">â† Dashboard</a>
 </header>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -931,7 +592,7 @@ ${leaderboard.map((e, i) => `<tr class="hover:bg-gray-800/30"><td class="py-1.5 
 
 </div>
 <script>
-async function saveSettings(e){e.preventDefault();const s={sharePower:document.getElementById('sharePower').checked,autoProcess:document.getElementById('autoProcess').checked,maxDownloads:parseInt(document.getElementById('maxDownloads').value)};const r=await fetch('/api/credits/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(s)});const d=await r.json();document.getElementById('settingsMsg').innerHTML=d.ok?'✅ Settings saved':'❌ Error'}</script>
+async function saveSettings(e){e.preventDefault();const s={sharePower:document.getElementById('sharePower').checked,autoProcess:document.getElementById('autoProcess').checked,maxDownloads:parseInt(document.getElementById('maxDownloads').value)};const r=await fetch('/api/credits/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(s)});const d=await r.json();document.getElementById('settingsMsg').innerHTML=d.ok?'âœ… Settings saved':'âŒ Error'}</script>
 </body></html>`);
 });
 
@@ -944,7 +605,7 @@ app.get('/api/knowledge', (req, res) => {
   }).join('\n\n---\n\n');
   res.set('Content-Type', 'text/markdown; charset=utf-8');
   res.set('Content-Disposition', 'attachment; filename="okf-knowledge-bundle.md"');
-  res.send(`# OKF Knowledge Bundle\n> ${skills.length} Skills · Generated ${new Date().toLocaleDateString('en-US')}\n\n---\n\n${bundle}`);
+  res.send(`# OKF Knowledge Bundle\n> ${skills.length} Skills Â· Generated ${new Date().toLocaleDateString('en-US')}\n\n---\n\n${bundle}`);
 });
 
 app.get('/api/knowledge/context', (req, res) => {
@@ -1028,10 +689,10 @@ app.get('/chat', (req, res) => {
 <header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
 <div>
 <h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">OKF Skill Agent</h1>
-<p class="text-xs text-gray-500 mt-1">${skills.length} Skills loaded · Knowledge-based Chat</p>
+<p class="text-xs text-gray-500 mt-1">${skills.length} Skills loaded Â· Knowledge-based Chat</p>
 </div>
 <div class="flex space-x-3">
-<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">â† Dashboard</a>
 <a href="/logout" class="text-xs text-gray-600 hover:text-red-400">Logout</a>
 </div>
 </header>
@@ -1057,13 +718,13 @@ function ask(){
   const div=document.getElementById('chatHistory');
   div.innerHTML+='<div class=mb-3><span class=text-blue-400.font-bold>You:</span><p class=text-gray-300.ml-4>'+q+'</p></div>';
   document.getElementById('question').value='';
-  div.innerHTML+='<div class=mb-3><span class=text-teal-400.font-bold>Agent:</span><p class=text-gray-300.ml-4>⏳ Thinking...</p></div>';
+  div.innerHTML+='<div class=mb-3><span class=text-teal-400.font-bold>Agent:</span><p class=text-gray-300.ml-4>â³ Thinking...</p></div>';
   div.scrollTop=div.scrollHeight;
   fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,history})})
     .then(r=>r.json()).then(d=>{
       div.lastChild.remove();
       const answer=d.answer||d.error;
-      div.innerHTML+='<div class=mb-3><span class=text-teal-400.font-bold>Agent:</span><p class=text-gray-300.ml-4>'+answer.replace(/\\n/g,'<br>')+'</p><p class=text-xs.text-gray-600.ml-4>'+d.model+' · '+(d.tokens||0)+' tokens · '+d.skillCount+' skills</p></div>';
+      div.innerHTML+='<div class=mb-3><span class=text-teal-400.font-bold>Agent:</span><p class=text-gray-300.ml-4>'+answer.replace(/\\n/g,'<br>')+'</p><p class=text-xs.text-gray-600.ml-4>'+d.model+' Â· '+(d.tokens||0)+' tokens Â· '+d.skillCount+' skills</p></div>';
       history.push({role:'user',content:q},{role:'assistant',content:answer});
       if(history.length>10)history=history.slice(-10);
       div.scrollTop=div.scrollHeight;
@@ -1106,10 +767,10 @@ app.get('/social', (req, res) => {
 <header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
 <div>
 <h1 class="text-xl font-bold bg-gradient-to-r from-pink-400 to-purple-500 bg-clip-text text-transparent">Social Media Manager</h1>
-<p class="text-xs text-gray-500 mt-1">OKF Skills → Posts for ${Object.keys(platforms).length} platforms</p>
+<p class="text-xs text-gray-500 mt-1">OKF Skills â†’ Posts for ${Object.keys(platforms).length} platforms</p>
 </div>
 <div class="flex space-x-3">
-<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">â† Dashboard</a>
 <a href="/logout" class="text-xs text-gray-600 hover:text-red-400">Logout</a>
 </div>
 </header>
@@ -1127,7 +788,7 @@ ${skills.map(s => `<div class="bg-gray-800/50 rounded border border-gray-700/50 
 <div class="bg-gray-900 p-4 rounded-xl border border-gray-800">
 <input type="hidden" id="skill-select" value="${skills[0]?.file || ''}">
 <div id="skill-label" class="text-sm mb-3">${skills[0] ? '<b>'+skills[0].name+'</b><br><span class=text-gray-500>'+skills[0].tags.join(' ')+'</span>' : 'No Skills'}</div>
-<button onclick="generatePosts()" id="genBtn" class="text-sm bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-pink-500 hover:to-purple-500 transition">🚀 Generate Posts</button>
+<button onclick="generatePosts()" id="genBtn" class="text-sm bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-pink-500 hover:to-purple-500 transition">ðŸš€ Generate Posts</button>
 <span id="genStatus" class="text-xs text-gray-500 ml-3"></span>
 </div>
 
@@ -1141,7 +802,7 @@ ${Object.entries(platforms).map(([key, p]) => `
 <textarea id="post-${key}" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-xs text-gray-300 h-32 resize-none focus:outline-none focus:border-pink-600" placeholder="Post appears here..."></textarea>
 <div class="flex justify-between mt-2">
 <span class="text-xs text-gray-600" id="count-${key}">0 chars</span>
-<button onclick="copyPost('${key}')" class="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded border border-gray-700 hover:bg-gray-700">📋 Copy</button>
+<button onclick="copyPost('${key}')" class="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded border border-gray-700 hover:bg-gray-700">ðŸ“‹ Copy</button>
 </div>
 </div>
 `).join('')}
@@ -1150,7 +811,7 @@ ${Object.entries(platforms).map(([key, p]) => `
 ${history.length > 0 ? `
 <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 mt-4">
 <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">History</h2>
-${history.map(h => `<div class="text-xs border-b border-gray-800 py-1"><span class=text-gray-500>${h.posted?.substring(0,16)||''}</span> <span class=text-pink-400>${h.platformName}</span> → ${h.skillName?.substring(0,30)}</div>`).join('')}
+${history.map(h => `<div class="text-xs border-b border-gray-800 py-1"><span class=text-gray-500>${h.posted?.substring(0,16)||''}</span> <span class=text-pink-400>${h.platformName}</span> â†’ ${h.skillName?.substring(0,30)}</div>`).join('')}
 </div>` : ''}
 
 </div></div>
@@ -1161,7 +822,7 @@ async function generatePosts(){
   const file=document.getElementById('skill-select').value;
   if(!file)return;
   document.getElementById('genBtn').disabled=true;
-  document.getElementById('genStatus').innerHTML='⏳ Generating...';
+  document.getElementById('genStatus').innerHTML='â³ Generating...';
   try{
     const r=await fetch('/api/social/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skillFile:file})});
     const d=await r.json();
@@ -1169,8 +830,8 @@ async function generatePosts(){
       const ta=document.getElementById('post-'+p.platform);
       if(ta){ta.value=p.text;document.getElementById('count-'+p.platform).innerHTML=p.text.length+' chars'}
     });
-    document.getElementById('genStatus').innerHTML='✅ Done';
-  }catch(e){document.getElementById('genStatus').innerHTML='❌ '+e.message}
+    document.getElementById('genStatus').innerHTML='âœ… Done';
+  }catch(e){document.getElementById('genStatus').innerHTML='âŒ '+e.message}
   document.getElementById('genBtn').disabled=false;
 }
 function copyPost(platform){
@@ -1215,36 +876,36 @@ app.get('/connect', (req, res) => {
 <div class="container mx-auto px-4 py-6 max-w-4xl">
 <header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
 <div>
-<h1 class="text-xl font-bold bg-gradient-to-r from-green-400 to-teal-500 bg-clip-text text-transparent">OKF Network · P2P Sync</h1>
-<p class="text-xs text-gray-500 mt-1">Distributed computing via GitHub — Share skills & connect nodes</p>
+<h1 class="text-xl font-bold bg-gradient-to-r from-green-400 to-teal-500 bg-clip-text text-transparent">OKF Network Â· P2P Sync</h1>
+<p class="text-xs text-gray-500 mt-1">Distributed computing via GitHub â€” Share skills & connect nodes</p>
 </div>
-<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">â† Dashboard</a>
 </header>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">🔗 Connect GitHub Repo</h2>
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">ðŸ”— Connect GitHub Repo</h2>
 <p class="text-xs text-gray-600 mb-3">Skills auto-sync between nodes.</p>
 <input id="syncOwner" placeholder="Owner (e.g. ThaiJenspacito)" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm mb-2">
 <input id="syncRepo" placeholder="Repo (e.g. OKF_MD_Master)" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm mb-3">
-<button onclick="doSync()" class="text-sm bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-2 rounded-lg hover:from-green-500 hover:to-teal-500 transition">🔄 Start Sync</button>
+<button onclick="doSync()" class="text-sm bg-gradient-to-r from-green-600 to-teal-600 text-white px-6 py-2 rounded-lg hover:from-green-500 hover:to-teal-500 transition">ðŸ”„ Start Sync</button>
 <span id="syncStatus" class="text-xs text-gray-500 ml-3"></span>
 </div>
 
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">🌐 Connected Nodes</h2>
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">ðŸŒ Connected Nodes</h2>
 <div id="contributors"></div>
 </div>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">📊 Sync Status</h2>
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">ðŸ“Š Sync Status</h2>
 <div id="syncState"><p class="text-gray-600 text-xs">No connection. Enter repo above.</p></div>
 </div>
 
 <div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">📋 Recent Syncs</h2>
+<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">ðŸ“‹ Recent Syncs</h2>
 <div id="syncLog" class="text-xs text-gray-500 space-y-1">
 ${log.length === 0 ? '<p>No syncs.</p>' : ''}
 ${log.map(l => '<div class=border-b.border-gray-800.py-1><span class=text-gray-600>'+l.at.substring(0,16)+'</span> '+l.action+' <span class=text-teal-400>'+l.changed+'</span> Skills</div>').join('')}
@@ -1258,16 +919,16 @@ async function doSync(){
   const o=document.getElementById('syncOwner').value.trim();
   const r=document.getElementById('syncRepo').value.trim();
   if(!o||!r)return;
-  document.getElementById('syncStatus').innerHTML='⏳ Syncing...';
+  document.getElementById('syncStatus').innerHTML='â³ Syncing...';
   try{
     const res=await fetch('/api/sync',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:o,repo:r})});
     const d=await res.json();
-    document.getElementById('syncStatus').innerHTML='✅ Pull: '+d.pull.pulled+' ('+d.pull.new+' neu) · Push: '+d.push.pushed+' Skills';
+    document.getElementById('syncStatus').innerHTML='âœ… Pull: '+d.pull.pulled+' ('+d.pull.new+' neu) Â· Push: '+d.push.pushed+' Skills';
     showState(d);
-  }catch(e){document.getElementById('syncStatus').innerHTML='❌ '+e.message}
+  }catch(e){document.getElementById('syncStatus').innerHTML='âŒ '+e.message}
 }
 function showState(d){
-  document.getElementById('syncState').innerHTML='<div class=text-sm><span class=text-teal-300>'+d.repo+'</span><br><span class=text-gray-500>Sync: '+d.lastSync+'</span><br><span class=text-gray-400>Pull: '+d.pull.pulled+' | Push: '+d.push.pushed+'</span><br>'+('⭐ '+d.repoInfo?.stars||'')+' 🍴 '+d.repoInfo?.forks||''+'</div>';
+  document.getElementById('syncState').innerHTML='<div class=text-sm><span class=text-teal-300>'+d.repo+'</span><br><span class=text-gray-500>Sync: '+d.lastSync+'</span><br><span class=text-gray-400>Pull: '+d.pull.pulled+' | Push: '+d.push.pushed+'</span><br>'+('â­ '+d.repoInfo?.stars||'')+' ðŸ´ '+d.repoInfo?.forks||''+'</div>';
   if(d.contributors?.length){
     document.getElementById('contributors').innerHTML=d.contributors.map(c=>'<div class=flex.items-center.space-x-2.py-1><span class=text-teal-300>'+c.login+'</span><span class=text-gray-600>'+c.contributions+' contributions</span></div>').join('')
   }
@@ -1282,16 +943,16 @@ app.get('/enterprise', (req, res) => {
 
   res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Enterprise · OKF MD Master</title>
+<title>Enterprise Â· OKF MD Master</title>
 <script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-5xl">
 <header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
 <div>
 <h1 class="text-xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Enterprise</h1>
-<p class="text-xs text-gray-500 mt-1">Data Migration · Bulk Processing · Custom LLMs</p>
+<p class="text-xs text-gray-500 mt-1">Data Migration Â· Bulk Processing Â· Custom LLMs</p>
 </div>
-<a href="/" class="text-xs text-teal-400 hover:text-teal-300">← Dashboard</a>
+<a href="/" class="text-xs text-teal-400 hover:text-teal-300">â† Dashboard</a>
 </header>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -1321,7 +982,7 @@ app.get('/enterprise', (req, res) => {
 <div class="space-y-2 text-sm">
 <div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Total Skills</p><p class="text-teal-400 text-xl font-bold">${allSkills.length}</p></div>
 <div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Data Volume</p><p class="text-blue-400 text-xl font-bold">${(totalSize/1024).toFixed(1)} KB</p></div>
-<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Formats</p><p class="text-purple-400 text-xl font-bold">MD·OKF·JSON</p></div>
+<div class="bg-gray-800 rounded-lg p-3"><p class="text-gray-500 text-xs">Formats</p><p class="text-purple-400 text-xl font-bold">MDÂ·OKFÂ·JSON</p></div>
 </div>
 <div class="mt-4 pt-4 border-t border-gray-800">
 <p class="text-xs text-gray-500">Enterprise API: <span class="font-mono text-teal-400">/api/knowledge/context</span></p>
