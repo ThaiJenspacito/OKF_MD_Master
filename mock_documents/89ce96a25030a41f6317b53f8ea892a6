@@ -1,0 +1,552 @@
+# Aufgabenplaner – Dokumentation der Unterseiten-Strukturen
+
+Diese Dokumentation beschreibt die React-Komponenten, TypeScript-Datenmodelle und UI-Layouts der fünf Hauptunterseiten der Aufgabenplaner-Anwendung.
+
+---
+
+## 1. Aufgaben-Seite (`Tasks.tsx`)
+
+### Komponenten-Struktur
+
+Die **Aufgaben-Seite** ist eine vollständige CRUD-Verwaltungsseite für wiederkehrende Aufgaben und Wartungsarbeiten. Sie wird mit `DashboardLayout` umhüllt und bietet Such-, Filter- und Bearbeitungsfunktionen.
+
+#### Layout-Bereiche
+
+| Bereich | Beschreibung |
+|---------|-------------|
+| **Header** | Titel "Aufgaben" mit Statistik (Anzahl Aufgaben, Gesamtdauer in Stunden) und Button "Neue Aufgabe" mit Feature-Gating (Lock-Icon für Free-Plan) |
+| **Filter-Bereich** | Suchfeld (Volltextsuche nach Name/Beschreibung), Dropdown "Häufigkeit" (alle/Woche/Monat/Quartal/Halbjahr/Jahr), Dropdown "Bereich" (alle/HH/NH/GH) |
+| **Usage-Meter** | Nur für Free-Plan: Gelber Banner mit Crown-Icon, zeigt aktuelle Nutzung vs. Limit (z.B. "Aufgaben: 5/10") |
+| **Tabelle** | Spalten: Aufgabe (Name + Beschreibung), Bereich (Badge), Häufigkeit (farbiges Badge), Dauer (Minuten), Aktionen (Bearbeiten/Löschen) |
+| **Dialog** | Modal für Erstellen/Bearbeiten mit Feldern: Name*, Beschreibung, Bereich, Häufigkeit*, Dauer (Minuten) |
+
+#### UI-Konstanten
+
+```typescript
+const FREQUENCIES = ["Woche", "Monat", "Quartal", "Halbjahr", "Jahr"] as const;
+const AREAS = ["HH", "NH", "GH"] as const;
+
+const frequencyColor: Record<string, string> = {
+  Woche: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+  Monat: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  Quartal: "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400",
+  Halbjahr: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  Jahr: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400",
+};
+```
+
+#### Formular-Modell
+
+```typescript
+type TaskForm = {
+  name: string;              // Aufgabenname (erforderlich)
+  description: string;       // Optionale Beschreibung
+  area: string;              // Bereich: HH/NH/GH oder leer
+  frequency: string;         // Häufigkeit: Woche/Monat/Quartal/Halbjahr/Jahr
+  durationMinutes: string;   // Dauer in Minuten (optional, als String für Input)
+};
+```
+
+#### Zustandsverwaltung
+
+- **search**: Suchtext für Volltextsuche
+- **filterFreq**: Aktiver Häufigkeitsfilter ("all" oder Häufigkeitswert)
+- **filterArea**: Aktiver Bereichsfilter ("all" oder HH/NH/GH)
+- **showDialog**: Boolean für Modal-Sichtbarkeit
+- **editId**: Null oder ID der zu bearbeitenden Aufgabe
+- **form**: Aktuelles Formularmodell
+
+#### tRPC-Operationen
+
+| Operation | Typ | Beschreibung |
+|-----------|-----|-------------|
+| `trpc.tasks.list.useQuery()` | Query | Alle Aufgaben abrufen |
+| `trpc.tasks.create.useMutation()` | Mutation | Neue Aufgabe erstellen (Feature-Gating: Free-Plan max. 10) |
+| `trpc.tasks.update.useMutation()` | Mutation | Aufgabe aktualisieren |
+| `trpc.tasks.delete.useMutation()` | Mutation | Aufgabe löschen |
+
+#### Feature-Gating
+
+- **Free-Plan**: Max. 10 Aufgaben; Button "Neue Aufgabe" wird deaktiviert, zeigt "Limit erreicht" mit Crown-Icon
+- **Pro/Enterprise**: Unbegrenzte Aufgaben
+
+#### Responsive Design
+
+- **Mobile**: Suchfeld und Filter stapeln sich vertikal; Tabellenspalten "Bereich" und "Dauer" sind ausgeblendet
+- **Tablet (sm)**: Filter nebeneinander; "Bereich" sichtbar
+- **Desktop (md)**: Alle Spalten sichtbar
+
+---
+
+## 2. Personal-Seite (`Personnel.tsx`)
+
+### Komponenten-Struktur
+
+Die **Personal-Seite** verwaltet Mitarbeiter mit Kontaktinformationen und Aktivitätsstatus. Das Layout nutzt eine **Kartenansicht** statt Tabelle für bessere Mobilfreundlichkeit.
+
+#### Layout-Bereiche
+
+| Bereich | Beschreibung |
+|---------|-------------|
+| **Header** | Titel "Personal" mit Statistik (aktive Mitarbeiter / Gesamtzahl) und Button "Neuer Mitarbeiter" mit Feature-Gating |
+| **Suchfeld** | Volltextsuche nach Name oder Rolle |
+| **Kartenraster** | Responsive Grid: 1 Spalte (Mobile), 2 Spalten (Tablet), 3 Spalten (Desktop) |
+| **Karte** | Zeigt: Avatar (Initial), Name, Rolle, E-Mail, Telefon, Status-Badge (Aktiv/Inaktiv), Bearbeiten/Löschen-Buttons |
+| **Dialog** | Modal für Erstellen/Bearbeiten mit Feldern: Name*, Rolle, E-Mail, Telefon |
+
+#### Formular-Modell
+
+```typescript
+type PersonnelForm = {
+  name: string;    // Vollständiger Name (erforderlich)
+  email: string;   // E-Mail-Adresse (optional)
+  phone: string;   // Telefonnummer (optional)
+  role: string;    // Position/Rolle (optional, z.B. "Reinigungskraft")
+};
+```
+
+#### Zustandsverwaltung
+
+- **search**: Suchtext
+- **showDialog**: Boolean für Modal-Sichtbarkeit
+- **editId**: Null oder ID des zu bearbeitenden Mitarbeiters
+- **form**: Aktuelles Formularmodell
+
+#### tRPC-Operationen
+
+| Operation | Typ | Beschreibung |
+|-----------|-----|-------------|
+| `trpc.personnel.list.useQuery()` | Query | Alle Mitarbeiter abrufen |
+| `trpc.personnel.create.useMutation()` | Mutation | Neuen Mitarbeiter erstellen (Feature-Gating: Free-Plan max. 2) |
+| `trpc.personnel.update.useMutation()` | Mutation | Mitarbeiter aktualisieren |
+| `trpc.personnel.delete.useMutation()` | Mutation | Mitarbeiter löschen |
+
+#### Feature-Gating
+
+- **Free-Plan**: Max. 2 Mitarbeiter; Button wird deaktiviert mit "Limit erreicht"
+- **Pro/Enterprise**: Unbegrenzte Mitarbeiter
+
+#### Karten-Komponente
+
+Jede Mitarbeiter-Karte zeigt:
+- Avatar: Kreis mit Anfangsbuchstabe des Namens
+- Name (gekürzt, falls zu lang)
+- Rolle (grauer Text, gekürzt)
+- Status-Badge: "Aktiv" (grün) oder "Inaktiv" (grau)
+- E-Mail mit Icon (nur wenn vorhanden)
+- Telefon mit Icon (nur wenn vorhanden)
+- Bearbeiten/Löschen-Buttons (erscheinen bei Hover)
+
+---
+
+## 3. Reinigungsplan-Seite (`Cleaning.tsx`)
+
+### Komponenten-Struktur
+
+Die **Reinigungsplan-Seite** ist eine **Analyse- und Übersichtsseite** (keine CRUD-Operationen). Sie zeigt Statistiken über wiederkehrende Aufgaben gruppiert nach Häufigkeit und Bereich.
+
+#### Layout-Bereiche
+
+| Bereich | Beschreibung |
+|---------|-------------|
+| **Header** | Titel "Reinigungsplan" mit Beschreibung |
+| **Filter** | Dropdown "Häufigkeit" (alle/Woche/Monat/Quartal/Halbjahr/Jahr), Dropdown "Bereich" (alle/HH/NH/GH) |
+| **KPI-Karten** | 3 Karten: Aufgaben gesamt, Pro Durchlauf (Stunden), Jährlicher Aufwand (Stunden) |
+| **Statistik-Grids** | 2 Spalten (1 auf Mobile): "Nach Häufigkeit" und "Nach Bereich" mit Progress-Balken |
+| **Aufgabenliste** | Alle gefilterten Aufgaben mit Name, Beschreibung, Bereich-Badge, Häufigkeit-Badge, Dauer |
+
+#### UI-Konstanten
+
+```typescript
+const FREQUENCIES = ["Woche", "Monat", "Quartal", "Halbjahr", "Jahr"] as const;
+const AREAS = ["HH", "NH", "GH"] as const;
+
+const frequencyColor: Record<string, string> = {
+  Woche: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400",
+  Monat: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  Quartal: "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400",
+  Halbjahr: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+  Jahr: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400",
+};
+
+const frequencyMultiplier: Record<string, number> = {
+  Woche: 52, Monat: 12, Quartal: 4, Halbjahr: 2, Jahr: 1,
+};
+```
+
+#### Statistik-Berechnung
+
+```typescript
+// Nach Häufigkeit
+const byFreq: Record<string, { count: number; minutes: number }> = {};
+
+// Nach Bereich
+const byArea: Record<string, { count: number; minutes: number }> = {};
+
+// Aggregierte Metriken
+const totalMinutes = filtered.reduce((s, t) => s + (t.durationMinutes || 0), 0);
+const yearlyMinutes = filtered.reduce((s, t) => s + (t.durationMinutes || 0) * frequencyMultiplier[t.frequency], 0);
+```
+
+#### Zustandsverwaltung
+
+- **filterFreq**: Aktiver Häufigkeitsfilter ("all" oder Häufigkeitswert)
+- **filterArea**: Aktiver Bereichsfilter ("all" oder HH/NH/GH)
+
+#### tRPC-Operationen
+
+| Operation | Typ | Beschreibung |
+|-----------|-----|-------------|
+| `trpc.tasks.list.useQuery()` | Query | Alle Aufgaben abrufen (für Statistiken) |
+
+#### Responsive Design
+
+- **Mobile**: KPI-Karten übereinander; Statistik-Grids übereinander
+- **Tablet (sm)**: KPI-Karten nebeneinander (3 Spalten)
+- **Desktop (lg)**: Statistik-Grids nebeneinander (2 Spalten)
+
+---
+
+## 4. Reparaturen-Seite (`Repairs.tsx`)
+
+### Komponenten-Struktur
+
+Die **Reparaturen-Seite** verwaltet Reparaturaufträge mit Status-Tracking und Zuweisungen. Sie kombiniert **Status-Karten** mit einer **Tabellenliste**.
+
+#### Layout-Bereiche
+
+| Bereich | Beschreibung |
+|---------|-------------|
+| **Header** | Titel "Reparaturen" mit Statistik (Gesamtanzahl) und Button "Neue Reparatur" mit Feature-Gating |
+| **Status-Karten** | 3 Karten (Offen/In Bearbeitung/Erledigt) mit Icon, Anzahl und Klickbarkeit zum Filtern |
+| **Filter** | Suchfeld (Volltextsuche), Dropdown "Bereich" (alle/HH/NH/GH) |
+| **Tabelle** | Spalten: Beschreibung, Ort, Bereich, Status, Zugewiesen, Aktionen |
+| **Dialog** | Modal für Erstellen/Bearbeiten mit Feldern: Beschreibung*, Ort, Bereich, Zugewiesen an, Status |
+
+#### UI-Konstanten
+
+```typescript
+const AREAS = ["HH", "NH", "GH"] as const;
+
+const STATUS_OPTIONS = [
+  { value: "offen", label: "Offen", icon: AlertTriangle, color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+  { value: "in_bearbeitung", label: "In Bearbeitung", icon: Clock, color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
+  { value: "erledigt", label: "Erledigt", icon: CheckCircle2, color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
+];
+```
+
+#### Formular-Modell
+
+```typescript
+type RepairForm = {
+  location: string;      // Ort/Raum (optional, z.B. "Gästebad")
+  area: string;          // Bereich: HH/NH/GH oder leer
+  description: string;   // Beschreibung (erforderlich)
+  assignedTo: string;    // Zugewiesen an (optional, z.B. "MS")
+  status: string;        // Status: offen/in_bearbeitung/erledigt
+};
+```
+
+#### Zustandsverwaltung
+
+- **search**: Suchtext für Volltextsuche
+- **filterStatus**: Aktiver Status-Filter ("all" oder Status-Wert)
+- **filterArea**: Aktiver Bereichsfilter ("all" oder HH/NH/GH)
+- **showDialog**: Boolean für Modal-Sichtbarkeit
+- **editId**: Null oder ID der zu bearbeitenden Reparatur
+- **form**: Aktuelles Formularmodell
+
+#### tRPC-Operationen
+
+| Operation | Typ | Beschreibung |
+|-----------|-----|-------------|
+| `trpc.repairs.list.useQuery()` | Query | Alle Reparaturen abrufen |
+| `trpc.repairs.create.useMutation()` | Mutation | Neue Reparatur erstellen (Feature-Gating: Free-Plan max. 5) |
+| `trpc.repairs.update.useMutation()` | Mutation | Reparatur aktualisieren |
+| `trpc.repairs.delete.useMutation()` | Mutation | Reparatur löschen |
+
+#### Feature-Gating
+
+- **Free-Plan**: Max. 5 Reparaturen; Button wird deaktiviert mit "Limit erreicht"
+- **Pro/Enterprise**: Unbegrenzte Reparaturen
+
+#### Status-Karten-Interaktion
+
+Klick auf eine Status-Karte filtert die Tabelle nach diesem Status. Erneuter Klick auf die gleiche Karte hebt den Filter auf (zeigt "all").
+
+#### Responsive Design
+
+- **Mobile**: Status-Karten in 3-Spalten-Grid; Tabellenspalten "Ort", "Bereich", "Zugewiesen" sind ausgeblendet
+- **Tablet (sm)**: "Ort" und "Zugewiesen" ausgeblendet; "Bereich" sichtbar
+- **Desktop (md)**: Alle Spalten sichtbar
+
+---
+
+## 5. Investitionen & Wünsche-Seite (`Investments.tsx`)
+
+### Komponenten-Struktur
+
+Die **Investitionen & Wünsche-Seite** verwaltet Wunschlisten und Investitionsprojekte mit Prioritäts- und Status-Tracking.
+
+#### Layout-Bereiche
+
+| Bereich | Beschreibung |
+|---------|-------------|
+| **Header** | Titel "Investitionen & Wünsche" mit Statistik (Gesamtanzahl Einträge) und Button "Neuer Eintrag" mit Feature-Gating |
+| **Filter** | Suchfeld (Volltextsuche), Dropdown "Status" (alle/Wunsch/Geplant/In Arbeit/Abgeschlossen/Storniert), Dropdown "Priorität" (alle/Niedrig/Mittel/Hoch/Kritisch) |
+| **Tabelle** | Spalten: Bezeichnung, Status, Priorität, Kosten, Aktionen |
+| **Dialog** | Modal für Erstellen/Bearbeiten mit Feldern: Bezeichnung*, Beschreibung, Priorität, Status, Geschätzte Kosten, Notizen |
+
+#### UI-Konstanten
+
+```typescript
+const PRIORITIES = [
+  { value: "Low", label: "Niedrig", color: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300" },
+  { value: "Medium", label: "Mittel", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  { value: "High", label: "Hoch", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
+  { value: "Critical", label: "Kritisch", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+];
+
+const STATUSES = [
+  { value: "Wish", label: "Wunsch", color: "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400" },
+  { value: "Planned", label: "Geplant", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+  { value: "InProgress", label: "In Arbeit", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
+  { value: "Completed", label: "Abgeschlossen", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
+  { value: "Cancelled", label: "Storniert", color: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400" },
+];
+```
+
+#### Formular-Modell
+
+```typescript
+type InvestForm = {
+  itemName: string;       // Bezeichnung (erforderlich, z.B. "Griddleplatte")
+  description: string;    // Optionale Beschreibung
+  priority: string;       // Priorität: Low/Medium/High/Critical
+  status: string;         // Status: Wish/Planned/InProgress/Completed/Cancelled
+  estimatedCost: string;  // Geschätzte Kosten (optional, z.B. "500€")
+  notes: string;          // Weitere Notizen (optional)
+};
+```
+
+#### Zustandsverwaltung
+
+- **search**: Suchtext für Volltextsuche
+- **filterStatus**: Aktiver Status-Filter ("all" oder Status-Wert)
+- **filterPriority**: Aktiver Prioritäts-Filter ("all" oder Prioritäts-Wert)
+- **showDialog**: Boolean für Modal-Sichtbarkeit
+- **editId**: Null oder ID des zu bearbeitenden Eintrags
+- **form**: Aktuelles Formularmodell
+
+#### tRPC-Operationen
+
+| Operation | Typ | Beschreibung |
+|-----------|-----|-------------|
+| `trpc.investments.list.useQuery()` | Query | Alle Investitionen abrufen |
+| `trpc.investments.create.useMutation()` | Mutation | Neue Investition erstellen (Feature-Gating: Free-Plan max. 5) |
+| `trpc.investments.update.useMutation()` | Mutation | Investition aktualisieren |
+| `trpc.investments.delete.useMutation()` | Mutation | Investition löschen |
+
+#### Feature-Gating
+
+- **Free-Plan**: Max. 5 Investitionen; Button wird deaktiviert mit "Limit erreicht"
+- **Pro/Enterprise**: Unbegrenzte Investitionen
+
+#### Tabellen-Spalten
+
+| Spalte | Responsive | Inhalt |
+|--------|-----------|--------|
+| Bezeichnung | Immer | Name + Beschreibung (1 Zeile, gekürzt) |
+| Status | Immer | Farbiges Badge mit Status-Label |
+| Priorität | Tablet+ (sm) | Farbiges Badge mit Stern-Icon + Prioritäts-Label |
+| Kosten | Desktop+ (md) | Geschätzte Kosten oder "—" |
+| Aktionen | Immer | Bearbeiten/Löschen-Buttons (bei Hover sichtbar) |
+
+---
+
+## TypeScript-Datenmodelle (Interfaces)
+
+### Task
+
+```typescript
+interface Task {
+  id: number;                    // Eindeutige ID
+  name: string;                  // Aufgabenname
+  description?: string;          // Optionale Beschreibung
+  area?: string;                 // Bereich: HH/NH/GH
+  frequency: "Jahr" | "Halbjahr" | "Quartal" | "Monat" | "Woche";
+  durationMinutes?: number;      // Dauer in Minuten
+  createdAt: Date;               // Erstellungsdatum
+  updatedAt: Date;               // Aktualisierungsdatum
+}
+
+interface InsertTask {
+  name: string;
+  description?: string;
+  area?: string;
+  frequency: "Jahr" | "Halbjahr" | "Quartal" | "Monat" | "Woche";
+  durationMinutes?: number;
+}
+```
+
+### Personnel
+
+```typescript
+interface Personnel {
+  id: number;                    // Eindeutige ID
+  name: string;                  // Vollständiger Name
+  email?: string;                // E-Mail-Adresse
+  phone?: string;                // Telefonnummer
+  role?: string;                 // Position/Rolle
+  isActive: "true" | "false";    // Aktivitätsstatus
+  createdAt: Date;               // Erstellungsdatum
+  updatedAt: Date;               // Aktualisierungsdatum
+}
+
+interface InsertPersonnel {
+  name: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+}
+```
+
+### Repair
+
+```typescript
+interface Repair {
+  id: number;                                           // Eindeutige ID
+  description: string;                                  // Reparaturbeschreibung
+  location?: string;                                    // Ort/Raum
+  area?: string;                                        // Bereich: HH/NH/GH
+  assignedTo?: number;                                  // Zugewiesen an (Personnel-ID)
+  status: "Pending" | "InProgress" | "Completed" | "OnHold";
+  notes?: string;                                       // Zusätzliche Notizen
+  createdAt: Date;                                      // Erstellungsdatum
+  updatedAt: Date;                                      // Aktualisierungsdatum
+}
+
+interface InsertRepair {
+  description: string;
+  location?: string;
+  area?: string;
+  assignedTo?: number;
+  status?: "Pending" | "InProgress" | "Completed" | "OnHold";
+  notes?: string;
+}
+```
+
+### Investment
+
+```typescript
+interface Investment {
+  id: number;                                      // Eindeutige ID
+  itemName: string;                                // Bezeichnung
+  description?: string;                            // Optionale Beschreibung
+  priority: "Low" | "Medium" | "High" | "Critical";
+  status: "Wish" | "Planned" | "InProgress" | "Completed" | "Cancelled";
+  estimatedCost?: Decimal;                         // Geschätzte Kosten
+  targetDate?: Date;                               // Zieldatum
+  notes?: string;                                  // Zusätzliche Notizen
+  createdAt: Date;                                 // Erstellungsdatum
+  updatedAt: Date;                                 // Aktualisierungsdatum
+}
+
+interface InsertInvestment {
+  itemName: string;
+  description?: string;
+  priority?: "Low" | "Medium" | "High" | "Critical";
+  status?: "Wish" | "Planned" | "InProgress" | "Completed" | "Cancelled";
+  estimatedCost?: Decimal;
+  targetDate?: Date;
+  notes?: string;
+}
+```
+
+---
+
+## Gemeinsame UI-Komponenten
+
+Alle Unterseiten nutzen folgende shadcn/ui-Komponenten:
+
+| Komponente | Verwendung |
+|-----------|-----------|
+| `Button` | Erstellen, Bearbeiten, Löschen, Abbrechen, Speichern |
+| `Input` | Textfelder für Name, E-Mail, Telefon, Ort, etc. |
+| `Textarea` | Mehrzeilige Felder für Beschreibung, Notizen |
+| `Badge` | Status-, Prioritäts-, Häufigkeits-, Bereichs-Anzeige |
+| `Card` / `CardContent` | Container für Inhalte und Karten |
+| `Dialog` / `DialogContent` / `DialogHeader` / `DialogTitle` / `DialogFooter` | Modals für Erstellen/Bearbeiten |
+| `Select` / `SelectTrigger` / `SelectContent` / `SelectItem` / `SelectValue` | Dropdown-Auswahl |
+| `Table` / `TableHeader` / `TableBody` / `TableRow` / `TableCell` / `TableHead` | Tabellenlayouts |
+| `Progress` | Fortschrittsbalken (Reinigungsplan) |
+
+---
+
+## Feature-Gating-Übersicht
+
+Das Feature-Gating basiert auf dem Abonnement-Plan des Benutzers:
+
+| Feature | Free | Pro | Enterprise |
+|---------|------|-----|-----------|
+| Aufgaben | 10 | ∞ | ∞ |
+| Personal | 2 | ∞ | ∞ |
+| Reparaturen | 5 | ∞ | ∞ |
+| Investitionen | 5 | ∞ | ∞ |
+| PDF-Export | ✗ | ✓ | ✓ |
+| Digitale Unterschriften | ✗ | ✓ | ✓ |
+| Auto-Befüllung | ✗ | ✓ | ✓ |
+
+Wenn ein Limit erreicht ist:
+- Der "Neue..." Button wird deaktiviert
+- Ein Crown-Icon (👑) wird angezeigt
+- Der Button-Text ändert sich zu "Limit erreicht"
+- Ein gelber Banner mit Usage-Meter erscheint (nur Free-Plan)
+
+---
+
+## Responsive Breakpoints
+
+Die Anwendung nutzt Tailwind CSS Breakpoints:
+
+| Breakpoint | Größe | Geräte |
+|-----------|-------|--------|
+| `sm` | 640px | Tablets, große Handys |
+| `md` | 768px | Tablets, kleine Laptops |
+| `lg` | 1024px | Desktops |
+
+Beispiele für responsive Verhalten:
+- **Tasks**: Tabellenspalten "Bereich" und "Dauer" sind auf Mobile ausgeblendet
+- **Personnel**: Kartenraster wechselt von 1 → 2 → 3 Spalten
+- **Repairs**: Status-Karten bleiben immer 3 Spalten; Tabellenspalten passen sich an
+
+---
+
+## Farbschema
+
+Die Anwendung nutzt ein konsistentes Farbschema mit Tailwind CSS:
+
+| Farbe | Verwendung | Hex-Werte |
+|-------|-----------|----------|
+| Emerald/Teal | Primary, Woche, Aktiv | `#10b981` / `#14b8a6` |
+| Blue | Monat, Geplant | `#3b82f6` |
+| Violet | Quartal, Wunsch | `#a78bfa` |
+| Amber | Halbjahr, Hoch, In Bearbeitung | `#f59e0b` |
+| Rose/Red | Jahr, Kritisch, Offen | `#f43f5e` / `#ef4444` |
+| Slate | Niedrig, Storniert | `#64748b` |
+
+Alle Farben haben Dark-Mode-Varianten mit reduzierter Sättigung und angepasster Helligkeit.
+
+---
+
+## Zusammenfassung
+
+Diese fünf Unterseiten bilden das Rückgrat der Aufgabenplaner-Anwendung:
+
+1. **Aufgaben**: CRUD-Verwaltung mit Such- und Filteroptionen
+2. **Personal**: Mitarbeiter-Verwaltung mit Kontaktinformationen
+3. **Reinigungsplan**: Analyse- und Statistik-Übersicht
+4. **Reparaturen**: Status-Tracking mit Zuweisungen
+5. **Investitionen**: Wunschlisten-Verwaltung mit Prioritäten
+
+Alle Seiten folgen einem konsistenten Design-System mit Feature-Gating, responsivem Layout und tRPC-basierter Datenverwaltung.

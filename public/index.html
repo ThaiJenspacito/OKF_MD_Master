@@ -72,6 +72,8 @@ input,select{background:#1e293b;border:1px solid #334155;border-radius:6px;paddi
 <button class="btn" onclick="apiCall('/api/scheduler/pause','POST').then(()=>location.reload())" id="pauseBtn">Pause</button>
 <button class="btn btn-teal" onclick="apiCall('/api/scout/scan','POST').then(d=>{alert('Scout: '+d.discovered+' files found');location.reload()})">Scout Now</button>
 <button class="btn btn-teal" onclick="apiCall('/api/architect/process','POST').then(d=>{alert('Architect: '+d.processed+' skills created');location.reload()})">Process Now</button>
+<button class="btn" onclick="processIssues()" id="ghBtn">🐙 Check Issues</button>
+<span id="ghStats" style="font-size:10px;color:#64748b"></span>
 </div>
 
 <div class="grid grid-4" id="statsGrid" style="margin-bottom:20px"></div>
@@ -95,11 +97,12 @@ input,select{background:#1e293b;border:1px solid #334155;border-radius:6px;paddi
 </div>
 <input type="file" id="fileUpload" accept=".md" style="display:none" onchange="doUpload(this.files[0])">
 <div id="uploadProgress" style="margin-top:8px"></div>
-<p style="font-size:10px;color:#64748b;margin-top:8px">or: </p>
-<form action="/api/upload" method="POST" enctype="multipart/form-data" target="_blank" style="display:flex;gap:8px;margin-top:4px">
-<input type="file" name="file" accept=".md" style="flex:1">
-<button class="btn btn-teal">Upload</button>
+<p style="font-size:10px;color:#64748b;margin-top:8px">or HuggingFace model: </p>
+<form onsubmit="fetchModel(event)" style="display:flex;gap:8px;margin-top:4px">
+<input type="text" id="modelInput" placeholder="e.g. microsoft/phi-2" style="flex:1">
+<button class="btn btn-teal">Fetch</button>
 </form>
+<p id="modelMsg" style="font-size:10px;color:#64748b;margin-top:4px"></p>
 </div>
 <div class="card">
 <div class="card-header">🔍 Scan Laptop</div>
@@ -203,6 +206,7 @@ const agents=[
 {icon:'🕵️',name:'Scout',detail:(activity['scout']?.action||'Idle')+': '+(activity['scout']?.detail||'waiting'),active:true},
 {icon:'🤖',name:'Architect',detail:'Model: '+(cfg.model||'-')+' → '+(cfg.fallbackModel||''),active:!!h.llm},
 {icon:'⏱️',name:'Scheduler',detail:'Poll: 10s · Idle: ≥120s · CPU <30%',active:s.scheduler.running},
+{icon:'🐙',name:'GitHub Bot',detail:'Auto-responds to issues via OKF knowledge',active:true},
 {icon:'🖥️',name:'Tray',detail:'Windows',active:true}
 ];
 document.getElementById('agentCards').innerHTML=agents.map(a=>'<div class=agent-row><div class=agent-icon>'+a.icon+'</div><div class=agent-info><div class=agent-name>'+a.name+'</div><div class=agent-detail>'+a.detail+'</div></div><span class="badge '+(a.active?'badge-green':'badge-red')+'">'+(a.active?'Active':'Off')+'</span></div>').join('')
@@ -280,6 +284,9 @@ if(!d.files||!d.files.length){div.innerHTML='<p style=color:#64748b>No .md files
 div.innerHTML=d.files.map(f=>'<div style=display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #1e293b><span>'+f.dir+'/<b>'+f.name+'</b></span><span style=color:#64748b>'+f.size+'B</span></div>').join('')
 }).catch(()=>{btn.disabled=false;btn.textContent='Search'})
 }
+
+function processIssues(){const btn=document.getElementById('ghBtn');btn.disabled=true;btn.textContent='Processing...';apiCall('/api/github/process','POST').then(d=>{btn.disabled=false;btn.textContent='🐙 Check Issues';if(d)document.getElementById('ghStats').textContent='✅ '+d.answered+' answered · '+d.escalated+' escalated'}).catch(()=>{btn.disabled=false;btn.textContent='🐙 Check Issues'})}
+function fetchModel(e){e.preventDefault();const inp=document.getElementById('modelInput');const val=inp.value.trim();if(!val)return;document.getElementById('modelMsg').textContent='Fetching...';apiCall('/api/fetch/model','POST',{model:val}).then(d=>{document.getElementById('modelMsg').innerHTML=d.ok?'✅ '+d.files.map(f=>f.filename).join(', '):'❌ '+d.error}).catch(()=>document.getElementById('modelMsg').textContent='Error')}
 
 const dropZone=document.getElementById('dropZone');
 dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.style.borderColor='#14b8a6'});

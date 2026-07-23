@@ -22,6 +22,7 @@ const monitor = require('./core/monitor');
 const sync = require('./core/sync');
 const auth = require('./core/auth');
 const credits = require('./core/credits');
+const githubBot = require('./core/github-bot');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -1076,6 +1077,40 @@ app.get('/enterprise', (req, res) => {
 </div>
 
 </div></body></html>`);
+});
+
+app.post('/api/github/process', async (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  try {
+    const result = await githubBot.processIssues('ThaiJenspacito', 'OKF_MD_Master', skillAgent);
+    res.json({ ok: true, ...result });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/github/stats', (req, res) => {
+  res.json(githubBot.getStats());
+});
+
+app.post('/api/fetch/model', express.json(), async (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const modelId = req.body.model;
+  if (!modelId) return res.status(400).json({ error: 'model ID required' });
+  try {
+    const results = [];
+    for (const file of ['README.md']) {
+      try {
+        const url = `https://huggingface.co/${modelId}/raw/main/${file}`;
+        const { data } = await axios.get(url, { timeout: 15000, headers: { 'User-Agent': 'OKF-MD-Master' } });
+        const filename = modelId.replace('/', '-') + '-' + file;
+        const filePath = path.join(UPLOADS_DIR, filename);
+        fs.writeFileSync(filePath, `# Source: https://huggingface.co/${modelId}\n\n${data}`);
+        results.push({ file, filename, size: fs.statSync(filePath).size });
+        addJournalEntry('model-fetch', filename, 'hf-docs-to-md', modelId);
+      } catch {}
+    }
+    if (results.length === 0) return res.status(404).json({ error: 'No docs found' });
+    res.json({ ok: true, model: modelId, files: results });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 if (require.main === module) startServer();

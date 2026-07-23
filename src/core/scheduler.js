@@ -11,6 +11,7 @@ const LOG_FILE = path.join(__dirname, '../../logs/system.log');
 const POLL_INTERVAL_MS = 10000;
 const BATCH_MAX = 5;
 const AUTO_SCAN_INTERVAL = 300000;
+const GH_BOT_INTERVAL = 3600000;
 const ACTIVITY_FILE = path.join(__dirname, '../../logs/agent-activity.json');
 
 let running = false;
