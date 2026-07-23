@@ -321,7 +321,6 @@ app.get('/', (req, res) => {
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>OKF MD Master</title>
 <script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js" onerror="var s=document.createElement('script');s.src='https://unpkg.com/chart.js@4/dist/chart.umd.js';document.head.appendChild(s)"></script>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0d9488">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -395,9 +394,21 @@ ${status.paused
 <button onclick="loadReport()" class="text-xs text-gray-600 hover:text-teal-400">↻ Refresh</button>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-<div class="relative"><canvas id="chartCpu" width="160" height="160"></canvas><span class="absolute inset-0 flex items-center justify-center text-xs text-gray-500 pointer-events-none" id="cpuLabel">CPU</span></div>
-<div class="relative"><canvas id="chartRam" width="160" height="160"></canvas><span class="absolute inset-0 flex items-center justify-center text-xs text-gray-500 pointer-events-none" id="ramLabel">RAM</span></div>
-<div class="relative"><canvas id="chartDisk" width="160" height="160"></canvas><span class="absolute inset-0 flex items-center justify-center text-xs text-gray-500 pointer-events-none" id="diskLabel">Disk</span></div>
+<div class="bg-gray-800 rounded-lg p-3 text-center">
+<p class="text-xs text-gray-500 mb-2">CPU</p>
+<div class="bg-gray-700 rounded-full h-4 mb-1"><div id="cpuBar" class="h-4 rounded-full transition-all duration-700" style="width:0;background:#06b6d4"></div></div>
+<p class="text-xs text-gray-400" id="cpuLabel2">SOLL 20% · IST - · MAX 95%</p>
+</div>
+<div class="bg-gray-800 rounded-lg p-3 text-center">
+<p class="text-xs text-gray-500 mb-2">RAM</p>
+<div class="bg-gray-700 rounded-full h-4 mb-1"><div id="ramBar" class="h-4 rounded-full transition-all duration-700" style="width:0;background:#06b6d4"></div></div>
+<p class="text-xs text-gray-400" id="ramLabel2">SOLL 4GB · IST - · MAX 16GB</p>
+</div>
+<div class="bg-gray-800 rounded-lg p-3 text-center">
+<p class="text-xs text-gray-500 mb-2">Disk</p>
+<div class="bg-gray-700 rounded-full h-4 mb-1"><div id="diskBar" class="h-4 rounded-full transition-all duration-700" style="width:0;background:#06b6d4"></div></div>
+<p class="text-xs text-gray-400" id="diskLabel2">SOLL 50% · IST - · MAX 95%</p>
+</div>
 </div>
 <div id="reportSummary" class="text-xs text-gray-500 mt-3 text-right"></div>
 </div>
@@ -456,6 +467,12 @@ ${agentCard('Tray App', '🖥️', 'gray', true, 'Windows Taskbar', null)}
 </form>
 <p id="uploadMsg" class="text-xs mt-2 text-gray-600"></p>
 <div class="mt-3 pt-3 border-t border-gray-800">
+<p class="text-xs text-gray-500 mb-2">or simple form</p>
+<form action="/api/upload" method="POST" enctype="multipart/form-data" target="_blank" class="flex space-x-2">
+<input type="file" name="file" accept=".md" class="text-xs text-gray-400 file:bg-gray-800 file:border file:border-gray-700 file:rounded file:text-gray-300 file:px-2 file:py-1 file:text-xs file:hover:bg-gray-700">
+<button type="submit" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800">Upload</button>
+</form>
+</div>
 <p class="text-xs text-gray-500 mb-2">🌐 URL or GitHub Repo</p>
 <div class="flex space-x-2">
 <input id="urlInput" type="text" placeholder="https://..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs focus:outline-none focus:border-teal-500">
@@ -547,11 +564,9 @@ function checkHealth(){fetch('/api/health').then(r=>r.json()).then(h=>{document.
 function fetchUrl(){const u=document.getElementById('urlInput').value.trim();if(!u)return;document.getElementById('fetchMsg').innerHTML='⏳...';fetch('/api/fetch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:u})}).then(r=>r.json()).then(d=>{document.getElementById('fetchMsg').innerHTML=d.ok?'✅ '+(d.type||'')+' '+d.filename+' ('+d.size+' Bytes)':'❌ '+d.error})}
 let gauges={};
 let chartRetries=0;
-function loadReport(){if(typeof Chart==='undefined'){if(chartRetries++<8)setTimeout(loadReport,1000);else{fallbackBars()}return}chartRetries=0;fetch('/api/report').then(r=>r.json()).then(r=>{const m=r.metrics;['cpu','ram','disk'].forEach(k=>{const d=m[k];const color=d.status==='under'?'#10b981':d.status==='ok'?'#06b6d4':d.status==='warn'?'#f59e0b':'#ef4444';const rem=100-d.bar;const id='chart'+k.charAt(0).toUpperCase()+k.slice(1);const ctx=document.getElementById(id);if(!ctx)return;try{if(gauges[k]){gauges[k].data.datasets[0].data=[d.bar,rem];gauges[k].data.datasets[0].backgroundColor=[color,'#1f2937'];gauges[k].update()}else{gauges[k]=new Chart(ctx,{type:'doughnut',data:{datasets:[{data:[d.bar,rem],backgroundColor:[color,'#1f2937'],borderWidth:0,borderRadius:[4,0]}]},options:{cutout:'75%',responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false},tooltip:{enabled:false}}}})}}catch(e){fallbackSingle(k,d,color,id)}document.getElementById(k+'Label').innerHTML='<span class=text-lg.font-bold style=color:'+color+'>'+d.ist+(d.unit||'%')+'</span><br><span class=text-gray-500>TARGET '+d.soll+(d.unit||'%')+' | MAX '+d.max+(d.unit||'%')+'</span>'});document.getElementById('reportSummary').innerHTML='<span class=font-mono>Uptime '+m.uptime.formatted+' · RSS '+m.process.rss+' · '+(m.disk.free?'Disk '+m.disk.free+'':'')+'</span>'})}
-function fallbackSingle(k,d,color,id){const el=document.getElementById(id);if(el&&el.parentElement){el.parentElement.innerHTML='<div class=flex.flex-col.items-center.justify-center.h-full><div class=w-full.bg-gray-700.rounded-full.h-4.mb-1><div class=h-4.rounded-full style=width:'+Math.min(d.bar,100)+'%;background:'+color+'></div></div></div>'}}
-function fallbackBars(){fetch('/api/report').then(r=>r.json()).then(r=>{const m=r.metrics;['cpu','ram','disk'].forEach(k=>{const d=m[k];const color=d.status==='under'?'#10b981':d.status==='ok'?'#06b6d4':d.status==='warn'?'#f59e0b':'#ef4444';const id='chart'+k.charAt(0).toUpperCase()+k.slice(1);fallbackSingle(k,d,color,id);document.getElementById(k+'Label').innerHTML='<span class=text-lg.font-bold style=color:'+color+'>'+d.ist+(d.unit||'%')+'</span>'})})}
+function loadReport(){fetch('/api/report').then(r=>r.json()).then(r=>{const m=r.metrics;['cpu','ram','disk'].forEach(k=>{const d=m[k];const color=d.status==='under'?'#10b981':d.status==='ok'?'#06b6d4':d.status==='warn'?'#f59e0b':'#ef4444';const bar=document.getElementById(k+'Bar');if(bar){bar.style.width=Math.min(d.bar,100)+'%';bar.style.background=color}const u=d.unit||'%';const label=document.getElementById(k+'Label2');if(label)label.innerHTML='TARGET '+d.soll+u+' · CURRENT <b style=color:'+color+'>'+d.ist+u+'</b> · MAX '+d.max+u});const s=document.getElementById('reportSummary');if(s)s.innerHTML='Uptime '+m.uptime.formatted+' · RSS '+m.process.rss+(m.disk.free?' · Disk '+m.disk.free:'')})}
 checkHealth();
-setTimeout(loadReport, 500);
+loadReport();
 </script></body></html>`);
 });
 
