@@ -433,8 +433,7 @@ ${agentCard('Tray App', '🖥️', 'gray', true, 'Windows Taskbar', null)}
 <tr><td class="py-1.5 text-gray-500">Max Tokens</td><td class="py-1.5 text-gray-300">${cfg.maxTokens}</td></tr>
 <tr><td class="py-1.5 text-gray-500">Max File Size</td><td class="py-1.5 text-gray-300">${Math.round((cfg.maxFileSize || 50000) / 1024)} KB</td></tr>
 <tr><td class="py-1.5 text-gray-500">Watch Dirs</td><td class="py-1.5 font-mono text-blue-300 text-xs">${(cfg.watchDirs || []).join(', ')}</td></tr>
-<tr><td class="py-1.5 text-gray-500">DeepSeek</td><td class="py-1.5 font-mono ${process.env.DEEPSEEK_API_KEY ? 'text-green-400' : 'text-red-400'} text-xs">${process.env.DEEPSEEK_API_KEY ? 'sk-...' + process.env.DEEPSEEK_API_KEY.slice(-4) : '—'}</td></tr>
-<tr><td class="py-1.5 text-gray-500">OpenRouter</td><td class="py-1.5 font-mono ${process.env.OPENROUTER_API_KEY ? 'text-green-400' : 'text-red-400'} text-xs">${process.env.OPENROUTER_API_KEY ? 'sk-or-...' + process.env.OPENROUTER_API_KEY.slice(-4) : '—'}</td></tr>
+<tr><td class="py-1.5 text-gray-500">Providers</td><td class="py-1.5 text-xs">${process.env.DEEPSEEK_API_KEY ? '🟢 DeepSeek ' : '🔴 DeepSeek '}${process.env.GEMINI_API_KEY ? '🟢 Gemini ' : '🔴 Gemini '}${process.env.OPENROUTER_API_KEY ? '🟢 OpenRouter' : '🔴 OpenRouter'}</td></tr>
 <tr><td class="py-1.5 text-gray-500">Port</td><td class="py-1.5 text-gray-300">${PORT}</td></tr>
 <tr><td class="py-1.5 text-gray-500">Session</td><td class="py-1.5 text-gray-500">8h valid</td></tr>
 </tbody></table>

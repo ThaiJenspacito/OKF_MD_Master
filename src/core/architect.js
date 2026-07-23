@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const matter = require('gray-matter');
 const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const config = require('../state/config');
@@ -40,6 +41,15 @@ function getClient(model) {
       costPer1K: 0.014
     };
   }
+  if (model === 'gemini' && process.env.GEMINI_API_KEY) {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    return {
+      client: genAI,
+      model: 'gemini-2.5-flash',
+      provider: 'gemini',
+      costPer1K: 0.004
+    };
+  }
   if (model.includes('/') && process.env.OPENROUTER_API_KEY) {
     return {
       client: new OpenAI({ baseURL: 'https://openrouter.ai/api/v1', apiKey: process.env.OPENROUTER_API_KEY }),
@@ -51,12 +61,12 @@ function getClient(model) {
   if (process.env.OPENROUTER_API_KEY) {
     return {
       client: new OpenAI({ baseURL: 'https://openrouter.ai/api/v1', apiKey: process.env.OPENROUTER_API_KEY }),
-      model: model || 'google/gemma-3-27b-it:free',
+      model: 'cohere/north-mini-code:free',
       provider: 'openrouter',
       costPer1K: 0
     };
   }
-  throw new Error('Kein LLM-Provider konfiguriert.');
+  throw new Error('No LLM provider configured.');
 }
 
 async function callLLM(prompt) {
@@ -68,17 +78,28 @@ async function callLLM(prompt) {
     if (model === primaryModel && model === fallbackModel) continue;
     try {
       const { client, model: actualModel, provider, costPer1K } = getClient(model);
-      const res = await client.chat.completions.create({
-        model: actualModel,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: cfg.maxTokens || 4096,
-        temperature: 0.3
-      });
 
-      const text = res.choices[0].message.content.trim();
-      const usage = res.usage || {};
-      const inputTokens = usage.prompt_tokens || Math.ceil(prompt.length / 4);
-      const outputTokens = usage.completion_tokens || Math.ceil(text.length / 4);
+      let text, inputTokens, outputTokens;
+
+      if (provider === 'gemini') {
+        const geminiModel = client.getGenerativeModel({ model: actualModel });
+        const result = await geminiModel.generateContent(prompt);
+        text = result.response.text().trim();
+        inputTokens = Math.ceil(prompt.length / 4);
+        outputTokens = Math.ceil(text.length / 4);
+      } else {
+        const res = await client.chat.completions.create({
+          model: actualModel,
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: cfg.maxTokens || 4096,
+          temperature: 0.3
+        });
+        text = res.choices[0].message.content.trim();
+        const usage = res.usage || {};
+        inputTokens = usage.prompt_tokens || Math.ceil(prompt.length / 4);
+        outputTokens = usage.completion_tokens || Math.ceil(text.length / 4);
+      }
+
       const totalTokens = inputTokens + outputTokens;
       const cost = (totalTokens / 1000) * costPer1K;
 

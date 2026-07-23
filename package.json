@@ -13,6 +13,7 @@
     "reset-failed": "node src/core/reset-failed.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "axios": "^1.18.1",
     "chokidar": "^3.6.0",
     "cookie-parser": "^1.4.7",
