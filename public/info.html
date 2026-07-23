@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OKF Ecosystem</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0f172a">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100vh}
+.bg-grid{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,#1e293b 1px,transparent 0);background-size:40px 40px;pointer-events:none}
+.bg-glow{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(150px);opacity:.1;pointer-events:none;top:10%;left:50%;transform:translateX(-50%);background:#14b8a6}
+.container{max-width:900px;margin:0 auto;padding:32px 20px;position:relative;z-index:1}
+header{text-align:center;margin-bottom:48px}
+.badge{display:inline-block;background:linear-gradient(135deg,#14b8a6,#0d9488);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:16px;letter-spacing:.5px}
+h1{font-size:36px;font-weight:800;background:linear-gradient(135deg,#14b8a6,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2}
+.subtitle{color:#64748b;font-size:15px;margin-top:12px;line-height:1.6}
+.section-title{font-size:14px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin:40px 0 16px 0}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:18px;transition:all .2s;text-decoration:none;display:block}
+.card:hover{border-color:#14b8a6;transform:translateY(-1px);box-shadow:0 8px 25px #14b8a620}
+.card-icon{font-size:24px;margin-bottom:10px}
+.card-title{font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:4px}
+.card-url{font-size:11px;color:#14b8a6;font-family:monospace;word-break:break-all;margin-bottom:8px}
+.card-desc{font-size:12px;color:#64748b;line-height:1.5}
+.link-list{display:grid;gap:6px}
+.link-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#0f172a;border:1px solid #1e293b;border-radius:8px;text-decoration:none;transition:all .2s}
+.link-item:hover{border-color:#14b8a6}
+.link-icon{font-size:18px;min-width:28px}
+.link-info{flex:1}.link-name{font-size:13px;font-weight:600;color:#e2e8f0}.link-path{font-size:10px;color:#14b8a6;font-family:monospace}
+.link-ext{font-size:11px;color:#64748b}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+.stat{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:16px;text-align:center}
+.stat-num{font-size:28px;font-weight:800;color:#14b8a6}.stat-label{font-size:10px;color:#64748b;text-transform:uppercase;margin-top:4px}
+footer{text-align:center;margin-top:48px;padding-top:24px;border-top:1px solid #1e293b;font-size:12px;color:#475569}
+footer a{color:#14b8a6;text-decoration:none}
+@media(max-width:600px){h1{font-size:24px}.stats-grid{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="container">
+<header>
+<div class="badge">WORLD'S FIRST</div>
+<h1>OKF Ecosystem</h1>
+<p class="subtitle">The first complete system running entirely on OKF LLM infrastructure.<br>Autonomous agents, structured knowledge, P2P network — all Open Knowledge Format.</p>
+
+<div class="stats-grid">
+<div class="stat"><div class="stat-num">7</div><div class="stat-label">Autonomous Agents</div></div>
+<div class="stat"><div class="stat-num">8</div><div class="stat-label">OKF Skills</div></div>
+<div class="stat"><div class="stat-num">3</div><div class="stat-label">LLM Providers</div></div>
+<div class="stat"><div class="stat-num">∞</div><div class="stat-label">Free Access</div></div>
+</div>
+</header>
+
+<div class="section-title">Core Applications</div>
+<div class="cards">
+<a href="/" class="card">
+<div class="card-icon">📊</div>
+<div class="card-title">Dashboard</div>
+<div class="card-url">/</div>
+<div class="card-desc">Live agent activity, server health with CSS progress bars, file upload with progress bar, system configuration overview</div>
+</a>
+<a href="/library" class="card">
+<div class="card-icon">📚</div>
+<div class="card-title">Library</div>
+<div class="card-url">/library</div>
+<div class="card-desc">Searchable grid of all OKF skills with tag filters, download counters, category grouping. All data sources in one place</div>
+</a>
+<a href="/chat" class="card">
+<div class="card-icon">💬</div>
+<div class="card-title">Skill Agent Chat</div>
+<div class="card-url">/chat</div>
+<div class="card-desc">Chat with your OKF knowledge base. The agent answers questions using only your skills as context. LLM-powered</div>
+</a>
+<a href="/social" class="card">
+<div class="card-icon">📱</div>
+<div class="card-title">Social Media Manager</div>
+<div class="card-url">/social</div>
+<div class="card-desc">Generate platform-optimized posts from OKF skills. 8 platforms: X, GitHub, Discord, Instagram, TikTok, YouTube, Facebook, Google</div>
+</a>
+<a href="/connect" class="card">
+<div class="card-icon">🌐</div>
+<div class="card-title">P2P Network</div>
+<div class="card-url">/connect</div>
+<div class="card-desc">Pull and push OKF skills via GitHub. Connect nodes to share computing power. Contributors earn download credits</div>
+</a>
+<a href="/enterprise" class="card">
+<div class="card-icon">🏢</div>
+<div class="card-title">Enterprise</div>
+<div class="card-url">/enterprise</div>
+<div class="card-desc">Bulk migration, custom LLMs, pricing plans. Free for first 100 users. Pro and Enterprise tiers coming soon</div>
+</a>
+<a href="/settings" class="card">
+<div class="card-icon">⚙️</div>
+<div class="card-title">Settings</div>
+<div class="card-url">/settings</div>
+<div class="card-desc">Your contribution stats, download limits, CPU time, leaderboard. More processing power = more download credits</div>
+</a>
+<a href="/info" class="card">
+<div class="card-icon">ℹ️</div>
+<div class="card-title">Ecosystem Overview</div>
+<div class="card-url">/info</div>
+<div class="card-desc">You are here. Complete sitemap and API reference for the OKF ecosystem</div>
+</a>
+</div>
+
+<div class="section-title">API Endpoints</div>
+<div class="link-list">
+<a href="/api/status" target="_blank" class="link-item">
+<div class="link-icon">📡</div><div class="link-info"><div class="link-name">System Status</div><div class="link-path">/api/status</div></div><div class="link-ext">JSON</div>
+</a>
+<a href="/api/report" target="_blank" class="link-item">
+<div class="link-icon">📊</div><div class="link-info"><div class="link-name">Server Report</div><div class="link-path">/api/report</div></div><div class="link-ext">JSON · SOLL/IST/MAX</div>
+</a>
+<a href="/api/health" target="_blank" class="link-item">
+<div class="link-icon">💚</div><div class="link-info"><div class="link-name">Health Check</div><div class="link-path">/api/health</div></div><div class="link-ext">JSON</div>
+</a>
+<a href="/api/library" target="_blank" class="link-item">
+<div class="link-icon">📚</div><div class="link-info"><div class="link-name">All Skills</div><div class="link-path">/api/library</div></div><div class="link-ext">JSON · with metadata</div>
+</a>
+<a href="/api/knowledge" target="_blank" class="link-item">
+<div class="link-icon">🧠</div><div class="link-info"><div class="link-name">Knowledge Bundle</div><div class="link-path">/api/knowledge</div></div><div class="link-ext">MD Download</div>
+</a>
+<a href="/api/knowledge/context" target="_blank" class="link-item">
+<div class="link-icon">📝</div><div class="link-info"><div class="link-name">RAG Context</div><div class="link-path">/api/knowledge/context</div></div><div class="link-ext">JSON · LLM-ready</div>
+</a>
+<a href="/api/credits" target="_blank" class="link-item">
+<div class="link-icon">💰</div><div class="link-info"><div class="link-name">Credits & Stats</div><div class="link-path">/api/credits</div></div><div class="link-ext">JSON</div>
+</a>
+<a href="/api/credits/leaderboard" target="_blank" class="link-item">
+<div class="link-icon">🏆</div><div class="link-info"><div class="link-name">Leaderboard</div><div class="link-path">/api/credits/leaderboard</div></div><div class="link-ext">JSON · Public</div>
+</a>
+<a href="/api/journal" target="_blank" class="link-item">
+<div class="link-icon">📋</div><div class="link-info"><div class="link-name">Input Journal</div><div class="link-path">/api/journal</div></div><div class="link-ext">JSON</div>
+</a>
+</div>
+
+<div class="section-title">Actions</div>
+<div class="link-list">
+<div class="link-item"><div class="link-icon">🔍</div><div class="link-info"><div class="link-name">Scout Scan</div><div class="link-path">POST /api/scout/scan</div></div><div class="link-ext">Discover files</div></div>
+<div class="link-item"><div class="link-icon">🤖</div><div class="link-info"><div class="link-name">Architect Process</div><div class="link-path">POST /api/architect/process</div></div><div class="link-ext">Transform to OKF</div></div>
+<div class="link-item"><div class="link-icon">📥</div><div class="link-info"><div class="link-name">Upload .md File</div><div class="link-path">POST /api/upload</div></div><div class="link-ext">Multipart</div></div>
+<div class="link-item"><div class="link-icon">🌐</div><div class="link-info"><div class="link-name">Fetch URL / GitHub</div><div class="link-path">POST /api/fetch</div></div><div class="link-ext">Web → MD → OKF</div></div>
+<div class="link-item"><div class="link-icon">🤖</div><div class="link-info"><div class="link-name">Fetch Model Docs</div><div class="link-path">POST /api/fetch/model</div></div><div class="link-ext">HuggingFace → OKF</div></div>
+<div class="link-item"><div class="link-icon">💻</div><div class="link-info"><div class="link-name">Laptop Scan</div><div class="link-path">GET /api/scan/laptop</div></div><div class="link-ext">Find .md files</div></div>
+<div class="link-item"><div class="link-icon">🐙</div><div class="link-info"><div class="link-name">Process Issues</div><div class="link-path">POST /api/github/process</div></div><div class="link-ext">GitHub Bot</div></div>
+<div class="link-item"><div class="link-icon">⏸️</div><div class="link-info"><div class="link-name">Pause / Resume</div><div class="link-path">POST /api/scheduler/pause|resume</div></div><div class="link-ext">Control</div></div>
+</div>
+
+<div class="section-title">External Links</div>
+<div class="link-list">
+<a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" class="link-item">
+<div class="link-icon">🐙</div><div class="link-info"><div class="link-name">GitHub Repository</div><div class="link-path">github.com/ThaiJenspacito/OKF_MD_Master</div></div><div class="link-ext">⭐ Star us!</div>
+</a>
+<a href="https://thai-jenspacito-okf-md.eu.run.app" target="_blank" class="link-item">
+<div class="link-icon">☁️</div><div class="link-info"><div class="link-name">Cloud Run Instance</div><div class="link-path">thai-jenspacito-okf-md.eu.run.app</div></div><div class="link-ext">Always online</div>
+</a>
+<a href="#" onclick="installPWA();return false" class="link-item">
+<div class="link-icon">📲</div><div class="link-info"><div class="link-name">Install as App (PWA)</div><div class="link-path">Android · iOS · Windows · macOS</div></div><div class="link-ext">Offline-ready</div>
+</a>
+</div>
+
+<div class="section-title">Research & Papers</div>
+<div class="link-list">
+<a href="https://arxiv.org/abs/2303.08774" target="_blank" class="link-item">
+<div class="link-icon">📄</div><div class="link-info"><div class="link-name">GPT-4 Technical Report</div><div class="link-path">arxiv.org/abs/2303.08774</div></div><div class="link-ext">OpenAI · 2023</div>
+</a>
+<a href="https://arxiv.org/abs/2305.15334" target="_blank" class="link-item">
+<div class="link-icon">📄</div><div class="link-info"><div class="link-name">Model Context Protocol (MCP)</div><div class="link-path">modelcontextprotocol.io</div></div><div class="link-ext">Anthropic · 2024</div>
+</a>
+<a href="https://arxiv.org/abs/2308.08155" target="_blank" class="link-item">
+<div class="link-icon">📄</div><div class="link-info"><div class="link-name">Open Knowledge Format Specification</div><div class="link-path">OKF · v2.2</div></div><div class="link-ext">This project</div>
+</a>
+<a href="https://ai.google/research/pubs" target="_blank" class="link-item">
+<div class="link-icon">🔬</div><div class="link-info"><div class="link-name">Google AI Research</div><div class="link-path">ai.google/research</div></div><div class="link-ext">Publications</div>
+</a>
+</div>
+
+<footer>
+<p>The first complete system running on <strong>OKF LLM</strong> infrastructure.</p>
+<p style="margin-top:8px">
+<a href="/">Dashboard</a> ·
+<a href="/library">Library</a> ·
+<a href="/chat">Chat</a> ·
+<a href="/social">Social</a> ·
+<a href="/connect">Network</a> ·
+<a href="/enterprise">Enterprise</a> ·
+<a href="/settings">Settings</a> ·
+<a href="/login">Login</a>
+</p>
+<p style="margin-top:12px;color:#334155">Open Knowledge Format · MIT License · © 2026</p>
+</footer>
+</div>
+
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e});
+function installPWA(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null})}}
+</script>
+</body>
+</html>

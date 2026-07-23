@@ -1118,6 +1118,10 @@ app.post('/api/fetch/model', express.json(), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/info', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/info.html'));
+});
+
 if (require.main === module) startServer();
 
 module.exports = { app, startServer };
