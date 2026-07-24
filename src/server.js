@@ -266,73 +266,6 @@ h1{font-size:26px;background:linear-gradient(135deg,#14b8a6,#3b82f6);-webkit-bac
 </div></body></html>`);
 });
 
-app.get('/login', (req, res) => {
-  if (isLoggedIn(req)) return res.redirect('/');
-  // Auto-detect mobile
-  const ua = (req.get('user-agent') || '').toLowerCase();
-  const isMobile = /mobile|android|iphone|ipad/.test(ua);
-  const gClientId = auth.GOOGLE_CLIENT_ID || '';
-
-  res.send(`<!DOCTYPE html><html lang="en"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>OKF MD Master</title>
-<link rel="icon" href="/icon.svg">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100dvh;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
-.bg-grid{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,#1e293b 1px,transparent 0);background-size:40px 40px;pointer-events:none}
-.bg-glow{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(120px);opacity:.15;pointer-events:none}
-.glow-1{top:-200px;left:-100px;background:#14b8a6}.glow-2{bottom:-200px;right:-100px;background:#3b82f6}.glow-3{top:50%;left:50%;transform:translate(-50%,-50%);background:#8b5cf6;width:400px;height:400px}
-.container{max-width:480px;width:100%;padding:24px;position:relative;z-index:1}
-.logo{text-align:center;margin-bottom:28px}
-.logo h1{font-size:32px;background:linear-gradient(135deg,#14b8a6,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800;letter-spacing:-.5px}
-.logo p{color:#64748b;font-size:13px;margin-top:6px}
-.login-card{background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:24px}
-.auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;border:none}
-.auth-google{background:#fff;color:#1e293b;margin-bottom:8px}.auth-google:hover{background:#f1f5f9}
-.auth-github{background:#24292f;color:#fff;margin-bottom:8px}.auth-github:hover{background:#2d363f}
-.auth-github svg{width:18px;height:18px}
-.divider{display:flex;align-items:center;margin:16px 0;gap:10px}.divider-line{flex:1;height:1px;background:#1e293b}.divider-text{color:#475569;font-size:11px}
-.dev-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:14px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;background:#0f766e15;color:#14b8a6;border:1px solid #0f766e40;text-decoration:none;transition:all .2s}.dev-btn:hover{background:#0f766e25}
-.qr-section{text-align:center;margin-top:20px;padding:16px;background:#0f172a;border:1px solid #1e293b;border-radius:12px}
-.qr-section p{font-size:11px;color:#64748b;margin-bottom:8px}
-.qr-section img{width:120px;height:120px;border-radius:8px}
-.social-bar{text-align:center;margin-top:20px;font-size:11px;color:#475569}
-.social-bar a{color:#64748b;text-decoration:none;margin:0 6px}.social-bar a:hover{color:#e2e8f0}
-.free-badge{display:inline-block;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;font-size:10px;padding:3px 8px;border-radius:20px;margin-bottom:12px;font-weight:700;letter-spacing:.5px}
-</style>
-</head><body>
-<div class="bg-grid"></div>
-<div class="bg-glow glow-1"></div><div class="bg-glow glow-2"></div><div class="bg-glow glow-3"></div>
-<div class="container">
-<div class="logo">
-<div class="free-badge">FREE · FIRST 100 USERS</div>
-<img src="/icon.svg" alt="OKF" style="width:64px;height:64px;margin-bottom:12px">
-<h1>OKF MD Master</h1>
-<p>Autonomous AI Knowledge Pipeline</p>
-</div>
-<div class="login-card">
-${gClientId ? '<div id="g_id_onload" data-client_id="'+gClientId+'" data-callback="onGoogleSignin" data-auto_prompt="false"></div><button class="auth-btn auth-google" onclick="document.querySelector(\'.g_id_signin div[role=button]\').click()"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button><div class="g_id_signin" style="display:none"></div><script src="https://accounts.google.com/gsi/client" async defer></script><script>function onGoogleSignin(r){fetch("/auth/google",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({credential:r.credential})}).then(x=>x.json()).then(d=>{if(d.ok)location.href="/";else alert(d.error)})}</script>' : ''}
-${auth.GH_CLIENT_ID ? '<a href="/auth/github" class="auth-btn auth-github"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>Continue with GitHub</a>' : ''}
-${(gClientId || auth.GH_CLIENT_ID) ? '<div class="divider"><div class="divider-line"></div><span class="divider-text">or</span><div class="divider-line"></div></div>' : ''}
-<a href="/auth/dev" class="dev-btn">👀 Continue as Guest</a>
-<p class="sub" style="margin-top:12px;font-size:10px;color:#475569">Guest mode: view only. No uploads, no processing.</p>
-</div>
-<div class="qr-section">
-<p>📱 Mobile App — scan to install</p>
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app/mobile" alt="QR to Mobile App">
-</div>
-<div class="social-bar">
-<img src="/avatar.png" alt="Creator" style="width:32px;height:32px;border-radius:50%;border:2px solid #14b8a6;vertical-align:middle;margin-right:4px">
-<a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" title="Star us on GitHub — every star helps the community grow">GitHub</a> ·
-<a href="https://linkedin.com" target="_blank" title="Follow OKF MD Master on LinkedIn">LinkedIn</a> ·
-<a href="https://www.facebook.com/profile.php?id=61592172550155" target="_blank" title="Like our Facebook page for updates">Facebook</a> ·
-<a href="https://wa.me/4915123445864" target="_blank">WhatsApp</a> ·
-<a href="https://line.me/R/ti/p/@okf-md-master" target="_blank">LINE</a>
-</div>
-</div></body></html>`);
-});
-
 app.get('/auth/dev', (req, res) => {
   createSession(res, { email: 'guest@okf', name: 'Guest', picture: null, role: 'guest', status: 'active' });
   res.redirect('/client');
@@ -386,8 +319,78 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  if (!isLoggedIn(req)) return res.redirect('/login');
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+  if (isLoggedIn(req)) return res.redirect('/client');
+  const gClientId = auth.GOOGLE_CLIENT_ID || '';
+
+  res.send(`<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OKF MD Master</title>
+<meta name="description" content="Open Knowledge Format — AI-ready file pipeline. Scan, upload, manage.">
+<meta property="og:title" content="OKF MD Master — Open Knowledge Format">
+<meta property="og:description" content="Turn any text into structured, AI-ready knowledge.">
+<meta property="og:image" content="/og-image.svg">
+<link rel="icon" href="/favicon.png?v=2">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0a0e17">
+<style>
+:root{--bg:#0a0e17;--card:#0f172a;--border:#1e293b;--text:#e2e8f0;--dim:#64748b;--teal:#14b8a6;--blue:#38bdf8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;align-items:center;justify-content:center;overflow-x:hidden}
+.bg-grid{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,#1e293b 1px,transparent 0);background-size:40px 40px;pointer-events:none}
+.bg-glow{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(120px);opacity:.12;pointer-events:none}
+.g1{top:-200px;left:-100px;background:var(--teal)}.g2{bottom:-200px;right:-100px;background:var(--blue)}.g3{top:50%;left:50%;transform:translate(-50%,-50%);background:#8b5cf6;width:400px;height:400px}
+.container{max-width:420px;width:100%;padding:24px;position:relative;z-index:1}
+.logo{text-align:center;margin-bottom:24px}
+.logo img{width:72px;height:72px;margin-bottom:10px}
+.logo h1{font-size:28px;background:linear-gradient(135deg,var(--teal),var(--blue),#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800;letter-spacing:-.5px}
+.logo p{color:var(--dim);font-size:12px;margin-top:4px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:.15s;margin-bottom:8px}
+.btn:active{transform:scale(.98)}
+.btn-google{background:#fff;color:#1e293b}.btn-google:hover{background:#f1f5f9}
+.btn-github{background:#24292f;color:#fff}.btn-github:hover{background:#2d363f}
+.btn-ms{background:#1e293b;color:#475569;border:1px dashed var(--border);cursor:not-allowed;opacity:.6}
+.divider{display:flex;align-items:center;margin:14px 0;gap:10px}.line{flex:1;height:1px;background:var(--border)}.text{color:#475569;font-size:10px}
+.btn-guest{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;border-radius:10px;font-size:13px;font-weight:600;background:transparent;color:var(--teal);border:1px solid var(--teal);text-decoration:none;transition:.15s}.btn-guest:hover{background:#14b8a615}
+.btn svg{width:18px;height:18px;flex-shrink:0}
+.qr{text-align:center;margin-top:20px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px}.qr p{font-size:10px;color:var(--dim);margin-bottom:8px}.qr img{width:100px;height:100px;border-radius:8px}
+.footer{text-align:center;margin-top:20px;font-size:10px;color:#475569}
+.footer a{color:var(--dim);text-decoration:none;margin:0 5px}.footer a:hover{color:var(--text)}
+</style></head><body>
+<div class="bg-grid"></div>
+<div class="bg-glow g1"></div><div class="bg-glow g2"></div><div class="bg-glow g3"></div>
+<div class="container">
+<div class="logo">
+<img src="/favicon.png?v=2" alt="OKF">
+<h1>OKF MD Master</h1>
+<p>Open Knowledge Format Ecosystem</p>
+</div>
+<div class="card">
+${gClientId ? '<div id="g_id_onload" data-client_id="'+gClientId+'" data-callback="onGoogleSignin" data-auto_prompt="false"></div><a href="javascript:void(0)" class="btn btn-google" onclick="document.querySelector(\'.g_id_signin div[role=button]\').click()"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</a><div class="g_id_signin" style="display:none"></div><script src="https://accounts.google.com/gsi/client" async defer></script><script>function onGoogleSignin(r){fetch("/auth/google",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({credential:r.credential})}).then(x=>x.json()).then(d=>{if(d.ok)location.href=d.redirect||"/client";else alert(d.error)})}</script>' : ''}
+${auth.GH_CLIENT_ID ? '<a href="/auth/github" class="btn btn-github"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>Continue with GitHub</a>' : ''}
+<div class="btn btn-ms"><svg viewBox="0 0 24 24" fill="#475569"><path d="M3 3h18v18H3V3zm16 16V5H5v14h14zM7 7h4v4H7V7zm6 0h4v4h-4V7zm-6 6h4v4H7v-4zm6 0h4v4h-4v-4z"/></svg>Microsoft · Coming soon</div>
+<div class="divider"><div class="line"></div><span class="text">or</span><div class="line"></div></div>
+<a href="/auth/dev" class="btn-guest">Continue as Guest</a>
+</div>
+<div class="qr">
+<p>Scan to open on mobile</p>
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app" alt="QR">
+</div>
+<div class="footer">
+<a href="https://github.com/ThaiJenspacito/OKF_MD_Master">GitHub</a> ·
+<a href="https://linkedin.com">LinkedIn</a> ·
+<a href="https://www.facebook.com/profile.php?id=61592172550155">Facebook</a> ·
+<a href="https://wa.me/4915123445864">WhatsApp</a>
+</div></div></body></html>`);
+});
+
+app.get('/login', (req, res) => res.redirect('/'));
+
+app.get('/logout', (req, res) => {
+  const sid = req.cookies.okf_session;
+  if (sid) delete sessions[sid];
+  res.clearCookie('okf_session');
+  res.redirect('/');
 });
 
 app.get('/api/status', (req, res) => {
@@ -864,17 +867,6 @@ function addExclude(){const v=document.getElementById('newExclude').value.trim()
 function removeExclude(btn,d){btn.parentElement.remove();const ex=excludePaths.filter(x=>x!==d);api('/api/settings',{excludePaths:ex}).then(()=>location.reload())}
 function logout(){document.cookie='okf_session=;max-age=0;path=/';window.location='/login'}
 </script></body></html>`);
-});
-
-<script>
-async function saveScope(e){e.preventDefault();const d={rootAccess:document.getElementById('rootAccess').checked};const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();document.getElementById('scopeMsg').innerHTML=j.ok?'✅ Saved':'❌ Error'}
-async function saveLLM(e){e.preventDefault();const d={model:document.getElementById('modelSelect').value,fallbackModel:document.getElementById('fallbackSelect').value,maxTokens:parseInt(document.getElementById('maxTokens').value),maxFileSize:parseInt(document.getElementById('maxFileSize').value)*1024,idleThresholdSec:parseInt(document.getElementById('idleThreshold').value),cpuThresholdPct:parseInt(document.getElementById('cpuThreshold').value)};const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();document.getElementById('llmMsg').innerHTML=j.ok?'✅ Saved · Restart required for some changes':'❌ Error'}
-async function addDir(){const v=document.getElementById('newDir').value.trim();if(!v)return;const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({watchDirs:[...(${JSON.stringify(cfg.watchDirs||['mock_documents'])}),v]})});await r.json();location.reload()}
-async function removeDir(d){const dirs=(${JSON.stringify(cfg.watchDirs||['mock_documents'])}).filter(x=>x!==d);await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({watchDirs:dirs})});location.reload()}
-async function addExclude(){const v=document.getElementById('newExclude').value.trim();if(!v)return;const ex=[...(${JSON.stringify(cfg.excludePaths||['node_modules','.git'])}),v];await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({excludePaths:ex})});location.reload()}
-async function removeExclude(d){const ex=(${JSON.stringify(cfg.excludePaths||['node_modules','.git'])}).filter(x=>x!==d);await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({excludePaths:ex})});location.reload()}
-</script>
-</body></html>`);
 });
 
 app.get('/api/knowledge', (req, res) => {
