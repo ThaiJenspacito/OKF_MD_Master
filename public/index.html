@@ -79,7 +79,10 @@ input,select{background:#1e293b;border:1px solid #334155;border-radius:6px;paddi
 <br>OKF skills work as context for all these tools. <a href="/connect" style="color:#f59e0b">Connect yours →</a>
 </div>
 
-<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="adminBar">
+<div id="adminWarning" style="display:none;width:100%;background:#7f1d1d20;border:1px solid #7f1d1d40;border-radius:8px;padding:8px 12px;font-size:11px;color:#f87171;margin-bottom:8px">
+⚠️ <b>Admin Mode</b> — Root access enabled. System-wide file access active. <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:#f87171;cursor:pointer;text-decoration:underline">Dismiss</button>
+</div>
 <button class="btn" onclick="apiCall('/api/scheduler/pause','POST').then(()=>location.reload())" id="pauseBtn">Pause</button>
 <button class="btn btn-teal" onclick="apiCall('/api/scout/scan','POST').then(d=>{alert('Scout: '+d.discovered+' files found');location.reload()})">Scout Now</button>
 <button class="btn btn-teal" onclick="apiCall('/api/architect/process','POST').then(d=>{alert('Architect: '+d.processed+' skills created');location.reload()})">Process Now</button>
@@ -166,6 +169,8 @@ const h=await apiCall('/api/health');
 const r=await apiCall('/api/report');
 const c=await apiCall('/api/credits');
 state={status:s,health:h,report:r,credits:c};
+const cfg=s.config||{};
+if(cfg.rootAccess){document.getElementById('adminWarning').style.display='block'}
 render();
 }catch(e){console.error(e)}
 }
