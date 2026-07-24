@@ -137,6 +137,16 @@ function getUser(req) {
   return sessions[sid].user || null;
 }
 
+function isGuest(req) {
+  const user = getUser(req);
+  return user && user.email === 'dev@localhost';
+}
+
+function guestGuard(req, res, next) {
+  if (isGuest(req)) return res.status(403).json({ error: 'Guest accounts are read-only. Login with Google for full access.' });
+  next();
+}
+
 function agentCard(name, icon, color, status, detail, model) {
   const dot = status ? 'ðŸŸ¢' : 'ðŸ”´';
   return `<div class="bg-gray-700/50 rounded-lg border border-gray-600/50 p-4 flex items-start space-x-3">
@@ -301,8 +311,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2
 ${gClientId ? '<div id="g_id_onload" data-client_id="'+gClientId+'" data-callback="onGoogleSignin" data-auto_prompt="false"></div><button class="auth-btn auth-google" onclick="document.querySelector(\'.g_id_signin div[role=button]\').click()"><svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Continue with Google</button><div class="g_id_signin" style="display:none"></div><script src="https://accounts.google.com/gsi/client" async defer></script><script>function onGoogleSignin(r){fetch("/auth/google",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({credential:r.credential})}).then(x=>x.json()).then(d=>{if(d.ok)location.href="/";else alert(d.error)})}</script>' : ''}
 ${auth.GH_CLIENT_ID ? '<a href="/auth/github" class="auth-btn auth-github"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.605-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>Continue with GitHub</a>' : ''}
 ${(gClientId || auth.GH_CLIENT_ID) ? '<div class="divider"><div class="divider-line"></div><span class="divider-text">or</span><div class="divider-line"></div></div>' : ''}
-<a href="/auth/dev" class="dev-btn">⚡ Continue without password</a>
-<form method="POST" action="/login" style="display:flex;gap:8px;margin-top:10px"><input type="password" name="pin" placeholder="PIN" maxlength="8" style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;color:#e2e8f0;font-size:13px;text-align:center;letter-spacing:4px"><button style="background:#14b8a6;color:#fff;border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer">→</button></form>
+<a href="/auth/dev" class="dev-btn">👀 Continue as Guest</a>
+<p class="sub" style="margin-top:12px;font-size:10px;color:#475569">Guest mode: view only. No uploads, no processing.</p>
 </div>
 <div class="qr-section">
 <p>📱 Mobile App — scan to install</p>
@@ -321,7 +331,7 @@ ${(gClientId || auth.GH_CLIENT_ID) ? '<div class="divider"><div class="divider-l
 
 app.get('/auth/dev', (req, res) => {
   const sid = crypto.randomBytes(16).toString('hex');
-  sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'dev@localhost', name: 'Jenspacito', picture: null } };
+  sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'dev@localhost', name: 'Guest', picture: null, role: 'guest' } };
   res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
   res.redirect('/choose');
 });
@@ -396,19 +406,19 @@ function startServer() {
   });
 }
 
-app.post('/api/scheduler/pause', (req, res) => {
+app.post('/api/scheduler/pause', guestGuard, (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   scheduler.pause();
   res.json({ ok: true, paused: true });
 });
 
-app.post('/api/scheduler/resume', (req, res) => {
+app.post('/api/scheduler/resume', guestGuard, (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   scheduler.resume();
   res.json({ ok: true, paused: false });
 });
 
-app.post('/api/scout/scan', (req, res) => {
+app.post('/api/scout/scan', guestGuard, (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   const scout = require('./core/scout');
   const results = scout.scanForKnowledge(config.get().watchDirs[0] || path.join(__dirname, '../mock_documents'));
@@ -416,7 +426,7 @@ app.post('/api/scout/scan', (req, res) => {
   res.json({ ok: true, discovered: results.length, files: results.map(r => r.filename) });
 });
 
-app.post('/api/architect/process', (req, res) => {
+app.post('/api/architect/process', guestGuard, (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   architect.processAll().then(results => {
     results.forEach(r => {
@@ -566,7 +576,7 @@ render(skills);
 </body></html>`);
 });
 
-app.post('/api/upload', upload.single('file'), (req, res) => {
+app.post('/api/upload', guestGuard, upload.single('file'), (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   if (!req.file) return res.status(400).json({ error: 'No file' });
   addJournalEntry('upload', req.file.originalname, 'uploaded', req.file.size + ' Bytes');
@@ -794,7 +804,7 @@ app.get('/api/knowledge/context', (req, res) => {
   res.json({ ok: true, count: skills.length, context, usage: 'Use this context as system prompt or RAG context.' });
 });
 
-app.post('/api/fetch', express.json(), async (req, res) => {
+app.post('/api/fetch', guestGuard, express.json(), async (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   const url = req.body.url;
   if (!url || !url.startsWith('http')) return res.status(400).json({ error: 'Invalid URL' });
@@ -1216,7 +1226,7 @@ app.get('/enterprise', (req, res) => {
 </div></body></html>`);
 });
 
-app.post('/api/github/process', async (req, res) => {
+app.post('/api/github/process', guestGuard, async (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   try {
     const result = await githubBot.processIssues('ThaiJenspacito', 'OKF_MD_Master', skillAgent);
@@ -1228,7 +1238,7 @@ app.get('/api/github/stats', (req, res) => {
   res.json(githubBot.getStats());
 });
 
-app.post('/api/fetch/model', express.json(), async (req, res) => {
+app.post('/api/fetch/model', guestGuard, express.json(), async (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   const modelId = req.body.model;
   if (!modelId) return res.status(400).json({ error: 'model ID required' });
