@@ -1493,6 +1493,7 @@ app.get('/products', (req, res) => {
 });
 
 app.get('/mobile', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.sendFile(path.join(__dirname, '../public/mobile.html'));
 });
 
