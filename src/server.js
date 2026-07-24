@@ -357,7 +357,9 @@ app.get('/auth/github/callback', async (req, res) => {
 
 app.post('/login', express.urlencoded({ extended: false }), (req, res) => {
   if (req.body.pin !== ADMIN_PIN) {
-    return res.send(`<!DOCTYPE html><html lang="en" class="dark"><head><meta charset="UTF-8"><title>OKF Login</title><script src="https://cdn.tailwindcss.com"></script></head><body class="bg-gray-950 min-h-screen flex items-center justify-center"><div class="text-center"><p class="text-red-400 text-lg mb-4">Wrong PIN</p><a href="/login" class="text-teal-400 hover:underline">Try again</a></div></body></html>`);
+    return res.send(`<!DOCTYPE html><html lang="en" class="dark"><head><meta charset="UTF-8"><title>OKF Login</title>
+<link rel="icon" href="/icon.svg">
+<script src="https://cdn.tailwindcss.com"></script></head><body class="bg-gray-950 min-h-screen flex items-center justify-center"><div class="text-center"><p class="text-red-400 text-lg mb-4">Wrong PIN</p><a href="/login" class="text-teal-400 hover:underline">Try again</a></div></body></html>`);
   }
   const sid = crypto.randomBytes(16).toString('hex');
   sessions[sid] = { created: Date.now(), ip: req.ip || req.socket.remoteAddress || 'local' };
@@ -473,6 +475,7 @@ app.get('/library', (req, res) => {
   res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>OKF Library</title>
+<link rel="icon" href="/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-7xl">
@@ -689,6 +692,7 @@ app.get('/settings', (req, res) => {
   res.send(`<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Settings · OKF MD Master</title>
+<link rel="icon" href="/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-4xl">
@@ -855,6 +859,7 @@ app.get('/chat', (req, res) => {
   res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>OKF Skill Agent</title>
+<link rel="icon" href="/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-4xl">
@@ -933,6 +938,7 @@ app.get('/social', (req, res) => {
   res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Social Media Manager</title>
+<link rel="icon" href="/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-6xl">
@@ -1044,6 +1050,7 @@ app.get('/connect', (req, res) => {
   res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>OKF Network</title>
+<link rel="icon" href="/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={darkMode:'class'}</script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
@@ -1117,7 +1124,8 @@ app.get('/enterprise', (req, res) => {
 
   res.send(`<!DOCTYPE html><html lang="en" class="dark"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Enterprise Â· OKF MD Master</title>
+<title>Enterprise · OKF MD Master</title>
+<link rel="icon" href="/icon.svg">
 <script src="https://cdn.tailwindcss.com"></script><script>tailwind.config={darkMode:'class'}</script>
 </head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
 <div class="container mx-auto px-4 py-6 max-w-5xl">
