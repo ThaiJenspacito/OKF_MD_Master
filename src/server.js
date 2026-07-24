@@ -36,6 +36,7 @@ const ADMIN_PIN = process.env.ADMIN_PIN || '180473';
 
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../docs')));
 
 const DATA_DIR = path.join(__dirname, '../data');
 const INDEX_FILE = path.join(DATA_DIR, 'index.md');
@@ -1478,6 +1479,9 @@ app.post('/api/users/role', express.json(), (req, res) => {
 app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/contact.html'));
 });
+
+app.get('/guide', (req, res) => res.sendFile(path.join(__dirname, '../docs/guide.html')));
+app.get('/guide-mobile', (req, res) => res.sendFile(path.join(__dirname, '../docs/guide-mobile.html')));
 
 app.get('/scan', (req, res) => {
   if (!isLoggedIn(req)) return res.redirect('/login');
