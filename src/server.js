@@ -1250,6 +1250,10 @@ app.post('/api/fetch/model', express.json(), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/contact', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/contact.html'));
+});
+
 app.get('/scan', (req, res) => {
   if (!isLoggedIn(req)) return res.redirect('/login');
   res.sendFile(path.join(__dirname, '../public/scan.html'));
