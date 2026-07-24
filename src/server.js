@@ -723,82 +723,147 @@ app.post('/api/credits/settings', express.json(), (req, res) => {
 app.get('/settings', (req, res) => {
   if (!isLoggedIn(req)) return res.redirect('/login');
   const user = getUser(req);
-  const email = user ? user.email : 'anonymous';
-  const stats = credits.getStats(email);
   const cfg = config.get();
-  const leaderboard = credits.getLeaderboard();
 
   res.send(`<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Settings · OKF MD Master</title>
 <link rel="icon" href="/icon.svg">
-<script src="https://cdn.tailwindcss.com"></script>
-</head><body class="bg-gray-950 text-gray-100 font-sans min-h-screen">
-<div class="container mx-auto px-4 py-6 max-w-4xl">
-<header class="flex justify-between items-center border-b border-gray-800 pb-5 mb-6">
-<div><h1 class="text-xl font-bold bg-gradient-to-r from-teal-400 to-blue-500 bg-clip-text text-transparent">Settings</h1>
-<p class="text-xs text-gray-500 mt-1">${user ? user.name || user.email : 'Guest'} · Power = Downloads</p></div>
-<a href="/" class="text-xs text-teal-400">← Dashboard</a>
-</header>
+<style>
+:root{--bg:#0a0e17;--card:#0f172a;--border:#1e293b;--text:#e2e8f0;--dim:#64748b;--accent:#38bdf8;--teal:#14b8a6;--red:#ef4444;--amber:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui;min-height:100dvh}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar .logo{font-weight:700;font-size:14px;color:var(--accent)}
+.topbar a{color:var(--dim);font-size:12px;text-decoration:none}
+.container{max-width:800px;margin:0 auto;padding:20px 16px}
+h1{font-size:20px;margin-bottom:4px}
+h1+p{color:var(--dim);font-size:12px;margin-bottom:24px}
+h2{font-size:13px;color:var(--accent);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11px;color:var(--dim);margin-bottom:4px}
+.form-group input,.form-group select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:12px}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--accent)}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.toggle-row span{font-size:12px}
+.toggle{position:relative;width:42px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#1e293b;border-radius:24px;transition:.2s}
+.toggle .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#64748b;border-radius:50%;transition:.2s}
+.toggle input:checked+.slider{background:#14b8a6}
+.toggle input:checked+.slider:before{background:#fff;transform:translateX(18px)}
+.btn{display:block;width:100%;background:var(--accent);color:#0a0e17;border:none;padding:10px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-top:8px}
+.btn:hover{opacity:.9}
+.btn-danger{background:var(--red);color:#fff}
+.tag-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);padding:3px 8px;border-radius:4px;font-size:10px}
+.tag button{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;line-height:1}
+.input-row{display:flex;gap:6px;margin-top:6px}
+.input-row input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:4px;font-size:11px}
+.input-row button{background:var(--teal);color:#0a0e17;border:none;padding:6px 12px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer}
+.msg{font-size:10px;margin-top:4px}
+.msg.ok{color:var(--teal)}.msg.err{color:var(--red)}
+.warning{font-size:10px;color:var(--amber);margin-top:2px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:600px){.grid-2{grid-template-columns:1fr}.form-row{flex-direction:column}}
+</style></head><body>
+<div class="topbar"><span class="logo">OKF MD Master</span><a href="/">← Dashboard</a></div>
+<div class="container">
+<h1>Settings</h1>
+<p>${user?user.name||user.email:'Guest'} — Configure your OKF pipeline</p>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">Scope Control</h2>
-<form onsubmit="saveScope(event)" class="space-y-3 text-sm">
+<div class="grid-2">
+<div class="card">
+<h2>Scope Control</h2>
+<form onsubmit="saveScope(event)">
+<div class="toggle-row"><span>Root Access</span><label class="toggle"><input type="checkbox" id="rootAccess" ${cfg.rootAccess?'checked':''}><span class="slider"></span></label></div>
+<p class="warning">Scans entire filesystem. Use with caution.</p>
 
-<label class="flex items-center justify-between">
-<span class="text-gray-400">Root Access</span>
-<input type="checkbox" id="rootAccess" ${cfg.rootAccess ? 'checked' : ''} class="accent-red-500">
-</label>
-<p class="text-xs text-red-500/70">⚠️ Allows scanning entire filesystem. Use with caution.</p>
-
-<div class="pt-3 border-t border-gray-800">
-<span class="text-gray-400 text-xs">Watch Directories</span>
-<div id="watchDirsList" class="space-y-1 mt-2">
-${(cfg.watchDirs || []).map(d => '<div class=flex.justify-between.items-center.bg-gray-800.rounded.px-3.py-1><span class=text-xs.text-blue-300>'+d+'</span><button onclick=removeDir(\''+d+'\') class=text-red-400.text-xs>×</button></div>').join('')}
-</div>
-<div class="flex gap-2 mt-2">
-<input id="newDir" placeholder="Add directory path..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs">
-<button type="button" onclick="addDir()" class="text-xs bg-teal-900/50 text-teal-300 px-3 py-1 rounded border border-teal-800">Add</button>
-</div>
+<div class="form-group" style="margin-top:14px"><label>Watch Directories</label>
+<div class="tag-list" id="watchDirsList">${(cfg.watchDirs||[]).map(d=>'<div class="tag"><span>'+d+'</span><button onclick="removeDir(this,\''+d+'\')">×</button></div>').join('')}</div>
+<div class="input-row"><input id="newDir" placeholder="Add path..."><button type="button" onclick="addDir()">+ Add</button></div>
 </div>
 
-<div class="pt-3 border-t border-gray-800">
-<span class="text-gray-400 text-xs">Excluded Paths</span>
-<div id="excludedList" class="space-y-1 mt-2">
-${(cfg.excludePaths || ['node_modules','.git','data','logs']).map(d => '<div class=flex.justify-between.items-center.bg-gray-800.rounded.px-3.py-1><span class=text-xs.text-yellow-300>'+d+'</span><button onclick=removeExclude(\''+d+'\') class=text-red-400.text-xs>×</button></div>').join('')}
-</div>
-<div class="flex gap-2 mt-2">
-<input id="newExclude" placeholder="Exclude pattern..." class="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs">
-<button type="button" onclick="addExclude()" class="text-xs bg-yellow-900/50 text-yellow-300 px-3 py-1 rounded border border-yellow-800">Exclude</button>
-</div>
+<div class="form-group"><label>Excluded Paths</label>
+<div class="tag-list" id="excludedList">${(cfg.excludePaths||['node_modules','.git','data','logs']).map(d=>'<div class="tag"><span>'+d+'</span><button onclick="removeExclude(this,\''+d+'\')">×</button></div>').join('')}</div>
+<div class="input-row"><input id="newExclude" placeholder="Exclude pattern..."><button type="button" onclick="addExclude()">+ Exclude</button></div>
 </div>
 
-<button class="bg-teal-600 hover:bg-teal-500 text-white text-sm px-4 py-2 rounded-lg transition w-full mt-4">Save Scope Settings</button>
+<button class="btn">Save Scope</button>
+<p id="scopeMsg" class="msg"></p>
 </form>
-<p id="scopeMsg" class="text-xs text-gray-500 mt-2"></p>
 </div>
 
-<div class="bg-gray-900 p-5 rounded-xl border border-gray-800">
-<h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">LLM Settings</h2>
-<form onsubmit="saveLLM(event)" class="space-y-3 text-sm">
-<div><span class="text-gray-400 text-xs">Primary Model</span>
-<select id="modelSelect" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs mt-1">
-${['cohere/north-mini-code:free','deepseek-chat','gemini','deepseek/deepseek-chat-v3-0324:free'].map(m => '<option value='+m+' '+(cfg.model===m?'selected':'')+'>'+m+'</option>').join('')}
-</select></div>
-<div><span class="text-gray-400 text-xs">Fallback Model</span>
-<select id="fallbackSelect" class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-xs mt-1">
-${['deepseek-chat','gemini','cohere/north-mini-code:free','google/gemma-3-27b-it:free'].map(m => '<option value='+m+' '+(cfg.fallbackModel===m?'selected':'')+'>'+m+'</option>').join('')}
-</select></div>
-<div class="flex items-center justify-between"><span class="text-gray-400 text-xs">Max Tokens</span><input id="maxTokens" type="number" value="${cfg.maxTokens||4096}" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-24 text-xs text-center"></div>
-<div class="flex items-center justify-between"><span class="text-gray-400 text-xs">Max File Size (KB)</span><input id="maxFileSize" type="number" value="${Math.round((cfg.maxFileSize||50000)/1024)}" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-24 text-xs text-center"></div>
-<div class="flex items-center justify-between"><span class="text-gray-400 text-xs">Idle Threshold (sec)</span><input id="idleThreshold" type="number" value="${cfg.idleThresholdSec||120}" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-24 text-xs text-center"></div>
-<div class="flex items-center justify-between"><span class="text-gray-400 text-xs">CPU Threshold (%)</span><input id="cpuThreshold" type="number" value="${cfg.cpuThresholdPct||30}" class="bg-gray-800 border border-gray-700 rounded px-3 py-1 w-24 text-xs text-center"></div>
-<button class="bg-teal-600 hover:bg-teal-500 text-white text-sm px-4 py-2 rounded-lg transition w-full">Save LLM Settings</button>
+<div class="card">
+<h2>LLM Configuration</h2>
+<form onsubmit="saveLLM(event)">
+<div class="form-group"><label>Primary Model</label>
+<select id="modelSelect">${['cohere/north-mini-code:free','deepseek-chat','gemini','deepseek/deepseek-chat-v3-0324:free'].map(m=>'<option value="'+m+'" '+(cfg.model===m?'selected':'')+'>'+m+'</option>').join('')}</select></div>
+<div class="form-group"><label>Fallback Model</label>
+<select id="fallbackSelect">${['deepseek-chat','gemini','cohere/north-mini-code:free','google/gemma-3-27b-it:free'].map(m=>'<option value="'+m+'" '+(cfg.fallbackModel===m?'selected':'')+'>'+m+'</option>').join('')}</select></div>
+<div class="form-row">
+<div class="form-group"><label>Max Tokens</label><input id="maxTokens" type="number" value="${cfg.maxTokens||4096}"></div>
+<div class="form-group"><label>Max File Size (KB)</label><input id="maxFileSize" type="number" value="${Math.round((cfg.maxFileSize||50000)/1024)}"></div>
+</div>
+<div class="form-row">
+<div class="form-group"><label>Idle Threshold (sec)</label><input id="idleThreshold" type="number" value="${cfg.idleThresholdSec||120}"></div>
+<div class="form-group"><label>CPU Threshold (%)</label><input id="cpuThreshold" type="number" value="${cfg.cpuThresholdPct||30}"></div>
+</div>
+<button class="btn">Save LLM Settings</button>
+<p id="llmMsg" class="msg"></p>
 </form>
-<p id="llmMsg" class="text-xs text-gray-500 mt-2"></p>
+</div>
+
+<div class="card">
+<h2>Credits & Power</h2>
+<form onsubmit="saveCredits(event)">
+<div class="form-row">
+<div class="form-group"><label>Max Downloads</label><input id="maxDownloads" type="number" value="${cfg.maxDownloads||50}"></div>
+<div class="form-group"><label>Credits per Download</label><input id="creditsPerDownload" type="number" value="${cfg.creditsPerDownload||1}"></div>
+</div>
+<div class="toggle-row"><span>Power Sharing</span><label class="toggle"><input type="checkbox" id="sharePower" ${cfg.sharePower!==false?'checked':''}><span class="slider"></span></label></div>
+<div class="toggle-row"><span>Auto Process</span><label class="toggle"><input type="checkbox" id="autoProcess" ${cfg.autoProcess!==false?'checked':''}><span class="slider"></span></label></div>
+<button class="btn">Save Credits</button>
+<p id="creditsMsg" class="msg"></p>
+</form>
+</div>
+
+<div class="card">
+<h2>Account</h2>
+<div style="font-size:11px;margin-bottom:12px">
+<div class="toggle-row"><span>Email</span><span style="color:var(--dim);font-size:11px">${user?user.email:'N/A'}</span></div>
+<div class="toggle-row"><span>Role</span><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:${user&&user.role==='admin'?'#052e16':'#1e293b'};color:${user&&user.role==='admin'?'#10b981':'var(--dim)'};font-weight:600">${user?user.role:'N/A'}</span></div>
+<div class="toggle-row"><span>Status</span><span style="font-size:11px;color:${user&&user.status==='active'?'#10b981':'var(--amber)'}">${user?user.status:'N/A'}</span></div>
+</div>
+<button class="btn btn-danger" onclick="logout()">Logout</button>
+</form>
 </div>
 </div>
+</div>
+
+<script>
+const cfg=${JSON.stringify(cfg||{})};
+const watchDirs=cfg.watchDirs||[];
+const excludePaths=cfg.excludePaths||[];
+
+async function api(url,body){const r=await fetch(url,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):null});return r.json()}
+
+async function saveScope(e){e.preventDefault();const d={rootAccess:document.getElementById('rootAccess').checked};const j=await api('/api/settings',d);const m=document.getElementById('scopeMsg');m.textContent=j.ok?'Saved':j.error||'Error';m.className='msg '+(j.ok?'ok':'err')}
+
+async function saveLLM(e){e.preventDefault();const d={model:document.getElementById('modelSelect').value,fallbackModel:document.getElementById('fallbackSelect').value,maxTokens:parseInt(document.getElementById('maxTokens').value),maxFileSize:parseInt(document.getElementById('maxFileSize').value)*1024,idleThresholdSec:parseInt(document.getElementById('idleThreshold').value),cpuThresholdPct:parseInt(document.getElementById('cpuThreshold').value)};const j=await api('/api/settings',d);const m=document.getElementById('llmMsg');m.textContent=j.ok?'Saved · Restart required':j.error||'Error';m.className='msg '+(j.ok?'ok':'err')}
+
+async function saveCredits(e){e.preventDefault();const d={maxDownloads:parseInt(document.getElementById('maxDownloads').value),creditsPerDownload:parseInt(document.getElementById('creditsPerDownload').value),sharePower:document.getElementById('sharePower').checked,autoProcess:document.getElementById('autoProcess').checked};const j=await api('/api/settings',d);const m=document.getElementById('creditsMsg');m.textContent=j.ok?'Saved':j.error||'Error';m.className='msg '+(j.ok?'ok':'err')}
+
+function addDir(){const v=document.getElementById('newDir').value.trim();if(!v)return;const dirs=[...watchDirs,v];api('/api/settings',{watchDirs:dirs}).then(()=>location.reload())}
+function removeDir(btn,d){btn.parentElement.remove();const dirs=watchDirs.filter(x=>x!==d);api('/api/settings',{watchDirs:dirs}).then(()=>location.reload())}
+function addExclude(){const v=document.getElementById('newExclude').value.trim();if(!v)return;const ex=[...excludePaths,v];api('/api/settings',{excludePaths:ex}).then(()=>location.reload())}
+function removeExclude(btn,d){btn.parentElement.remove();const ex=excludePaths.filter(x=>x!==d);api('/api/settings',{excludePaths:ex}).then(()=>location.reload())}
+function logout(){document.cookie='okf_session=;max-age=0;path=/';window.location='/login'}
+</script></body></html>`);
+});
 
 <script>
 async function saveScope(e){e.preventDefault();const d={rootAccess:document.getElementById('rootAccess').checked};const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});const j=await r.json();document.getElementById('scopeMsg').innerHTML=j.ok?'✅ Saved':'❌ Error'}
