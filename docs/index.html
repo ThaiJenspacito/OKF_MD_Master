@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>OKF MD Master — The First Complete Open Knowledge Format System</title>
+<meta name="description" content="Autonomous knowledge pipeline. Turn markdown into AI-ready OKF skills with 9 agents, P2P sync, and zero data loss.">
+<link rel="icon" href="../public/icon.svg">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;line-height:1.6;overflow-x:hidden}
+.bg-grid{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,#1e293b 1px,transparent 0);background-size:40px 40px;pointer-events:none;z-index:0}
+.nav{position:sticky;top:0;z-index:100;background:#0a0e17ee;backdrop-filter:blur(10px);border-bottom:1px solid #1e293b;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo img{width:32px;height:32px}
+.nav-logo span{font-weight:700;background:linear-gradient(135deg,#14b8a6,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:16px}
+.nav-links{display:flex;gap:20px;font-size:13px}.nav-links a{color:#94a3b8;text-decoration:none}.nav-links a:hover{color:#e2e8f0}
+.container{max-width:1100px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
+.hero{text-align:center;padding:80px 20px 60px}
+.hero img{width:100px;height:100px;margin-bottom:24px}
+.hero h1{font-size:44px;font-weight:800;background:linear-gradient(135deg,#14b8a6,#3b82f6,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;line-height:1.2}
+.hero p{font-size:17px;color:#94a3b8;max-width:650px;margin:0 auto 28px}
+.btn{display:inline-block;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;transition:all .2s;margin:6px}
+.btn-primary{background:linear-gradient(135deg,#14b8a6,#0d9488);color:#fff}.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 25px #14b8a630}
+.btn-outline{border:1px solid #334155;color:#e2e8f0;background:transparent}.btn-outline:hover{background:#1e293b}
+.stats{display:flex;justify-content:center;gap:40px;margin:40px 0;flex-wrap:wrap}
+.stat{text-align:center}.stat-num{font-size:36px;font-weight:800;color:#14b8a6}.stat-lbl{font-size:12px;color:#64748b;text-transform:uppercase;margin-top:4px}
+.section{padding:60px 0}.section h2{font-size:26px;font-weight:700;text-align:center;margin-bottom:12px}.section .subtitle{text-align:center;color:#64748b;font-size:14px;margin-bottom:40px}
+.features{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:40px}
+.feat{background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:24px;transition:all .2s}.feat:hover{border-color:#14b8a6}.feat-icon{font-size:28px;margin-bottom:12px}.feat h3{font-size:16px;margin-bottom:6px}.feat p{font-size:13px;color:#64748b;line-height:1.5}
+.agents{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.agent{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:16px;text-align:center}.agent-icon{font-size:24px}.agent-name{font-size:13px;font-weight:600;margin-top:6px}.agent-role{font-size:10px;color:#64748b;margin-top:2px}
+.messengers{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.msg-card{background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:24px;width:200px;text-align:center;text-decoration:none;transition:all .2s}.msg-card:hover{transform:translateY(-2px);border-color:#334155}.msg-icon{font-size:28px;margin-bottom:8px}.msg-name{font-size:14px;font-weight:600;color:#e2e8f0}.msg-desc{font-size:11px;color:#64748b;margin-top:4px}
+.pricing{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.price-card{background:#0f172a;border:1px solid #1e293b;border-radius:14px;padding:28px;text-align:center}.price-card.featured{border-color:#14b8a6;background:#0f172a}
+.price-name{font-size:16px;font-weight:700;margin-bottom:8px}.price-amount{font-size:32px;font-weight:800;color:#14b8a6;margin-bottom:16px}.price-amount span{font-size:14px;color:#64748b}.price-feat{font-size:12px;color:#64748b;margin-bottom:6px}
+footer{text-align:center;padding:40px 20px;border-top:1px solid #1e293b;margin-top:40px;font-size:12px;color:#475569}
+footer a{color:#64748b;text-decoration:none;margin:0 8px}footer a:hover{color:#e2e8f0}
+@media(max-width:768px){.hero h1{font-size:28px}.stats{gap:20px}.nav-links{display:none}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<nav class="nav">
+<a href="#" class="nav-logo"><img src="../public/icon.svg" alt="OKF"><span>OKF MD Master</span></a>
+<div class="nav-links">
+<a href="#features">Features</a><a href="#agents">Agents</a><a href="#messengers">Messengers</a><a href="#pricing">Pricing</a>
+<a href="https://github.com/ThaiJenspacito/OKF_MD_Master">GitHub</a>
+</div>
+</nav>
+
+<section class="hero">
+<div class="container">
+<img src="../public/icon.svg" alt="OKF MD Master">
+<h1>The First Complete Open Knowledge Format System</h1>
+<p>Turn any text into structured, AI-ready knowledge — automatically. 9 autonomous agents, zero data loss, P2P sync.</p>
+<a href="https://thai-jenspacito-okf-md.eu.run.app" class="btn btn-primary">Live Demo →</a>
+<a href="https://github.com/ThaiJenspacito/OKF_MD_Master" class="btn btn-outline">⭐ Star on GitHub</a>
+<a href="https://thai-jenspacito-okf-md.eu.run.app/login" class="btn btn-outline">Try Free</a>
+<div class="stats">
+<div class="stat"><div class="stat-num">9</div><div class="stat-lbl">Agents</div></div>
+<div class="stat"><div class="stat-num">14</div><div class="stat-lbl">OKF Skills</div></div>
+<div class="stat"><div class="stat-num">4</div><div class="stat-lbl">Chat Channels</div></div>
+<div class="stat"><div class="stat-num">∞</div><div class="stat-lbl">Free Access</div></div>
+</div>
+</div>
+</section>
+
+<section class="section" id="features">
+<div class="container">
+<h2>Why OKF?</h2>
+<p class="subtitle">Traditional markdown is invisible to AI agents. OKF MD Master bridges the gap.</p>
+<div class="features">
+<div class="feat"><div class="feat-icon">🔄</div><h3>Auto-Transform</h3><p>Drop .md files anywhere — 9 agents detect, enrich, and convert them to structured OKF skills automatically.</p></div>
+<div class="feat"><div class="feat-icon">🧠</div><h3>AI-Ready Output</h3><p>YAML frontmatter with name, type, tags, version. Ready for any LLM agent, RAG system, or Google AI Studio.</p></div>
+<div class="feat"><div class="feat-icon">💤</div><h3>CPU-Friendly</h3><p>Only processes when your computer is idle. Never interrupts your work. Respects your resources.</p></div>
+<div class="feat"><div class="feat-icon">🔗</div><h3>P2P Network</h3><p>Connect nodes via GitHub. Share computing power across machines. Earn download credits from contributions.</p></div>
+<div class="feat"><div class="feat-icon">📱</div><h3>Chat Anywhere</h3><p>Telegram, LINE, WhatsApp, Google Chat — your AI is always one message away. Human-like, natural responses.</p></div>
+<div class="feat"><div class="feat-icon">✅</div><h3>Quality Guaranteed</h3><p>Built-in quality agent validates every skill. A+ average score. Missing fields, bad YAML — caught automatically.</p></div>
+</div>
+</div>
+</section>
+
+<section class="section" id="agents" style="background:#0a0e17">
+<div class="container">
+<h2>9 Autonomous Agents</h2>
+<p class="subtitle">Working together — always watching, always improving.</p>
+<div class="agents">
+<div class="agent"><div class="agent-icon">👁️</div><div class="agent-name">Watcher</div><div class="agent-role">File Monitor</div></div>
+<div class="agent"><div class="agent-icon">🔎</div><div class="agent-name">Auto-Scanner</div><div class="agent-role">Every 5min</div></div>
+<div class="agent"><div class="agent-icon">🕵️</div><div class="agent-name">Scout</div><div class="agent-role">Copy & Filter</div></div>
+<div class="agent"><div class="agent-icon">🤖</div><div class="agent-name">Architect</div><div class="agent-role">LLM Transform</div></div>
+<div class="agent"><div class="agent-icon">⏱️</div><div class="agent-name">Scheduler</div><div class="agent-role">Idle-Aware</div></div>
+<div class="agent"><div class="agent-icon">✅</div><div class="agent-name">Quality Agent</div><div class="agent-role">Score A+</div></div>
+<div class="agent"><div class="agent-icon">💬</div><div class="agent-name">Skill Agent</div><div class="agent-role">Chat AI</div></div>
+<div class="agent"><div class="agent-icon">🐙</div><div class="agent-name">GitHub Bot</div><div class="agent-role">Auto-Issues</div></div>
+<div class="agent"><div class="agent-icon">📱</div><div class="agent-name">Social Manager</div><div class="agent-role">8 Platforms</div></div>
+</div>
+</div>
+</section>
+
+<section class="section" id="messengers">
+<div class="container">
+<h2>Chat with OKF on Your Favorite Messenger</h2>
+<p class="subtitle">Same AI. Same personality. Any platform.</p>
+<div class="messengers">
+<a href="https://t.me/JensBeckerBot" target="_blank" class="msg-card">
+<div class="msg-icon">✈️</div><div class="msg-name">Telegram</div><div class="msg-desc">@JensBeckerBot</div>
+</a>
+<a href="https://line.me/R/ti/p/@okf-md-master" target="_blank" class="msg-card">
+<div class="msg-icon">🟢</div><div class="msg-name">LINE</div><div class="msg-desc">@okf-md-master</div>
+</a>
+<a href="https://wa.me/4915123445864" target="_blank" class="msg-card">
+<div class="msg-icon">💬</div><div class="msg-name">WhatsApp</div><div class="msg-desc">Direct Chat</div>
+</a>
+<a href="https://thai-jenspacito-okf-md.eu.run.app/chat" target="_blank" class="msg-card">
+<div class="msg-icon">💻</div><div class="msg-name">Web Chat</div><div class="msg-desc">Full Knowledge Base</div>
+</a>
+</div>
+</div>
+</section>
+
+<section class="section" id="pricing">
+<div class="container">
+<h2>Pricing</h2>
+<p class="subtitle">Free for the first 100 users. Always free for open source.</p>
+<div class="pricing">
+<div class="price-card featured">
+<div class="price-name">Free</div><div class="price-amount">$0</div>
+<div class="price-feat">✅ All 9 Agents</div><div class="price-feat">✅ Unlimited Skills</div><div class="price-feat">✅ P2P Network</div><div class="price-feat">✅ 4 Chat Channels</div><div class="price-feat">✅ MIT License</div>
+<a href="https://thai-jenspacito-okf-md.eu.run.app/login" class="btn btn-primary" style="margin-top:16px">Get Started</a>
+</div>
+<div class="price-card">
+<div class="price-name">Pro</div><div class="price-amount">$19<span>/seat</span></div>
+<div class="price-feat">All Free features</div><div class="price-feat">Cloud priority</div><div class="price-feat">Custom LLMs</div><div class="price-feat">API access</div><div class="price-feat">Bulk migration</div>
+<span style="font-size:11px;color:#64748b">Coming Q4 2026</span>
+</div>
+<div class="price-card">
+<div class="price-name">Enterprise</div><div class="price-amount">Custom</div>
+<div class="price-feat">On-premise</div><div class="price-feat">White-label</div><div class="price-feat">Dedicated instance</div><div class="price-feat">SLA 99.9%</div><div class="price-feat">Training</div>
+<span style="font-size:11px;color:#64748b">Contact us</span>
+</div>
+</div>
+</div>
+</section>
+
+<footer>
+<p>OKF MD Master · The First Complete Open Knowledge Format System</p>
+<p style="margin-top:8px">
+<a href="https://github.com/ThaiJenspacito/OKF_MD_Master">GitHub</a> ·
+<a href="https://thai-jenspacito-okf-md.eu.run.app">Cloud Run</a> ·
+<a href="https://thai-jenspacito-okf-md.eu.run.app/info">Info</a> ·
+<a href="https://thai-jenspacito-okf-md.eu.run.app/login">Login</a> ·
+<a href="https://t.me/JensBeckerBot">Telegram</a> ·
+<a href="https://wa.me/4915123445864">WhatsApp</a>
+</p>
+<p style="margin-top:12px;color:#334155">MIT License · © 2026 · Built with ❤️</p>
+</footer>
+</body>
+</html>
