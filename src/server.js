@@ -1250,6 +1250,19 @@ app.post('/api/fetch/model', express.json(), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/go', (req, res) => {
+  if (isLoggedIn(req)) return res.redirect('/chat');
+  res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>·</title><style>body{background:#0a0e17;display:flex;align-items:center;justify-content:center;min-height:100dvh;margin:0}input{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px 16px;color:#e2e8f0;font-size:16px;text-align:center;letter-spacing:4px;outline:none}input:focus{border-color:#14b8a6}</style></head><body><form method="POST" action="/go"><input type="password" name="pin" placeholder="····" maxlength="8" autofocus></form></body></html>`);
+});
+
+app.post('/go', express.urlencoded({ extended: false }), (req, res) => {
+  if (req.body.pin !== ADMIN_PIN) return res.redirect('/go');
+  const sid = crypto.randomBytes(16).toString('hex');
+  sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'admin@okf', name: 'Admin', picture: null } };
+  res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
+  res.redirect('/chat');
+});
+
 app.get('/contact', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/contact.html'));
 });
