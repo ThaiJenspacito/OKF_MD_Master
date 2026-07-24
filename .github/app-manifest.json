@@ -1,0 +1,18 @@
+{
+  "name": "OKF MD Master",
+  "url": "https://thai-jenspacito-okf-md.eu.run.app",
+  "description": "The first complete Open Knowledge Format system. 9 autonomous agents turn markdown into AI-ready structured knowledge with zero data loss.",
+  "public": true,
+  "default_permissions": {
+    "issues": "read",
+    "contents": "read",
+    "metadata": "read"
+  },
+  "default_events": ["issues", "issue_comment"],
+  "callback_url": "https://thai-jenspacito-okf-md.eu.run.app/github/webhook",
+  "setup_url": "https://thai-jenspacito-okf-md.eu.run.app/login",
+  "redirect_url": "https://thai-jenspacito-okf-md.eu.run.app",
+  "hook_attributes": {
+    "url": "https://thai-jenspacito-okf-md.eu.run.app/github/webhook"
+  }
+}

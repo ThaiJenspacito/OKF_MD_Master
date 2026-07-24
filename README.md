@@ -9,6 +9,7 @@
   [![Cloud Run](https://img.shields.io/badge/cloud-run-live-green)](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
   [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/ThaiJenspacito/OKF_MD_Master/pulls)
   [![FREE for 100 users](https://img.shields.io/badge/FREE-first%20100%20users-orange)](#-pricing)
+  [![Marketplace](https://img.shields.io/badge/GitHub-Marketplace-8A2BE2)](https://github.com/marketplace)
 
   **Connect:**
   [![LinkedIn](https://img.shields.io/badge/LinkedIn-OKF_MD_Master-0A66C2)](https://linkedin.com)
