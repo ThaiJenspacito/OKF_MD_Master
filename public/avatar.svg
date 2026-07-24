@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14b8a6"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bg)"/>
+
+  <g transform="translate(256,170)">
+    <circle cx="-100" cy="0" r="72" fill="url(#teal)" opacity="0.9"/>
+    <circle cx="-100" cy="0" r="36" fill="#0f172a"/>
+    <circle cx="-100" cy="0" r="14" fill="url(#teal)"/>
+    <circle cx="0" cy="0" r="72" fill="url(#teal)" opacity="0.7"/>
+    <circle cx="0" cy="0" r="36" fill="#0f172a"/>
+    <circle cx="0" cy="0" r="14" fill="url(#teal)"/>
+    <circle cx="100" cy="0" r="72" fill="url(#teal)" opacity="0.5"/>
+    <circle cx="100" cy="0" r="36" fill="#0f172a"/>
+    <circle cx="100" cy="0" r="14" fill="url(#teal)"/>
+  </g>
+
+  <text x="256" y="400" text-anchor="middle" font-family="system-ui,sans-serif" font-size="56" font-weight="800" fill="#e2e8f0" letter-spacing="3">OKF</text>
+  <text x="256" y="440" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" fill="#64748b" letter-spacing="5">MD MASTER</text>
+</svg>
