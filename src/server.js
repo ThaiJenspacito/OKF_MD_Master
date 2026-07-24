@@ -27,6 +27,7 @@ const qualityAgent = require('./core/okf-quality-agent');
 const lineBot = require('./core/line-bot');
 const tgBot = require('./core/telegram-bot');
 const waBot = require('./core/whatsapp-bot');
+const gcBot = require('./core/google-chat-bot');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -1217,6 +1218,13 @@ app.post('/api/settings', express.json(), (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   const updated = config.update(req.body);
   res.json({ ok: true, config: updated });
+});
+
+app.post('/google-chat/webhook', express.json(), async (req, res) => {
+  try {
+    const result = await gcBot.handleEvent(req.body, skillAgent);
+    res.json(result || { text: 'ok' });
+  } catch (e) { res.json({ text: 'Sorry, something went wrong.' }); }
 });
 
 app.post('/telegram/webhook', express.json(), async (req, res) => {
