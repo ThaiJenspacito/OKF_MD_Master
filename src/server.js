@@ -1493,7 +1493,6 @@ app.get('/products', (req, res) => {
 });
 
 app.get('/mobile', (req, res) => {
-  if (!isLoggedIn(req)) return res.redirect('/login');
   res.sendFile(path.join(__dirname, '../public/mobile.html'));
 });
 
