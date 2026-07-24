@@ -1231,6 +1231,10 @@ app.post('/api/fetch/model', express.json(), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/products', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/products.html'));
+});
+
 app.get('/mobile', (req, res) => {
   if (!isLoggedIn(req)) return res.redirect('/login');
   res.sendFile(path.join(__dirname, '../public/mobile.html'));

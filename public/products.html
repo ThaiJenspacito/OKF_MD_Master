@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Products · OKF MD Master</title>
+<link rel="icon" href="/icon.svg">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100dvh}
+.nav{position:sticky;top:0;z-index:100;background:#0a0e17ee;backdrop-filter:blur(10px);border-bottom:1px solid #1e293b;padding:10px 20px;display:flex;justify-content:space-between;align-items:center}
+.nav-logo{display:flex;align-items:center;gap:8px;text-decoration:none}.nav-logo img{width:28px;height:28px}
+.nav-logo span{font-weight:700;background:linear-gradient(135deg,#14b8a6,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:14px}
+.nav-links{display:flex;gap:16px;font-size:12px}.nav-links a{color:#94a3b8;text-decoration:none}.nav-links a:hover{color:#e2e8f0}
+.container{max-width:1000px;margin:0 auto;padding:32px 20px}
+h1{font-size:24px;margin-bottom:6px;background:linear-gradient(135deg,#f59e0b,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:#64748b;font-size:13px;margin-bottom:32px}
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#475569;margin:32px 0 12px 0}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.product{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;transition:all .2s}.product:hover{border-color:#f59e0b}
+.product-icon{font-size:28px}.product-name{font-size:15px;font-weight:700}.product-desc{font-size:11px;color:#64748b;line-height:1.5}.product-tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:9px;background:#1e293b;color:#64748b;padding:2px 6px;border-radius:4px}
+.product-links{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}.product-links a{font-size:10px;padding:4px 10px;border-radius:6px;text-decoration:none;border:1px solid #334155;color:#94a3b8;transition:all .15s}.product-links a:hover{border-color:#f59e0b;color:#e2e8f0}.product-links .dl{background:#f59e0b15;color:#f59e0b;border-color:#f59e0b40}
+.platform-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.platform{background:#0f172a;border:1px solid #1e293b;border-radius:10px;padding:16px;text-align:center;text-decoration:none;transition:all .2s;display:block}.platform:hover{border-color:#14b8a6;transform:translateY(-1px)}
+.platform-icon{font-size:24px;margin-bottom:6px}.platform-name{font-size:13px;font-weight:600;color:#e2e8f0}.platform-action{font-size:10px;color:#64748b;margin-top:4px}
+.share-box{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;font-size:11px;color:#94a3b8;font-family:monospace;margin-top:8px;word-break:break-all;max-height:100px;overflow-y:auto;position:relative}
+.copy-btn{position:absolute;top:6px;right:6px;background:#1e293b;border:1px solid #334155;border-radius:4px;padding:2px 8px;font-size:9px;color:#94a3b8;cursor:pointer}.copy-btn:hover{background:#334155}
+</style>
+</head>
+<body>
+<nav class="nav">
+<a href="/" class="nav-logo"><img src="/icon.svg" alt="OKF"><span>OKF MD Master</span></a>
+<div class="nav-links">
+<a href="/">Dashboard</a><a href="/info">Info</a><a href="/products" style="color:#f59e0b">Products</a><a href="https://github.com/ThaiJenspacito/OKF_MD_Master">GitHub</a>
+</div>
+</nav>
+
+<div class="container">
+<h1>OKF Products</h1>
+<p class="sub">All tools, skills, and platforms — one download hub. Share with your network.</p>
+
+<div class="section-label">Core Products</div>
+<div class="product-grid">
+<div class="product">
+<div class="product-icon">🧠</div><div class="product-name">OKF MD Master</div><div class="product-desc">The first complete Open Knowledge Format system. 9 autonomous agents turn markdown into AI-ready skills.</div>
+<div class="product-tags"><span class="tag">Node.js</span><span class="tag">OKF</span><span class="tag">LLM</span><span class="tag">MIT</span></div>
+<div class="product-links">
+<a class="dl" href="https://github.com/ThaiJenspacito/OKF_MD_Master/archive/refs/heads/main.zip">⬇ Download ZIP</a>
+<a href="https://github.com/ThaiJenspacito/OKF_MD_Master">🐙 GitHub</a>
+<a href="https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app">☁️ Live Demo</a>
+</div>
+</div>
+
+<div class="product">
+<div class="product-icon">📦</div><div class="product-name">OKF Knowledge Bundle</div><div class="product-desc">All 14 OKF skills in one download. Ready for RAG, LLM fine-tuning, or direct import.</div>
+<div class="product-tags"><span class="tag">YAML</span><span class="tag">RAG</span><span class="tag">Skills</span></div>
+<div class="product-links">
+<a class="dl" href="https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app/api/knowledge">⬇ Download Bundle</a>
+<a href="https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app/library">📚 Library</a>
+</div>
+</div>
+
+<div class="product">
+<div class="product-icon">🤖</div><div class="product-name">OKF Quality Agent</div><div class="product-desc">Validates every OKF skill for YAML compliance, content quality, and tag consistency. A+ average score.</div>
+<div class="product-tags"><span class="tag">QA</span><span class="tag">YAML</span><span class="tag">Validator</span></div>
+<div class="product-links">
+<a class="dl" href="https://github.com/ThaiJenspacito/OKF_MD_Master">🐙 Source</a>
+<a href="https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app">☁️ Try</a>
+</div>
+</div>
+
+<div class="product">
+<div class="product-icon">💬</div><div class="product-name">OKF Chat AI</div><div class="product-desc">Chat with your OKF knowledge base. Ask anything — the agent answers from your skills.</div>
+<div class="product-tags"><span class="tag">AI</span><span class="tag">Chat</span><span class="tag">RAG</span></div>
+<div class="product-links">
+<a class="dl" href="https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app/chat">💬 Open Chat</a>
+<a href="https://t.me/JensBeckerBot">📱 Telegram</a>
+<a href="https://wa.me/4915123445864">💚 WhatsApp</a>
+</div>
+</div>
+
+<div class="product">
+<div class="product-icon">📱</div><div class="product-name">Social Media Manager</div><div class="product-desc">Generate platform-optimized posts from OKF skills. 8 platforms: X, GitHub, Discord, Instagram, TikTok, YouTube, Facebook, Google.</div>
+<div class="product-tags"><span class="tag">Social</span><span class="tag">Marketing</span><span class="tag">Posts</span></div>
+<div class="product-links">
+<a class="dl" href="https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app/social">📱 Generate Posts</a>
+</div>
+</div>
+
+<div class="product">
+<div class="product-icon">🌐</div><div class="product-name">P2P Network</div><div class="product-desc">Share computing power across nodes via GitHub. Earn credits. Pull and push skills automatically.</div>
+<div class="product-tags"><span class="tag">P2P</span><span class="tag">GitHub</span><span class="tag">Sync</span></div>
+<div class="product-links">
+<a class="dl" href="https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app/connect">🌐 Connect</a>
+</div>
+</div>
+</div>
+
+<div class="section-label">Share on Platforms</div>
+<div class="platform-grid">
+<a href="https://www.facebook.com/sharer/sharer.php?u=https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" class="platform">
+<div class="platform-icon">📘</div><div class="platform-name">Facebook</div><div class="platform-action">Share Project</div>
+</a>
+<a href="https://twitter.com/intent/tweet?text=OKF+MD+Master+-+The+first+complete+Open+Knowledge+Format+system.+9+agents,+zero+data+loss.+https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" class="platform">
+<div class="platform-icon">𝕏</div><div class="platform-name">X / Twitter</div><div class="platform-action">Tweet Now</div>
+</a>
+<a href="https://www.youtube.com" target="_blank" class="platform">
+<div class="platform-icon">▶️</div><div class="platform-name">YouTube</div><div class="platform-action">Tutorials</div>
+</a>
+<a href="https://discord.com" target="_blank" class="platform">
+<div class="platform-icon">💬</div><div class="platform-name">Discord</div><div class="platform-action">Join Server</div>
+</a>
+<a href="https://github.com/marketplace" target="_blank" class="platform">
+<div class="platform-icon">🐙</div><div class="platform-name">GitHub Marketplace</div><div class="platform-action">Install App</div>
+</a>
+<a href="https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" class="platform">
+<div class="platform-icon">💼</div><div class="platform-name">LinkedIn</div><div class="platform-action">Share Post</div>
+</a>
+<a href="https://www.reddit.com/submit?url=https://github.com/ThaiJenspacito/OKF_MD_Master&title=OKF+MD+Master+-+First+Complete+OKF+System" target="_blank" class="platform">
+<div class="platform-icon">🔴</div><div class="platform-name">Reddit</div><div class="platform-action">Post Now</div>
+</a>
+<a href="https://www.instagram.com" target="_blank" class="platform">
+<div class="platform-icon">📷</div><div class="platform-name">Instagram</div><div class="platform-action">Share Story</div>
+</a>
+</div>
+
+<div class="section-label">Quick Copy Posts</div>
+<div class="product-grid">
+<div class="product">
+<div class="product-icon">𝕏</div><div class="product-name">X / Twitter Post</div>
+<div class="share-box">OKF MD Master is live! 🚀 The first complete Open Knowledge Format system. 9 agents turn markdown into AI-ready skills. Zero data loss. Free for 100 users. github.com/ThaiJenspacito/OKF_MD_Master #OKF #AI #OpenSource<button class="copy-btn" onclick="copyText(this,'OKF MD Master is live! 🚀 The first complete Open Knowledge Format system. 9 agents turn markdown into AI-ready skills. Zero data loss. Free for 100 users. github.com/ThaiJenspacito/OKF_MD_Master #OKF #AI #OpenSource')">Copy</button></div>
+</div>
+<div class="product">
+<div class="product-icon">📘</div><div class="product-name">Facebook Post</div>
+<div class="share-box">After months of building, I'm launching OKF MD Master — the first system running entirely on Open Knowledge Format. 9 autonomous agents, P2P network, zero data loss. Free for the first 100 users. Try it: thai-jenspacito-okf-md.eu.run.app<button class="copy-btn" onclick="copyText(this,'After months of building, I\'m launching OKF MD Master — the first system running entirely on Open Knowledge Format. 9 autonomous agents, P2P network, zero data loss. Free for the first 100 users. Try it: thai-jenspacito-okf-md.eu.run.app')">Copy</button></div>
+</div>
+<div class="product">
+<div class="product-icon">💼</div><div class="product-name">LinkedIn Post</div>
+<div class="share-box">🧠 I just open-sourced the first deterministic agent framework on OKF. 9 agents · 14 skills · 4 chat channels. Free for 100 users. Star it: github.com/ThaiJenspacito/OKF_MD_Master #OKF #MCP #AgentAI #OpenSource<button class="copy-btn" onclick="copyText(this,'🧠 I just open-sourced the first deterministic agent framework on OKF. 9 agents · 14 skills · 4 chat channels. Free for 100 users. Star it: github.com/ThaiJenspacito/OKF_MD_Master #OKF #MCP #AgentAI #OpenSource')">Copy</button></div>
+</div>
+<div class="product">
+<div class="product-icon">🔴</div><div class="product-name">Reddit Post</div>
+<div class="share-box">I built OKF_MD_Master — a framework that combines OKF structure with MCP connectivity. 9 autonomous agents, P2P sync, zero data loss. Try it live or star on GitHub. Feedback welcome! 🙌<button class="copy-btn" onclick="copyText(this,'I built OKF_MD_Master — a framework that combines OKF structure with MCP connectivity. 9 autonomous agents, P2P sync, zero data loss. Try it live or star on GitHub. Feedback welcome! 🙌')">Copy</button></div>
+</div>
+</div>
+</div>
+
+<script>
+function copyText(btn,text){navigator.clipboard.writeText(text);btn.textContent='✅ Copied!';setTimeout(()=>btn.textContent='Copy',2000)}
+</script>
+</body>
+</html>
