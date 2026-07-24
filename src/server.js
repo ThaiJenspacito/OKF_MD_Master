@@ -188,41 +188,66 @@ app.get('/choose', (req, res) => {
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100dvh;display:flex;align-items:center;justify-content:center}
 .bg-grid{position:fixed;inset:0;background-image:radial-gradient(circle at 1px 1px,#1e293b 1px,transparent 0);background-size:40px 40px;pointer-events:none}
-.container{max-width:500px;width:100%;padding:24px;position:relative;z-index:1;text-align:center}
-h1{font-size:24px;background:linear-gradient(135deg,#14b8a6,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
-.sub{color:#64748b;font-size:13px;margin-bottom:28px}
-.cards{display:grid;gap:10px}
-.card{display:flex;align-items:center;gap:14px;padding:16px;border-radius:12px;text-decoration:none;transition:all .2s;border:1px solid #1e293b;background:#0f172a;text-align:left}
-.card:hover{transform:translateY(-1px);border-color:#14b8a6}
-.card-icon{font-size:28px;min-width:40px;text-align:center}
-.card-info{flex:1}.card-name{font-size:15px;font-weight:700;color:#e2e8f0}.card-desc{font-size:11px;color:#64748b;margin-top:2px}
-.logout{font-size:11px;color:#475569;margin-top:24px;display:inline-block;text-decoration:none}.logout:hover{color:#ef4444}
+.container{max-width:520px;width:100%;padding:24px;position:relative;z-index:1;text-align:center}
+.logo-img{width:80px;height:80px;margin-bottom:16px}
+h1{font-size:26px;background:linear-gradient(135deg,#14b8a6,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
+.sub{color:#64748b;font-size:14px;margin-bottom:8px}
+.greeting{color:#475569;font-size:12px;margin-bottom:28px}
+.section-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#475569;margin-bottom:10px}
+.cards{display:grid;gap:8px;margin-bottom:16px}
+.card{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;text-decoration:none;transition:all .2s;border:1px solid #1e293b;background:#0f172a;text-align:left}
+.card:hover{transform:translateY(-1px);border-color:#334155}
+.card-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0}
+.icon-web{background:#0f766e;color:#14b8a6}.icon-mobile{background:#1e3a5f;color:#3b82f6}
+.icon-chat{background:#3b1f6e;color:#8b5cf6}.icon-telegram{background:#1a3a5c;color:#26A5E4}
+.icon-line{background:#003d1a;color:#06C755}.icon-whatsapp{background:#0d3a1a;color:#25D366}
+.icon-google{background:#1a2530;color:#4285F4}
+.card-info{flex:1}.card-name{font-size:14px;font-weight:700;color:#e2e8f0}.card-desc{font-size:11px;color:#64748b;margin-top:3px}
+.card-arrow{color:#334155;font-size:14px}
+.powered{font-size:10px;color:#334155;margin-top:24px}
+.logout{font-size:11px;color:#475569;margin-top:16px;display:inline-block;text-decoration:none}.logout:hover{color:#ef4444}
 </style>
 </head><body>
 <div class="bg-grid"></div>
 <div class="container">
-<h1>Welcome, ${name}</h1>
-<p class="sub">Choose your interface</p>
+<img src="/icon.svg" alt="OKF" class="logo-img">
+<h1>OKF MD Master</h1>
+<p class="sub">Where do you want to chat?</p>
+<p class="greeting">Welcome, ${name} — pick your messenger</p>
+
+<div class="section-label">Messengers</div>
 <div class="cards">
-<a href="/" class="card">
-<div class="card-icon">📊</div><div class="card-info"><div class="card-name">Web Dashboard</div><div class="card-desc">Full control · 9 agents · charts · settings</div></div>
-</a>
-<a href="/mobile" class="card">
-<div class="card-icon">📱</div><div class="card-info"><div class="card-name">Mobile App</div><div class="card-desc">Touch-optimized · installable · offline-ready</div></div>
-</a>
-<a href="/chat" class="card">
-<div class="card-icon">💬</div><div class="card-info"><div class="card-name">Chat AI</div><div class="card-desc">Ask the OKF knowledge base directly</div></div>
-</a>
-<a href="https://wa.me/4915123445864" target="_blank" class="card">
-<div class="card-icon">💚</div><div class="card-info"><div class="card-name">WhatsApp</div><div class="card-desc">Chat with OKF AI via WhatsApp</div></div>
+<a href="https://t.me/JensBeckerBot" target="_blank" class="card">
+<div class="card-icon icon-telegram">✈️</div><div class="card-info"><div class="card-name">Telegram</div><div class="card-desc">@JensBeckerBot — fast, secure, all features</div></div>
+<div class="card-arrow">→</div>
 </a>
 <a href="https://line.me/R/ti/p/@okf-md-master" target="_blank" class="card">
-<div class="card-icon">🟢</div><div class="card-info"><div class="card-name">LINE</div><div class="card-desc">Chat with OKF AI via LINE</div></div>
+<div class="card-icon icon-line">🟢</div><div class="card-info"><div class="card-name">LINE</div><div class="card-desc">Most popular in Asia — @okf-md-master</div></div>
+<div class="card-arrow">→</div>
 </a>
-<a href="https://t.me/JensBeckerBot" target="_blank" class="card">
-<div class="card-icon">📱</div><div class="card-info"><div class="card-name">Telegram</div><div class="card-desc">Chat with OKF AI via Telegram @JensBeckerBot</div></div>
+<a href="https://wa.me/4915123445864" target="_blank" class="card">
+<div class="card-icon icon-whatsapp">💬</div><div class="card-info"><div class="card-name">WhatsApp</div><div class="card-desc">Direct chat — always online</div></div>
+<div class="card-arrow">→</div>
 </a>
 </div>
+
+<div class="section-label">Web Apps</div>
+<div class="cards">
+<a href="/" class="card">
+<div class="card-icon icon-web">📊</div><div class="card-info"><div class="card-name">Dashboard</div><div class="card-desc">Full control · 9 agents · live charts</div></div>
+<div class="card-arrow">→</div>
+</a>
+<a href="/mobile" class="card">
+<div class="card-icon icon-mobile">📱</div><div class="card-info"><div class="card-name">Mobile App</div><div class="card-desc">Touch-optimized · installable · offline</div></div>
+<div class="card-arrow">→</div>
+</a>
+<a href="/chat" class="card">
+<div class="card-icon icon-chat">💬</div><div class="card-info"><div class="card-name">Chat AI</div><div class="card-desc">Talk to your OKF knowledge base</div></div>
+<div class="card-arrow">→</div>
+</a>
+</div>
+
+<p class="powered">Powered by Open Knowledge Format</p>
 <a href="/logout" class="logout">Logout</a>
 </div></body></html>`);
 });
@@ -268,6 +293,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2
 <div class="container">
 <div class="logo">
 <div class="free-badge">FREE · FIRST 100 USERS</div>
+<img src="/icon.svg" alt="OKF" style="width:64px;height:64px;margin-bottom:12px">
 <h1>OKF MD Master</h1>
 <p>Autonomous AI Knowledge Pipeline</p>
 </div>
