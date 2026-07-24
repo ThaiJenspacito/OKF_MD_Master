@@ -970,7 +970,13 @@ ${skills.map(s => `<div class="bg-gray-800/50 rounded border border-gray-700/50 
 <button onclick="generatePosts()" id="genBtn" class="text-sm bg-gradient-to-r from-pink-600 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-pink-500 hover:to-purple-500 transition">ðŸš€ Generate Posts</button>
 <span id="genStatus" class="text-xs text-gray-500 ml-3"></span>
 </div>
-
+<div id="reviewQueue" class="bg-gray-900 p-4 rounded-xl border border-amber-800/50 mb-4" style="display:none">
+<div class="flex justify-between items-center mb-2">
+<h3 class="text-xs font-semibold text-amber-400 uppercase tracking-wider">⏳ Pending Your Approval</h3>
+<button onclick="approveAll()" class="text-xs bg-green-900/50 text-green-300 px-3 py-1 rounded border border-green-800">✅ Approve All</button>
+</div>
+<div id="reviewPosts" class="space-y-2"></div>
+</div>
 <div id="postsArea" class="grid grid-cols-1 md:grid-cols-2 gap-4">
 ${Object.entries(platforms).map(([key, p]) => `
 <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
@@ -997,24 +1003,36 @@ ${history.map(h => `<div class="text-xs border-b border-gray-800 py-1"><span cla
 
 <script>
 const platforms=${JSON.stringify(platforms)};
+let pendingPosts=[];
 async function generatePosts(){
   const file=document.getElementById('skill-select').value;
   if(!file)return;
   document.getElementById('genBtn').disabled=true;
-  document.getElementById('genStatus').innerHTML='â³ Generating...';
+  document.getElementById('genStatus').innerHTML='⏳ Generating...';
   try{
     const r=await fetch('/api/social/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skillFile:file})});
     const d=await r.json();
-    if(d.posts)d.posts.forEach(p=>{
-      const ta=document.getElementById('post-'+p.platform);
-      if(ta){ta.value=p.text;document.getElementById('count-'+p.platform).innerHTML=p.text.length+' chars'}
-      const ts=document.getElementById('ts-'+p.platform);
-      if(ts){const now=new Date();ts.innerHTML='🕐 '+now.toLocaleTimeString()}
-    });
-    document.getElementById('genStatus').innerHTML='âœ… Done';
-  }catch(e){document.getElementById('genStatus').innerHTML='âŒ '+e.message}
+    if(d.posts){pendingPosts=d.posts;showReviewQueue(d.posts)}
+    document.getElementById('genStatus').innerHTML='✅ '+d.posts.length+' posts ready for review';
+  }catch(e){document.getElementById('genStatus').innerHTML='❌ '+e.message}
   document.getElementById('genBtn').disabled=false;
 }
+function showReviewQueue(posts){
+  document.getElementById('reviewQueue').style.display='block';
+  document.getElementById('reviewPosts').innerHTML=posts.map((p,i)=>'<div class="bg-gray-800 rounded-lg p-3 border border-amber-700/30"><div class="flex justify-between items-center mb-1"><b class="text-xs text-amber-300">'+p.platformName+'</b><div class="flex gap-1"><button onclick="approvePost('+i+')" class="text-xs bg-green-900/50 text-green-300 px-2 py-0.5 rounded border border-green-800" title="Approve and move to publish">✅</button><button onclick="rejectPost('+i+')" class="text-xs bg-red-900/50 text-red-300 px-2 py-0.5 rounded border border-red-800" title="Reject this post">❌</button></div></div><div class="text-xs text-gray-400 mb-1" style="max-height:40px;overflow:hidden">'+p.text.substring(0,120)+'...</div></div>').join('');
+}
+function approvePost(i){
+  const p=pendingPosts[i];
+  const ta=document.getElementById('post-'+p.platform);
+  if(ta){ta.value=p.text;document.getElementById('count-'+p.platform).innerHTML=p.text.length+' chars'}
+  const ts=document.getElementById('ts-'+p.platform);
+  if(ts){const now=new Date();ts.innerHTML='🕐 Approved '+now.toLocaleTimeString()}
+  pendingPosts.splice(i,1);
+  showReviewQueue(pendingPosts);
+  if(pendingPosts.length===0){document.getElementById('reviewQueue').style.display='none';document.getElementById('genStatus').innerHTML='✅ All approved!'}
+}
+function rejectPost(i){pendingPosts.splice(i,1);showReviewQueue(pendingPosts);if(pendingPosts.length===0){document.getElementById('reviewQueue').style.display='none';document.getElementById('genStatus').innerHTML='All reviewed'}}
+function approveAll(){pendingPosts.forEach((p,i)=>approvePost(i));pendingPosts=[];document.getElementById('reviewQueue').style.display='none';document.getElementById('genStatus').innerHTML='✅ All approved and ready!'}
 function copyPost(platform){
   const ta=document.getElementById('post-'+platform);
   ta.select();navigator.clipboard.writeText(ta.value);
