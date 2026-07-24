@@ -1,4 +1,4 @@
-// Bot Personality — human-like, natural, varied responses
+﻿// Bot Personality — human-like, natural, varied responses
 
 const greetings = [
   (name) => `Hey ${name}! 👋`,
@@ -33,7 +33,7 @@ const responses = {
       `Current status — looking good:`,
       `Dashboard snapshot:`,
     ];
-    return `${lines[Math.floor(Math.random() * lines.length)]}\n\n✅ 14 OKF Skills · 🤖 9 Agents · ☁️ Cloud Run 24/7\n🌐 https://thai-jenspacito-okf-md.eu.run.app`;
+    return `${lines[Math.floor(Math.random() * lines.length)]}\n\n✅ 14 OKF Skills · 🤖 9 Agents · ☁️ Cloud Run 24/7\n🌐 https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app`;
   },
   skills: () => {
     const lines = [
@@ -41,7 +41,7 @@ const responses = {
       `Browse the collection here:`,
       `Skills library — take a look:`,
     ];
-    return `${lines[Math.floor(Math.random() * lines.length)]}\n\n📚 https://thai-jenspacito-okf-md.eu.run.app/library`;
+    return `${lines[Math.floor(Math.random() * lines.length)]}\n\n📚 https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app/library`;
   },
   thinking: () => {
     const lines = [

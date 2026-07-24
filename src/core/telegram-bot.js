@@ -1,4 +1,4 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 const personality = require('./bot-personality');
 require('dotenv').config();
 
@@ -56,7 +56,7 @@ async function handleUpdate(body, skillAgent) {
       const result = await skillAgent.ask(userText, []);
       answer = personality.formatAnswer(result.answer);
     } else {
-      answer = `I got your message! But my brain is taking a quick nap 😴 Try the web dashboard meanwhile: https://thai-jenspacito-okf-md.eu.run.app`;
+      answer = `I got your message! But my brain is taking a quick nap 😴 Try the web dashboard meanwhile: https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app`;
     }
 
     await sendMessage(chatId, answer);

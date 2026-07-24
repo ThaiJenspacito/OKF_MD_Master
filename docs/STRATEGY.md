@@ -1,4 +1,4 @@
-# OKF MD Master — Strategy & Positioning
+﻿# OKF MD Master — Strategy & Positioning
 
 **Version:** 2.2.0
 **Date:** 2026-07-23
@@ -98,7 +98,7 @@ OKF MD Master is **not just another MCP server**. It is the **missing bridge** b
 | LinkedIn/X/Reddit Posts | Story + link + screenshot |
 | Discord Server | Link in README |
 | "Good First Issue" | For new contributors |
-| Live Demo in README | `https://thai-jenspacito-okf-md.eu.run.app` |
+| Live Demo in README | `https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app` |
 
 ---
 

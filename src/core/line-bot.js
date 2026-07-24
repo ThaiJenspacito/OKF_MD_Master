@@ -1,4 +1,4 @@
-const axios = require('axios');
+﻿const axios = require('axios');
 const personality = require('./bot-personality');
 require('dotenv').config();
 
@@ -60,7 +60,7 @@ async function handleWebhook(body, skillAgent) {
           const result = await skillAgent.ask(userText, []);
           answer = personality.formatAnswer(result.answer);
         } else {
-          answer = `Got your message! Brain's taking a break 😴 Try the dashboard: https://thai-jenspacito-okf-md.eu.run.app`;
+          answer = `Got your message! Brain's taking a break 😴 Try the dashboard: https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app`;
         }
 
       await replyMessage(replyToken, answer);

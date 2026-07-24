@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
   <img src="public/icon.svg" width="120" alt="OKF MD Master">
   <h1>OKF MD Master</h1>
   <p><strong>Turn any text into structured, AI-ready knowledge — automatically.</strong></p>
@@ -114,7 +114,7 @@ npm start
 Open `http://localhost:5000` — click **Continue without password** (dev mode).
 
 **Or use our Cloud instance** (always up-to-date):  
-👉 [thai-jenspacito-okf-md.eu.run.app](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
+👉 [thai-jenspacito-okf-md-299034318175.europe-west1.run.app](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
 
 ---
 
@@ -212,7 +212,7 @@ OKF MD Master works alongside the best tools in the AI ecosystem. Our skills ser
 
 - **GitHub**: [@ThaiJenspacito](https://github.com/ThaiJenspacito)
 - **Issues**: [github.com/ThaiJenspacito/OKF_MD_Master/issues](https://github.com/ThaiJenspacito/OKF_MD_Master/issues)
-- **Cloud**: [thai-jenspacito-okf-md.eu.run.app](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
+- **Cloud**: [thai-jenspacito-okf-md-299034318175.europe-west1.run.app](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
 
 ---
 

@@ -1,10 +1,10 @@
-# Sponsors & Pricing
+﻿# Sponsors & Pricing
 
 ## Free Tier — Forever
 
 **MIT License.** All features, unlimited skills, 100 users. No credit card needed.
 
-👉 [Start now](https://thai-jenspacito-okf-md.eu.run.app) — click "Continue without password"
+👉 [Start now](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app) — click "Continue without password"
 
 ## Pro Tier — $19/Seat/Month
 

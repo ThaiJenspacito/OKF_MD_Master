@@ -1,4 +1,4 @@
-# Hi, I'm building the future of AI knowledge infrastructure 👋
+﻿# Hi, I'm building the future of AI knowledge infrastructure 👋
 
 **20+ years entrepreneur → AI Agent Architect**
 
@@ -32,7 +32,7 @@ I build tools that turn unstructured knowledge into AI-ready skills. My current 
 
 - GitHub: [@ThaiJenspacito](https://github.com/ThaiJenspacito)
 - Project: [OKF MD Master](https://github.com/ThaiJenspacito/OKF_MD_Master)
-- Live Demo: [Cloud Run](https://thai-jenspacito-okf-md.eu.run.app)
+- Live Demo: [Cloud Run](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
 
 ---
 

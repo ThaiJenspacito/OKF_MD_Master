@@ -1,4 +1,4 @@
-# Contributing to OKF MD Master
+﻿# Contributing to OKF MD Master
 
 First off — thank you! Every contribution makes the OKF ecosystem stronger.
 
@@ -62,5 +62,5 @@ npm start             # http://localhost:5000
 ## Need Help?
 
 - Open an [issue](https://github.com/ThaiJenspacito/OKF_MD_Master/issues)
-- Check the [Live Demo](https://thai-jenspacito-okf-md.eu.run.app)
+- Check the [Live Demo](https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app)
 - Read [STRATEGY.md](docs/STRATEGY.md)

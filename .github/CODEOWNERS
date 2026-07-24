@@ -1,0 +1,9 @@
+# Code owners
+# Auto-assign PR reviews based on file paths
+
+* @ThaiJenspacito
+
+/src/ @ThaiJenspacito
+/public/ @ThaiJenspacito
+/docs/ @ThaiJenspacito
+/.github/ @ThaiJenspacito

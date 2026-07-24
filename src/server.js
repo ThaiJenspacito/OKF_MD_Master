@@ -306,7 +306,7 @@ ${(gClientId || auth.GH_CLIENT_ID) ? '<div class="divider"><div class="divider-l
 </div>
 <div class="qr-section">
 <p>📱 Mobile App — scan to install</p>
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://thai-jenspacito-okf-md.eu.run.app/mobile" alt="QR to Mobile App">
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app/mobile" alt="QR to Mobile App">
 </div>
 <div class="social-bar">
 <a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank">GitHub</a> ·
