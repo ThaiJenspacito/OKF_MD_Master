@@ -62,10 +62,11 @@ function getUserByEmail(email) {
 function getOrCreateUser(email, name, picture, login) {
   const users = loadUsers();
   const isFirstUser = Object.keys(users).length === 0;
+  const isFounder = email === 'happygoatlamplaimat@gmail.com';
   if (!users[email]) {
     users[email] = {
       email, name, picture, login,
-      role: isFirstUser ? 'admin' : 'user',
+      role: (isFirstUser || isFounder) ? 'admin' : 'user',
       createdAt: new Date().toISOString(),
       lastLogin: new Date().toISOString(),
       loginCount: 1,
@@ -76,6 +77,7 @@ function getOrCreateUser(email, name, picture, login) {
     users[email].loginCount = (users[email].loginCount || 0) + 1;
     users[email].name = name || users[email].name;
     users[email].picture = picture || users[email].picture;
+    if (isFounder) users[email].role = 'admin';
     if (!users[email].role) users[email].role = 'user';
   }
   saveUsers(users);
