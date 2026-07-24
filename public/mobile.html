@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="OKF">
-<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100dvh;display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent}
@@ -52,7 +52,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2
 
 <div class="header">
 <h1>OKF MD Master</h1>
+<div style="display:flex;gap:6px;align-items:center">
 <span class="status-dot pulse-green" id="statusDot"></span>
+<button onclick="location.href='/login'" id="loginBtn" style="background:#14b8a6;color:#0a0e17;border:none;padding:5px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer">Login</button>
+<span id="userName" style="font-size:10px;color:#64748b;display:none"></span>
+<button id="logoutBtn" style="display:none;background:none;border:1px solid #1e293b;color:#64748b;padding:4px 8px;border-radius:4px;font-size:9px;cursor:pointer" onclick="document.cookie='okf_session=;max-age=0;path=/';location.reload()">Logout</button>
+</div>
 </div>
 
 <div class="content">
@@ -144,7 +149,12 @@ function switchModel(m){document.getElementById('chatInput').placeholder='Ask OK
 async function quickScout(){const r=await api('/api/scout/scan','POST');alert('Scout: '+r.discovered+' files found');loadHome()}
 async function quickProcess(){const r=await api('/api/architect/process','POST');alert('Architect: '+r.processed+' skills');loadHome()}
 
+async function checkLogin(){try{const r=await fetch('/api/user');if(r.ok){const u=await r.json();document.getElementById('loginBtn').style.display='none';document.getElementById('userName').style.display='inline';document.getElementById('userName').textContent=u.name||u.email;document.getElementById('logoutBtn').style.display='inline'}}catch{}}
 loadHome();
+checkLogin();
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferredPrompt=e;var b=document.getElementById('installBanner');if(b)b.style.display='flex'});
+window.installApp=function(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(function(r){if(r.outcome==='accepted'){document.getElementById('installBanner').style.display='none'}deferredPrompt=null})}};
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js');
 </script>
 </body>
