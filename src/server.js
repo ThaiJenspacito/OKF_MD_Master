@@ -1258,9 +1258,26 @@ app.get('/go', (req, res) => {
 app.post('/go', express.urlencoded({ extended: false }), (req, res) => {
   if (req.body.pin !== ADMIN_PIN) return res.redirect('/go');
   const sid = crypto.randomBytes(16).toString('hex');
-  sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'admin@okf', name: 'Admin', picture: null } };
+  sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'admin@okf', name: 'Admin', picture: null, role: 'admin' } };
   res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
   res.redirect('/chat');
+});
+
+app.get('/api/users', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const u = getUser(req);
+  if (!u || !auth.isAdmin(u.email)) return res.status(403).json({ error: 'Admin only' });
+  res.json(Object.values(auth.getAllUsers()).map(u => ({email:u.email,name:u.name,role:u.role,picture:u.picture,loginCount:u.loginCount,lastLogin:u.lastLogin})));
+});
+
+app.post('/api/users/role', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const u = getUser(req);
+  if (!u || !auth.isAdmin(u.email)) return res.status(403).json({ error: 'Admin only' });
+  const { email, role } = req.body;
+  if (!email || !role) return res.status(400).json({ error: 'email and role required' });
+  auth.setRole(email, role);
+  res.json({ ok: true, email, role });
 });
 
 app.get('/contact', (req, res) => {

@@ -61,9 +61,11 @@ function getUserByEmail(email) {
 
 function getOrCreateUser(email, name, picture, login) {
   const users = loadUsers();
+  const isFirstUser = Object.keys(users).length === 0;
   if (!users[email]) {
     users[email] = {
       email, name, picture, login,
+      role: isFirstUser ? 'admin' : 'user',
       createdAt: new Date().toISOString(),
       lastLogin: new Date().toISOString(),
       loginCount: 1,
@@ -74,9 +76,25 @@ function getOrCreateUser(email, name, picture, login) {
     users[email].loginCount = (users[email].loginCount || 0) + 1;
     users[email].name = name || users[email].name;
     users[email].picture = picture || users[email].picture;
+    if (!users[email].role) users[email].role = 'user';
   }
   saveUsers(users);
   return users[email];
+}
+
+function isAdmin(email) {
+  const user = getUserByEmail(email);
+  return user && user.role === 'admin';
+}
+
+function setRole(email, role) {
+  const users = loadUsers();
+  if (users[email]) {
+    users[email].role = role;
+    saveUsers(users);
+    return true;
+  }
+  return false;
 }
 
 function getAllUsers() {
@@ -85,6 +103,6 @@ function getAllUsers() {
 
 module.exports = {
   verifyGoogleToken, getGitHubToken, getGitHubUser,
-  getOrCreateUser, getUserByEmail, getAllUsers,
+  getOrCreateUser, getUserByEmail, getAllUsers, isAdmin, setRole,
   GOOGLE_CLIENT_ID, GH_CLIENT_ID, GH_CLIENT_SECRET
 };
