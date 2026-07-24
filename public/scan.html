@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Device Scan · OKF</title>
+<link rel="icon" href="/icon.svg">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0e17;color:#e2e8f0;min-height:100dvh}
+.nav{background:#0a0e17ee;backdrop-filter:blur(10px);border-bottom:1px solid #1e293b;padding:10px 20px;display:flex;justify-content:space-between;align-items:center}
+.nav a{color:#94a3b8;text-decoration:none;font-size:12px}.nav a:hover{color:#e2e8f0}
+.container{max-width:700px;margin:0 auto;padding:32px 20px}
+h1{font-size:22px;margin-bottom:4px}.sub{color:#64748b;font-size:13px;margin-bottom:24px}
+.card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:20px;margin-bottom:12px}
+.card h2{font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#0f766e;color:#fff;transition:all .15s;text-decoration:none}.btn:hover{background:#0d9488}.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{background:transparent;border:1px solid #334155;color:#94a3b8}.btn-outline:hover{background:#1e293b}
+.dir-list{max-height:200px;overflow-y:auto;margin:8px 0;font-size:11px}
+.dir-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid #1e293b;font-family:monospace;font-size:11px}.dir-item:hover{background:#1e293b30}
+.dir-item .path{color:#94a3b8}.dir-item .count{color:#64748b;font-size:10px}.dir-item .add{color:#14b8a6;cursor:pointer;font-size:14px}
+.step{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #1e293b;font-size:12px}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#1e293b;flex-shrink:0}.step-num.done{background:#14b8a6}.step-num.active{background:#f59e0b;animation:pulse 1.5s infinite}
+.step-info{flex:1}.step-title{font-weight:600}.step-detail{color:#64748b;font-size:10px;margin-top:2px}
+.step-status{font-size:11px;color:#64748b}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.progress-bar{background:#1e293b;border-radius:8px;height:8px;overflow:hidden;margin:12px 0}.progress-fill{background:linear-gradient(90deg,#14b8a6,#3b82f6);height:100%;border-radius:8px;transition:width .5s}
+.skip-btn{background:transparent;border:none;color:#ef4444;font-size:10px;cursor:pointer;text-decoration:underline}
+</style>
+</head>
+<body>
+<nav class="nav">
+<a href="/">← Dashboard</a>
+<span style="font-size:12px;color:#64748b">Device to OKF Converter</span>
+</nav>
+
+<div class="container">
+<h1>🔍 Convert Your Device to OKF</h1>
+<p class="sub">Step by step — find all markdown files on your computer and turn them into structured OKF skills.</p>
+
+<div class="card">
+<h2>📂 Step 1: Scan Directories</h2>
+<p style="font-size:11px;color:#64748b;margin-bottom:10px">These common folders were found on your device. Add the ones you want to scan.</p>
+<div class="dir-list" id="dirList">Loading...</div>
+<div style="display:flex;gap:8px;margin-top:8px">
+<input id="customDir" placeholder="Add custom path..." style="flex:1;background:#1e293b;border:1px solid #334155;border-radius:6px;padding:6px 10px;color:#e2e8f0;font-size:11px">
+<button class="btn btn-outline" onclick="addCustom()" style="font-size:11px">Add</button>
+</div>
+<div style="margin-top:10px;font-size:10px;color:#475569">
+Directories selected: <b id="selectedCount">0</b>
+</div>
+</div>
+
+<div class="card">
+<h2>⚙️ Step 2: Process Files</h2>
+<div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:0%"></div></div>
+<div id="steps">
+<div class="step"><div class="step-num">1</div><div class="step-info"><div class="step-title">Scout Scan</div><div class="step-detail">Discover .md files in selected directories</div></div><div class="step-status" id="step1">Waiting</div></div>
+<div class="step"><div class="step-num">2</div><div class="step-info"><div class="step-title">Copy & Validate</div><div class="step-detail">Copy files to sandbox, filter invalid ones</div></div><div class="step-status" id="step2">Waiting</div></div>
+<div class="step"><div class="step-num">3</div><div class="step-info"><div class="step-title">AI Transform</div><div class="step-detail">LLM enriches with YAML frontmatter</div></div><div class="step-status" id="step3">Waiting</div></div>
+<div class="step"><div class="step-num">4</div><div class="step-info"><div class="step-title">Quality Check</div><div class="step-detail">Validate OKF compliance, score A+</div></div><div class="step-status" id="step4">Waiting</div></div>
+</div>
+<button class="btn" onclick="startProcess()" id="startBtn">▶ Start Conversion</button>
+<span id="processMsg" style="font-size:11px;color:#64748b;margin-left:10px"></span>
+</div>
+
+<div class="card" id="resultsCard" style="display:none">
+<h2>✅ Results</h2>
+<div id="resultsContent"></div>
+</div>
+</div>
+
+<script>
+let selectedDirs=[];
+
+function stepDone(n,msg){document.getElementById('step'+n).innerHTML=msg;document.querySelectorAll('.step-num')[n-1].classList.add('done')}
+function stepActive(n){document.getElementById('step'+n).innerHTML='Processing...';document.querySelectorAll('.step-num')[n-1].classList.add('active')}
+function setProgress(pct){document.getElementById('progressBar').style.width=pct+'%'}
+
+async function loadDirs(){
+const r=await fetch('/api/scan/laptop');
+const d=await r.json();
+const div=document.getElementById('dirList');
+if(!d.files||!d.files.length){div.innerHTML='<span style=color:#64748b>No .md files found on device</span>';return}
+const dirs=[...new Set(d.files.map(f=>f.dir))];
+div.innerHTML=dirs.map(d=>'<div class=dir-item><span class=path>📁 '+d+'</span><span class=add onclick="toggleDir(\''+d+'\')">+ Add</span></div>').join('');
+}
+function toggleDir(dir){if(selectedDirs.includes(dir)){selectedDirs=selectedDirs.filter(d=>d!==dir)}else{selectedDirs.push(dir)};document.getElementById('selectedCount').textContent=selectedDirs.length}
+function addCustom(){const v=document.getElementById('customDir').value.trim();if(v&&!selectedDirs.includes(v)){selectedDirs.push(v);document.getElementById('selectedCount').textContent=selectedDirs.length;document.getElementById('customDir').value=''}}
+
+async function startProcess(){
+if(selectedDirs.length===0){alert('Select at least one directory first');return}
+const btn=document.getElementById('startBtn');btn.disabled=true;btn.textContent='⚡ Converting...';
+setProgress(10);stepActive(1);
+try{
+const r=await fetch('/api/scout/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dirs:selectedDirs})});
+const d=await r.json();
+stepDone(1,'✅ '+d.discovered+' files found');setProgress(30);
+stepActive(2);setTimeout(async()=>{
+stepDone(2,'✅ Files copied');setProgress(50);
+stepActive(3);setTimeout(async()=>{
+const a=await fetch('/api/architect/process',{method:'POST'});
+const ad=await a.json();
+stepDone(3,'✅ '+ad.processed+' skills created');setProgress(80);
+stepActive(4);setTimeout(async()=>{
+const q=await fetch('/api/quality/audit',{method:'POST'});
+const qd=await q.json();
+stepDone(4,'✅ '+qd.summary.grade+' ('+qd.summary.average+'%)');setProgress(100);
+btn.textContent='✅ Done!';btn.disabled=false;
+document.getElementById('resultsCard').style.display='block';
+document.getElementById('resultsContent').innerHTML='<p style=font-size:13px>🎉 <b>'+ad.processed+'</b> new OKF skills created · Grade: <b>'+qd.summary.grade+'</b> · <a href=/library style=color:#14b8a6>View in Library →</a></p>';
+},1500)},1500)},1500)}catch(e){btn.textContent='❌ Error';btn.disabled=false;document.getElementById('processMsg').innerHTML=e.message}
+}
+
+loadDirs();
+</script>
+</body>
+</html>
