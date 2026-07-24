@@ -293,7 +293,7 @@ ${(gClientId || auth.GH_CLIENT_ID) ? '<div class="divider"><div class="divider-l
 
 app.get('/auth/dev', (req, res) => {
   const sid = crypto.randomBytes(16).toString('hex');
-  sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'dev@localhost', name: 'Developer', picture: null } };
+  sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'dev@localhost', name: 'Jenspacito', picture: null } };
   res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
   res.redirect('/choose');
 });

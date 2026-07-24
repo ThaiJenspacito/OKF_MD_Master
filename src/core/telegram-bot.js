@@ -57,6 +57,7 @@ async function handleUpdate(body, skillAgent) {
       answer = personality.formatAnswer(result.answer);
     } else {
       answer = `I got your message! But my brain is taking a quick nap 😴 Try the web dashboard meanwhile: https://thai-jenspacito-okf-md.eu.run.app`;
+    }
 
     await sendMessage(chatId, answer);
     return { chatId, userName, text: userText, answered: true };

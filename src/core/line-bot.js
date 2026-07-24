@@ -61,6 +61,7 @@ async function handleWebhook(body, skillAgent) {
           answer = personality.formatAnswer(result.answer);
         } else {
           answer = `Got your message! Brain's taking a break 😴 Try the dashboard: https://thai-jenspacito-okf-md.eu.run.app`;
+        }
 
       await replyMessage(replyToken, answer);
       results.push({ userId, displayName, text: userText, answered: true });
