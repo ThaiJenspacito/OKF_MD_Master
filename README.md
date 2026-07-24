@@ -11,6 +11,11 @@
   [![FREE for 100 users](https://img.shields.io/badge/FREE-first%20100%20users-orange)](#-pricing)
   [![Marketplace](https://img.shields.io/badge/GitHub-Marketplace-8A2BE2)](https://github.com/marketplace)
 
+  <br>
+  <a href="https://github.com/anomalyco/opencode" title="Built entirely with OpenCode">
+    <img src="https://img.shields.io/badge/Built_with-OpenCode-8A2BE2?style=for-the-badge&logo=github&logoColor=white" alt="Built with OpenCode">
+  </a>
+
   **Connect:**
   [![LinkedIn](https://img.shields.io/badge/LinkedIn-OKF_MD_Master-0A66C2)](https://linkedin.com)
   [![Facebook](https://img.shields.io/badge/Facebook-Page-1877F2)](https://www.facebook.com/profile.php?id=61592172550155)

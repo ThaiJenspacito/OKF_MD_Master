@@ -1,5 +1,15 @@
 ﻿# Sponsors & Pricing
 
+## Proudly Built With
+
+[![OpenCode](https://img.shields.io/badge/OpenCode-Anomalyco-8A2BE2?style=for-the-badge&logo=github)](https://github.com/anomalyco/opencode)
+
+OKF MD Master was built entirely with **OpenCode** — the open source coding agent. Every feature, every agent, every page was created through AI-assisted development with OpenCode.
+
+👉 [Star OpenCode on GitHub](https://github.com/anomalyco/opencode) · [Try OpenCode](https://github.com/anomalyco/opencode)
+
+---
+
 ## Free Tier — Forever
 
 **MIT License.** All features, unlimited skills, 100 users. No credit card needed.
