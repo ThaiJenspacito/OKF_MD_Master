@@ -37,9 +37,46 @@ async function handleUpdate(body, skillAgent) {
   const userText = msg.text || '';
   const userName = msg.from?.first_name || 'User';
 
-  // Register the chat ID
+  const usersFile = require('fs').existsSync(require('path').join(__dirname, '../../../data/telegram-users.json'))
+    ? JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '../../../data/telegram-users.json'), 'utf8'))
+    : {};
+  const found = Object.entries(usersFile).find(([, v]) => v.chatId === chatId);
+  const existingEmail = found ? found[0] : null;
+
   if (!TG_CHAT_ID || TG_CHAT_ID === '0') {
     console.log('TELEGRAM CHAT ID:', chatId, '- add this to .env as ALLOWED_CHAT_ID');
+  }
+
+  if (userText.toLowerCase().includes('/register')) {
+    const parts = userText.split(' ').filter(Boolean);
+    let email = parts[1] || '';
+    if (email) {
+      email = email.replace('@', '@').trim();
+      const existing = Object.entries(usersFile).find(([, v]) => v.chatId === chatId);
+      let key = existing ? existing[0] : (email + '_' + chatId);
+      usersFile[key] = { email, chatId, name: userName, registered: new Date().toISOString(), active: true };
+      require('fs').mkdirSync(require('path').dirname(require('path').join(__dirname, '../../../data/telegram-users.json')), { recursive: true });
+      require('fs').writeFileSync(require('path').join(__dirname, '../../../data/telegram-users.json'), JSON.stringify(usersFile, null, 2));
+      await sendMessage(chatId, `✅ Registered! Will notify at ${email}`);
+    } else {
+      await sendMessage(chatId, 'Usage: /register your@email.com');
+    }
+    return { chatId, userName, text: userText, answered: true };
+  }
+
+  if (userText.toLowerCase().includes('/status')) {
+    if (existingEmail) {
+      try {
+        const auth = require('./auth');
+        const user = auth.getUserByEmail(existingEmail);
+        const role = user ? user.role : 'unknown';
+        const status = user ? user.status : 'unknown';
+        await sendMessage(chatId, `👤 ${existingEmail}\nRole: ${role}\nStatus: ${status}`);
+      } catch { await sendMessage(chatId, '⚠️ Could not check status.'); }
+    } else {
+      await sendMessage(chatId, '⚠️ Not linked to any account. Use /register your@email.com');
+    }
+    return { chatId, userName, text: userText, answered: true };
   }
 
   console.log(`Telegram: "${userText}" from ${userName} (${chatId})`);
@@ -56,7 +93,7 @@ async function handleUpdate(body, skillAgent) {
       const result = await skillAgent.ask(userText, []);
       answer = personality.formatAnswer(result.answer);
     } else {
-      answer = `I got your message! But my brain is taking a quick nap 😴 Try the web dashboard meanwhile: https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app`;
+      answer = personality.responses.start(userName);
     }
 
     await sendMessage(chatId, answer);
@@ -68,9 +105,17 @@ async function handleUpdate(body, skillAgent) {
 }
 
 async function broadcastToRegistered(text) {
-  if (TG_CHAT_ID && TG_CHAT_ID !== '0') {
-    await sendMessage(TG_CHAT_ID, text);
-  }
+  if (!TG_TOKEN) return { sent: 0 };
+  try {
+    const usersFile = require('path').join(__dirname, '../../../data/telegram-users.json');
+    const users = require('fs').existsSync(usersFile) ? JSON.parse(require('fs').readFileSync(usersFile, 'utf8')) : {};
+    const active = Object.entries(users).filter(([, v]) => v.active !== false);
+    let sent = 0;
+    for (const [, u] of active) {
+      try { await sendMessage(u.chatId, text); sent++; } catch {}
+    }
+    return { sent, total: active.length };
+  } catch { return { sent: 0 }; }
 }
 
 module.exports = { handleUpdate, sendMessage, setWebhook, broadcastToRegistered, TG_TOKEN };

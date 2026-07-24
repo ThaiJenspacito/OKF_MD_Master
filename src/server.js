@@ -28,6 +28,7 @@ const lineBot = require('./core/line-bot');
 const tgBot = require('./core/telegram-bot');
 const waBot = require('./core/whatsapp-bot');
 const gcBot = require('./core/google-chat-bot');
+const approval = require('./core/approval');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -137,14 +138,16 @@ function getUser(req) {
   return sessions[sid].user || null;
 }
 
-function isGuest(req) {
-  const user = getUser(req);
-  return user && user.email === 'dev@localhost';
-}
-
-function guestGuard(req, res, next) {
-  if (isGuest(req)) return res.status(403).json({ error: 'Guest accounts are read-only. Login with Google for full access.' });
-  next();
+function createSession(res, user) {
+  Object.keys(sessions).forEach(sid => {
+    if (sessions[sid].user && sessions[sid].user.email === user.email) {
+      delete sessions[sid];
+    }
+  });
+  const sid = crypto.randomBytes(16).toString('hex');
+  sessions[sid] = { created: Date.now(), ip: 'local', user };
+  res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
+  return sid;
 }
 
 function agentCard(name, icon, color, status, detail, model) {
@@ -330,20 +333,17 @@ ${(gClientId || auth.GH_CLIENT_ID) ? '<div class="divider"><div class="divider-l
 });
 
 app.get('/auth/dev', (req, res) => {
-  const sid = crypto.randomBytes(16).toString('hex');
-  sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'dev@localhost', name: 'Guest', picture: null, role: 'guest' } };
-  res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
-  res.redirect('/choose');
+  createSession(res, { email: 'guest@okf', name: 'Guest', picture: null, role: 'guest', status: 'active' });
+  res.redirect('/client');
 });
 
 app.post('/auth/google', express.json(), async (req, res) => {
   try {
     const payload = await auth.verifyGoogleToken(req.body.credential);
     const user = auth.getOrCreateUser(payload.email, payload.name, payload.picture);
-    const sid = crypto.randomBytes(16).toString('hex');
-    sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user };
-    res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
-    res.json({ ok: true });
+    createSession(res, user);
+    if (!auth.isActive(user.email)) return res.json({ ok: true, pending: true });
+    res.json({ ok: true, redirect: auth.isAdmin(user.email) ? '/admin' : '/client' });
   } catch (e) { res.status(401).json({ error: e.message }); }
 });
 
@@ -359,10 +359,9 @@ app.get('/auth/github/callback', async (req, res) => {
     const token = await auth.getGitHubToken(req.query.code);
     const ghUser = await auth.getGitHubUser(token);
     const user = auth.getOrCreateUser(ghUser.email, ghUser.name, ghUser.picture, ghUser.login);
-    const sid = crypto.randomBytes(16).toString('hex');
-    sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user };
-    res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
-    res.redirect('/choose');
+    createSession(res, user);
+    if (!auth.isActive(user.email)) return res.redirect('/pending');
+    res.redirect(auth.isAdmin(user.email) ? '/admin' : '/client');
   } catch (e) { res.redirect('/login?error=' + encodeURIComponent(e.message)); }
 });
 
@@ -576,11 +575,40 @@ render(skills);
 </body></html>`);
 });
 
-app.post('/api/upload', guestGuard, upload.single('file'), (req, res) => {
+app.post('/api/upload', upload.single('file'), (req, res) => {
   if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
   if (!req.file) return res.status(400).json({ error: 'No file' });
-  addJournalEntry('upload', req.file.originalname, 'uploaded', req.file.size + ' Bytes');
-  res.json({ ok: true, filename: req.file.originalname, size: req.file.size });
+  const user = getUser(req);
+  if (!user || !user.email) return res.status(400).json({ error: 'Login required' });
+  if (user.role === 'guest') return res.status(403).json({ error: 'Guest accounts are read-only. Login with Google for full access.' });
+  if (auth.isAdmin(user.email)) {
+    addJournalEntry('upload', req.file.originalname, 'uploaded', req.file.size + ' Bytes');
+    return res.json({ ok: true, filename: req.file.originalname, size: req.file.size });
+  }
+  approval.addToQueue(req.file.originalname, req.file.path, req.file.size);
+  const journalFile = path.join(__dirname, '../../data/tenants', user.email, 'journal.json');
+  fs.mkdirSync(path.dirname(journalFile), { recursive: true });
+  const entries = fs.existsSync(journalFile) ? JSON.parse(fs.readFileSync(journalFile, 'utf8')) : [];
+  entries.push({ at: new Date().toISOString(), action: 'uploaded', filename: req.file.originalname, detail: 'Pending admin approval' });
+  fs.writeFileSync(journalFile, JSON.stringify(entries, null, 2));
+  res.json({ ok: true, pending: true, filename: req.file.originalname });
+});
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  if (!req.file) return res.status(400).json({ error: 'No file' });
+  const user = getUser(req);
+  if (!user || !user.email) return res.status(400).json({ error: 'Login required' });
+  if (user.role === 'guest') return res.status(403).json({ error: 'Guest accounts are read-only. Login with Google for full access.' });
+  if (auth.isAdmin(user.email)) {
+    addJournalEntry('upload', req.file.originalname, 'uploaded', req.file.size + ' Bytes');
+    approval.ensureTenantDir(user.email);
+    const dest = path.join(__dirname, '../../data/tenants', user.email, 'incoming', req.file.originalname);
+    fs.copyFileSync(req.file.path, dest);
+    return res.json({ ok: true, filename: req.file.originalname, size: req.file.size });
+  }
+  approval.addToQueue(user.email, req.file.originalname, req.file.path, req.file.size);
+  res.json({ ok: true, pending: true, filename: req.file.originalname });
 });
 
 app.get('/api/scan/laptop', (req, res) => {
@@ -1260,6 +1288,77 @@ app.post('/api/fetch/model', guestGuard, express.json(), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+app.get('/admin', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  const user = getUser(req);
+  if (!user || !auth.isAdmin(user.email)) return res.redirect('/client');
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+app.get('/client', (req, res) => {
+  if (!isLoggedIn(req)) return res.redirect('/login');
+  res.sendFile(path.join(__dirname, '../public/client.html'));
+});
+
+app.get('/pending', (req, res) => {
+  res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Pending · OKF</title><link rel="icon" href="/icon.svg"><style>body{background:#0a0e17;color:#e2e8f0;font-family:system-ui;display:flex;align-items:center;justify-content:center;min-height:100dvh;margin:0;text-align:center}.card{background:#0f172a;border:1px solid #1e293b;border-radius:16px;padding:32px;max-width:400px}.card h1{font-size:20px;color:#f59e0b;margin-bottom:8px}.card p{color:#64748b;font-size:13px;line-height:1.6}</style></head><body><div class="card"><h1>⏳ Account Pending</h1><p>Your account is awaiting admin approval. You will be notified once activated.</p><p style="font-size:11px;color:#475569;margin-top:12px">This usually takes a few hours.</p></div></body></html>`);
+});
+
+app.get('/api/admin/approvals', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !auth.isAdmin(user.email)) return res.status(403).json({ error: 'Admin only' });
+  res.json(approval.getQueue());
+});
+
+app.post('/api/admin/approve', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !auth.isAdmin(user.email)) return res.status(403).json({ error: 'Admin only' });
+  const result = approval.approveItem(req.body.id, user.email);
+  if (!result) return res.status(404).json({ error: 'Item not found' });
+  res.json({ ok: true, result });
+});
+
+app.post('/api/admin/reject', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !auth.isAdmin(user.email)) return res.status(403).json({ error: 'Admin only' });
+  const result = approval.rejectItem(req.body.id, req.body.reason, req.body.comment, user.email);
+  if (!result) return res.status(404).json({ error: 'Item not found' });
+  res.json({ ok: true, result });
+});
+
+app.get('/api/admin/pending-users', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !auth.isAdmin(user.email)) return res.status(403).json({ error: 'Admin only' });
+  res.json(auth.getPendingUsers());
+});
+
+app.post('/api/admin/activate-user', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !auth.isAdmin(user.email)) return res.status(403).json({ error: 'Admin only' });
+  auth.activateUser(req.body.email);
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/deactivate-user', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !auth.isAdmin(user.email)) return res.status(403).json({ error: 'Admin only' });
+  auth.deactivateUser(req.body.email);
+  res.json({ ok: true });
+});
+
+app.post('/api/client/journal', express.json(), (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !user.email) return res.status(400).json({ error: 'Login required' });
+  res.json(approval.getJournal(user.email));
+});
+
 app.get('/go', (req, res) => {
   if (isLoggedIn(req)) return res.redirect('/chat');
   res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>·</title><style>body{background:#0a0e17;display:flex;align-items:center;justify-content:center;min-height:100dvh;margin:0}input{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px 16px;color:#e2e8f0;font-size:16px;text-align:center;letter-spacing:4px;outline:none}input:focus{border-color:#14b8a6}</style></head><body><form method="POST" action="/go"><input type="password" name="pin" placeholder="····" maxlength="8" autofocus></form></body></html>`);
@@ -1271,6 +1370,27 @@ app.post('/go', express.urlencoded({ extended: false }), (req, res) => {
   sessions[sid] = { created: Date.now(), ip: req.ip || 'local', user: { email: 'admin@okf', name: 'Admin', picture: null, role: 'admin' } };
   res.cookie('okf_session', sid, { httpOnly: true, maxAge: 30 * 24 * 3600000, secure: false, sameSite: 'lax' });
   res.redirect('/chat');
+});
+
+app.get('/api/user', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  res.json({ email: user.email, name: user.name, picture: user.picture, role: user.role, status: user.status });
+});
+
+app.get('/api/files', (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !user.email) return res.json([]);
+  const tenantDir = path.join(__dirname, '../../data/tenants', user.email, 'incoming');
+  if (!fs.existsSync(tenantDir)) return res.json([]);
+  try {
+    const files = fs.readdirSync(tenantDir).map(f => {
+      const stat = fs.statSync(path.join(tenantDir, f));
+      return { name: f, size: stat.size, uploaded: stat.mtime.toISOString() };
+    }).sort((a, b) => new Date(b.uploaded) - new Date(a.uploaded));
+    res.json(files);
+  } catch { res.json([]); }
 });
 
 app.get('/api/users', (req, res) => {
@@ -1343,6 +1463,16 @@ app.post('/telegram/webhook', express.json(), async (req, res) => {
     console.error('Telegram webhook error:', e.message);
     res.status(500).json({ error: e.message });
   }
+});
+
+app.post('/api/broadcast', express.json(), async (req, res) => {
+  if (!isLoggedIn(req)) return res.status(401).json({ error: 'Not logged in' });
+  const user = getUser(req);
+  if (!user || !auth.isAdmin(user.email)) return res.status(403).json({ error: 'Admin only' });
+  const text = req.body.text;
+  if (!text) return res.status(400).json({ error: 'Text required' });
+  const result = await tgBot.broadcastToRegistered(text);
+  res.json({ ok: true, ...result });
 });
 
 app.get('/whatsapp/webhook', (req, res) => {

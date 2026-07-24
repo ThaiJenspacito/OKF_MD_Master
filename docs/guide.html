@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="description" content="OKF MD Master Guide — Learn how to scan, upload, and manage your device files">
+  <meta property="og:title" content="OKF MD Master Guide">
+  <title>Guide · OKF MD</title>
+  <link rel="icon" href="/icon.svg">
+  <style>
+    :root { --bg:#0a0e17; --card:#0f172a; --border:#1e293b; --text:#e2e8f0; --dim:#64748b; --accent:#38bdf8; }
+    * { box-sizing:border-box; margin:0; padding:0 }
+    body { background:var(--bg); color:var(--text); font-family:system-ui; min-height:100dvh }
+    .topbar { background:var(--card); border-bottom:1px solid var(--border); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10 }
+    .topbar .logo { font-weight:700; color:var(--accent); font-size:15px }
+    .auth-bar { display:flex; gap:8px; align-items:center }
+    .auth-bar img { height:20px; width:20px; border-radius:4px }
+    .auth-bar .login-btn { background:var(--accent); color:#0a0e17; border:none; padding:6px 14px; border-radius:6px; font-weight:600; font-size:12px; cursor:pointer; text-decoration:none }
+    .container { max-width:800px; margin:0 auto; padding:24px 20px }
+    h1 { font-size:22px; margin-bottom:6px }
+    h1 + p { color:var(--dim); font-size:13px; margin-bottom:28px }
+    h2 { font-size:16px; color:var(--accent); margin:28px 0 10px; padding-top:16px; border-top:1px solid var(--border) }
+    .step { background:var(--card); border:1px solid var(--border); border-radius:14px; margin-bottom:16px; overflow:hidden }
+    .step-header { display:flex; align-items:center; gap:12px; padding:14px 16px; cursor:pointer }
+    .step-num { width:30px; height:30px; border-radius:50%; background:var(--accent); color:#0a0e17; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0 }
+    .step-title { font-weight:600; font-size:14px }
+    .step-desc { padding:0 16px 16px 58px; font-size:12px; color:var(--dim); line-height:1.6 }
+    .screenshot { background:#0a0e17; border:1px dashed var(--border); border-radius:10px; margin:0 16px 16px 58px; min-height:200px; display:flex; align-items:center; justify-content:center; position:relative }
+    .screenshot .placeholder { color:var(--dim); font-size:12px; text-align:center }
+    .screenshot img { width:100%; border-radius:10px }
+    .hover-tip { background:var(--accent); color:#0a0e17; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; position:absolute; top:8px; right:8px }
+    .note { background:#1e293b; border-left:3px solid var(--accent); padding:10px 14px; border-radius:0 8px 8px 0; font-size:12px; color:var(--text); margin:10px 0 16px; line-height:1.5 }
+    a { color:var(--accent) }
+    .footer { text-align:center; padding:30px; color:var(--dim); font-size:11px; border-top:1px solid var(--border); margin-top:40px }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="logo">OKF MD Master</span>
+    <div class="auth-bar">
+      <span style="color:var(--dim);font-size:11px">Login in header:</span>
+      <a href="/login"><img src="/img/google.svg" alt="Google" title="Login with Google"></a>
+      <a href="/auth/github"><img src="/img/github.svg" alt="GitHub" title="Login with GitHub"></a>
+    </div>
+  </div>
+  <div class="container">
+    <h1>OKF MD Master — Complete Guide</h1>
+    <p>Step-by-step walkthrough for scanning, uploading, and managing files with OKF MD.</p>
+
+    <div class="note"><strong>Login Required</strong> — Only Google and GitHub accounts are accepted. No PIN or guest access.</div>
+
+    <h2>1 — Login with OAuth</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">1</div><div class="step-title">Choose Google or GitHub to sign in</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">Click Google → redirects to Google OAuth</span>
+        <div class="placeholder">[ SCREENSHOT: Login page with Google and GitHub buttons ]</div>
+      </div>
+      <div class="step-desc">Click <strong>Login with Google</strong> or <strong>Login with GitHub</strong> on the top-right of the header. After OAuth approval, your account is created automatically. First-time users require admin activation.</div>
+    </div>
+
+    <h2>2 — Upload Files</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">2</div><div class="step-title">Drag or select .md, .json, .csv files</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">Click +Upload → File dialog opens</span>
+        <div class="placeholder">[ SCREENSHOT: Upload button + file picker ]</div>
+      </div>
+      <div class="step-desc">Click the <strong>+ Upload</strong> button in the Client dashboard. Select .md, .txt, .json, .csv, .yaml, or .yml files (max 500 KB each). Uploads go into the admin review queue.</div>
+    </div>
+
+    <h2>3 — Approval Workflow</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">3</div><div class="step-title">Admin reviews and approves your file</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">Admin sees uploads in Approval-Widget</span>
+        <div class="placeholder">[ SCREENSHOT: Admin approval queue with Approve/Reject buttons ]</div>
+      </div>
+      <div class="step-desc">The admin reviews your upload. If approved, it appears in your <strong>Library</strong>. If rejected, the reason appears in your <strong>Upload History</strong> with the reason code (duplicate, wrong_format, too_large, no_content, policy, other).</div>
+    </div>
+
+    <h2>4 — Client Dashboard</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">4</div><div class="step-title">Library, Journal, and Chat tabs</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">Three tabs: Library · Upload History · Chat</span>
+        <div class="placeholder">[ SCREENSHOT: Client dashboard with file grid ]</div>
+      </div>
+      <div class="step-desc"><strong>Library</strong>: View approved files. <strong>Upload History</strong>: Full journal of all uploads with status and rejection reasons. <strong>Chat</strong>: Contact support.</div>
+    </div>
+
+    <h2>5 — Device Scan Wizard</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">5</div><div class="step-title">Scan your device and convert to .md</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">Wizard guides you step-by-step</span>
+        <div class="placeholder">[ SCREENSHOT: Scan Wizard with steps ]</div>
+      </div>
+      <div class="step-desc">Visit <a href="/scan">/scan</a> to use the Device Scan Wizard. It walks you through converting documents, images, and code to structured .md files.</div>
+    </div>
+
+    <h2>6 — Admin Portal</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">6</div><div class="step-title">Founder admin at /admin</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">/admin shows approval queue + user management</span>
+        <div class="placeholder">[ SCREENSHOT: Admin dashboard with Approval-Widget ]</div>
+      </div>
+      <div class="step-desc">Admins access the Approval Queue, activate/deactivate users, and manage the system from <strong>/admin</strong>.</div>
+    </div>
+
+    <div class="note">Need help? Email <a href="mailto:Jenspacito+OKF@gmail.com">Jenspacito+OKF@gmail.com</a></div>
+  </div>
+  <div class="footer">OKF MD Master &middot; Open Knowledge Format Ecosystem &middot; <a href="https://github.com/ThaiJenspacito/okf_md_master">GitHub</a></div>
+</body>
+</html>

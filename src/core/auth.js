@@ -66,7 +66,8 @@ function getOrCreateUser(email, name, picture, login) {
   if (!users[email]) {
     users[email] = {
       email, name, picture, login,
-      role: (isFirstUser || isFounder) ? 'admin' : 'user',
+      role: (isFirstUser || isFounder) ? 'admin' : 'pending',
+      status: (isFirstUser || isFounder) ? 'active' : 'pending',
       createdAt: new Date().toISOString(),
       lastLogin: new Date().toISOString(),
       loginCount: 1,
@@ -78,8 +79,47 @@ function getOrCreateUser(email, name, picture, login) {
     users[email].name = name || users[email].name;
     users[email].picture = picture || users[email].picture;
     if (isFounder) users[email].role = 'admin';
-    if (!users[email].role) users[email].role = 'user';
+    if (isFounder) users[email].status = 'active';
+    if (!users[email].role) users[email].role = 'pending';
+    if (!users[email].status) users[email].status = 'pending';
   }
+  saveUsers(users);
+  return users[email];
+}
+
+function activateUser(email) {
+  const users = loadUsers();
+  if (users[email]) {
+    users[email].status = 'active';
+    users[email].role = 'client';
+    users[email].activatedAt = new Date().toISOString();
+    saveUsers(users);
+    return true;
+  }
+  return false;
+}
+
+function deactivateUser(email) {
+  const users = loadUsers();
+  if (users[email]) {
+    users[email].status = 'rejected';
+    saveUsers(users);
+    return true;
+  }
+  return false;
+}
+
+function getPendingUsers() {
+  const users = loadUsers();
+  return Object.entries(users)
+    .filter(([, u]) => u.status === 'pending')
+    .map(([email, u]) => ({ email, name: u.name, picture: u.picture, provider: u.provider, createdAt: u.createdAt }));
+}
+
+function isActive(email) {
+  const user = getUserByEmail(email);
+  return user && user.status === 'active';
+}
   saveUsers(users);
   return users[email];
 }
@@ -106,5 +146,6 @@ function getAllUsers() {
 module.exports = {
   verifyGoogleToken, getGitHubToken, getGitHubUser,
   getOrCreateUser, getUserByEmail, getAllUsers, isAdmin, setRole,
+  activateUser, deactivateUser, getPendingUsers, isActive,
   GOOGLE_CLIENT_ID, GH_CLIENT_ID, GH_CLIENT_SECRET
 };

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+  <meta name="description" content="OKF MD Mobile Guide — Scan, upload, and manage your files from your phone">
+  <meta property="og:title" content="OKF MD Master · Mobile Guide">
+  <title>Mobile Guide · OKF MD</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/icon.svg">
+  <style>
+    :root { --bg:#0a0e17; --card:#0f172a; --border:#1e293b; --text:#e2e8f0; --dim:#64748b; --accent:#38bdf8; }
+    * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent }
+    body { background:var(--bg); color:var(--text); font-family:system-ui; min-height:100dvh; padding-left:env(safe-area-inset-left); padding-right:env(safe-area-inset-right) }
+    .topbar { background:var(--card); border-bottom:1px solid var(--border); padding:10px 14px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10 }
+    .topbar .logo { font-weight:700; font-size:14px; color:var(--accent) }
+    .auth-pills { display:flex; gap:6px }
+    .auth-pills a { display:flex; align-items:center; gap:4px; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:5px 10px; border-radius:16px; font-size:10px; text-decoration:none; font-weight:600 }
+    .container { padding:16px 14px; padding-bottom:100px }
+    h1 { font-size:18px; margin-bottom:4px }
+    h1+p { color:var(--dim); font-size:11px; margin-bottom:20px }
+    h2 { font-size:14px; color:var(--accent); margin:22px 0 8px; padding-top:12px; border-top:1px solid var(--border) }
+    .step { background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:12px; overflow:hidden }
+    .step-header { display:flex; align-items:center; gap:10px; padding:12px }
+    .step-num { width:26px; height:26px; border-radius:50%; background:var(--accent); color:#0a0e17; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex-shrink:0 }
+    .step-title { font-weight:600; font-size:12px; flex:1 }
+    .screenshot { margin:0 12px 12px; min-height:160px; border:1px dashed var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; position:relative }
+    .screenshot .placeholder { color:var(--dim); font-size:11px; text-align:center; padding:20px }
+    .screenshot img { width:100%; border-radius:10px }
+    .hover-tip { background:var(--accent); color:#0a0e17; padding:2px 7px; border-radius:4px; font-size:9px; font-weight:700; position:absolute; top:6px; right:6px }
+    .step-desc { padding:0 12px 12px; font-size:11px; color:var(--dim); line-height:1.5 }
+    .note { background:#1e293b; border-left:3px solid var(--accent); padding:8px 12px; border-radius:0 8px 8px 0; font-size:11px; margin:8px 0 14px; line-height:1.5 }
+    .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--border); display:flex; padding:6px 0 env(safe-area-inset-bottom); justify-content:space-around; z-index:10 }
+    .bottom-nav a { color:var(--dim); text-decoration:none; font-size:9px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 8px }
+    .bottom-nav a.active { color:var(--accent) }
+    .bottom-nav a svg { width:18px; height:18px }
+    .footer { text-align:center; padding:20px 14px; color:var(--dim); font-size:10px }
+    a { color:var(--accent) }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="logo">OKF MD Mobile</span>
+    <div class="auth-pills">
+      <a href="/login">G Login</a>
+      <a href="/auth/github">GH Login</a>
+    </div>
+  </div>
+  <div class="container">
+    <h1>Mobile Guide</h1>
+    <p>Alles von unterwegs — Scan, Upload, Verwalten.</p>
+
+    <div class="note">Login required — nur Google & GitHub.</div>
+
+    <h2>1 — Anmelden</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">1</div><div class="step-title">Google oder GitHub wählen</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">G Login oder GH Login antippen</span>
+        <div class="placeholder">[ SCREENSHOT: Mobile Login-Seite ]</div>
+      </div>
+      <div class="step-desc"><strong>G Login</strong> (Google) oder <strong>GH Login</strong> (GitHub) oben rechts antippen. Nach der OAuth-Freigabe wird dein Konto erstellt. Erstnutzer müssen vom Admin aktiviert werden.</div>
+    </div>
+
+    <h2>2 — Dateien hochladen</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">2</div><div class="step-title">Auf +Upload tippen, Datei wählen</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">Upload-Button im Client-Dashboard</span>
+        <div class="placeholder">[ SCREENSHOT: Mobile Upload-Button ]</div>
+      </div>
+      <div class="step-desc">Im <strong>Client-Dashboard</strong> auf <strong>+Upload</strong> tippen. .md, .json, .csv, .yaml (max 500 KB) auswählen. Der Upload geht in die Admin-Prüfung.</div>
+    </div>
+
+    <h2>3 — Freigabe abwarten</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">3</div><div class="step-title">Admin prüft und genehmigt</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">Status im Upload-Journal einsehbar</span>
+        <div class="placeholder">[ SCREENSHOT: Mobile Upload-History ]</div>
+      </div>
+      <div class="step-desc">Der Admin prüft deine Datei. Bei Genehmigung erscheint sie in deiner <strong>Library</strong>. Bei Ablehnung siehst du den Grund im <strong>Upload-Journal</strong>.</div>
+    </div>
+
+    <h2>4 — Library & Journal</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">4</div><div class="step-title">Drei Tabs: Library · History · Chat</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">Tabs wechseln durch Antippen</span>
+        <div class="placeholder">[ SCREENSHOT: Mobile Client Dashboard Tabs ]</div>
+      </div>
+      <div class="step-desc"><strong>Library</strong>: Genehmigte Dateien. <strong>Upload History</strong>: Alle Uploads mit Status. <strong>Chat</strong>: Support kontaktieren.</div>
+    </div>
+
+    <h2>5 — Scan Wizard</h2>
+    <div class="step">
+      <div class="step-header"><div class="step-num">5</div><div class="step-title">Geräte-Scan für .md Konvertierung</div></div>
+      <div class="screenshot">
+        <span class="hover-tip">Schritt-für-Schritt-Assistent</span>
+        <div class="placeholder">[ SCREENSHOT: Mobile Scan Wizard ]</div>
+      </div>
+      <div class="step-desc">Unter <a href="/scan">/scan</a> findest du den Device Scan Wizard — führt dich durch die Konvertierung zu .md.</div>
+    </div>
+
+    <div class="note">Support: <a href="mailto:Jenspacito+OKF@gmail.com">Jenspacito+OKF@gmail.com</a></div>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="/client" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Client</a>
+    <a href="/scan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>Scan</a>
+  </div>
+  <div class="footer">OKF MD &middot; Open Knowledge Format</div>
+</body>
+</html>
