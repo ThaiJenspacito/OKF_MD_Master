@@ -969,7 +969,7 @@ ${Object.entries(platforms).map(([key, p]) => `
 <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
 <div class="flex justify-between items-center mb-2">
 <span class="font-bold text-sm">${p.name}</span>
-<span class="text-xs text-gray-600">${p.maxChars} chars max</span>
+<span class="text-xs text-gray-600">${p.maxChars} chars · <span id="ts-${key}" class="text-gray-600"></span></span>
 </div>
 <textarea id="post-${key}" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-xs text-gray-300 h-32 resize-none focus:outline-none focus:border-pink-600" placeholder="Post appears here..."></textarea>
 <div class="flex justify-between mt-2">
@@ -1001,6 +1001,8 @@ async function generatePosts(){
     if(d.posts)d.posts.forEach(p=>{
       const ta=document.getElementById('post-'+p.platform);
       if(ta){ta.value=p.text;document.getElementById('count-'+p.platform).innerHTML=p.text.length+' chars'}
+      const ts=document.getElementById('ts-'+p.platform);
+      if(ts){const now=new Date();ts.innerHTML='🕐 '+now.toLocaleTimeString()}
     });
     document.getElementById('genStatus').innerHTML='âœ… Done';
   }catch(e){document.getElementById('genStatus').innerHTML='âŒ '+e.message}

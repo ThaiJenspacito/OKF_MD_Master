@@ -126,7 +126,7 @@ async function sendChat(){
 const q=document.getElementById('chatInput').value.trim();if(!q)return;
 const model=document.getElementById('modelSelect').value;
 const div=document.getElementById('chatMessages');
-div.innerHTML+='<div class="chat-msg msg-user">'+q+'</div>';
+div.innerHTML+='<div class="chat-msg msg-user">'+q+'<div style=font-size:9px;color:#475569;margin-top:2px>'+new Date().toLocaleTimeString()+'</div></div>';
 document.getElementById('chatInput').value='';
 div.innerHTML+='<div class="chat-msg msg-bot">Thinking...</div>';
 div.scrollTop=div.scrollHeight;
@@ -135,7 +135,7 @@ let r;
 if(model==='cloud'){r=await api('/api/chat','POST',{question:q,history:[]})}
 else{r={answer:'Model '+model+' selected. Switch to Cloud Agent for full OKF knowledge.',model:model,tokens:0}}
 div.lastChild.remove();
-div.innerHTML+='<div class="chat-msg msg-bot">'+r.answer.replace(/\n/g,'<br>')+'</div>';div.scrollTop=div.scrollHeight
+div.innerHTML+='<div class="chat-msg msg-bot">'+r.answer.replace(/\n/g,'<br>')+'<div style=font-size:9px;color:#475569;margin-top:2px>'+new Date().toLocaleTimeString()+'</div></div>';div.scrollTop=div.scrollHeight
 }catch(e){div.lastChild.remove();div.innerHTML+='<div class="chat-msg msg-bot">Error</div>'}
 }
 function switchModel(m){document.getElementById('chatInput').placeholder='Ask OKF ('+m+')...'}
