@@ -46,18 +46,25 @@ async function generatePost(skill, platform) {
 
   const { client, model } = getClient('cohere/north-mini-code:free');
 
-  const prompt = `Create a social media post for ${cfg.name}.
+  const prompt = `Create a SOCIAL MEDIA POST that TRIGGERS ENGAGEMENT.
+
 Platform: ${cfg.name} (${cfg.type})
-Max characters: ${cfg.maxChars}
+Max length: ${cfg.maxChars} characters
 Tone: ${cfg.tone}
-${cfg.hashtags ? 'Add ' + cfg.hashtags + ' relevant hashtags.' : ''}
+${cfg.hashtags ? 'Add ' + cfg.hashtags + ' hashtags.' : ''}
+
+CRITICAL RULES:
+- Use SHORT URLs: github.com/ThaiJenspacito/OKF_MD_Master
+- End with a QUESTION or CALL-TO-ACTION to trigger comments
+- Make it shareable — people should WANT to repost this
+- Start with a hook (question, bold statement, or surprising fact)
 
 The OKF skill to post about:
 Name: ${skill.name}
 Description: ${skill.description}
 Tags: ${skill.tags.join(', ')}
 
-Return ONLY the finished post text. No explanation.`;
+Return ONLY the post text. No explanation. No markdown.`;
 
   const res = await client.chat.completions.create({
     model,

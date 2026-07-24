@@ -309,6 +309,7 @@ ${(gClientId || auth.GH_CLIENT_ID) ? '<div class="divider"><div class="divider-l
 <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://thai-jenspacito-okf-md-299034318175.europe-west1.run.app/mobile" alt="QR to Mobile App">
 </div>
 <div class="social-bar">
+<img src="/avatar.png" alt="Creator" style="width:32px;height:32px;border-radius:50%;border:2px solid #14b8a6;vertical-align:middle;margin-right:4px">
 <a href="https://github.com/ThaiJenspacito/OKF_MD_Master" target="_blank" title="Star us on GitHub — every star helps the community grow">GitHub</a> ·
 <a href="https://linkedin.com" target="_blank" title="Follow OKF MD Master on LinkedIn">LinkedIn</a> ·
 <a href="https://www.facebook.com/profile.php?id=61592172550155" target="_blank" title="Like our Facebook page for updates">Facebook</a> ·
